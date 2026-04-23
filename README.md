@@ -441,8 +441,6 @@ owner(Jake) PC에서는 `./scripts/auto-pull-watcher.sh`가 30초마다 `origin/
 - ✅ Design Library 재사용 자산
 - ✅ 자동 pull 워처
 - 🔨 PoC 1과정 돌려서 루브릭·프롬프트 재튜닝
-- 📋 예정: 컴포넌트 단위 재생성 UI · 보일러플레이트 라이브러리 · 엠바고 처리 · 기자 QA 생성 (→ press-release-harness로 분리 예정)
-- 📋 예정: 자동 테스트 · GitHub Actions CI · Webhook 기반 즉시 반영
 
 ---
 
@@ -450,7 +448,6 @@ owner(Jake) PC에서는 `./scripts/auto-pull-watcher.sh`가 30초마다 `origin/
 
 - 내부 사용 목적으로 작성됨. 외부 배포·상용화 시 라이선스 별도 합의.
 - 원조 로직: `aiworld-main` (Claude Code 스킬 파이프라인) 계승
-- 아키텍처 설계 · 구현: Jake (전략기획 팀장) + Claude
 
 ---
 
