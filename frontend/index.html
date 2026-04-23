@@ -1,0 +1,1822 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI World Harness</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" />
+<style>
+  :root { --c-accent: #0f172a; --c-brand: #059669; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-feature-settings: "ss01","ss06";
+    letter-spacing: -0.01em;
+  }
+  .mono { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace; }
+  .scroll-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-slim::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+  .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:500; white-space:nowrap; }
+  .kbd { font-family: ui-monospace; font-size:11px; padding:1px 5px; border:1px solid #e4e4e7; border-bottom-width:2px; border-radius:4px; background:#fafafa; }
+  .nav-btn { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; font-size:14px; color:#52525b; }
+  .nav-btn.active { background:#18181b; color:white; }
+  .nav-btn:hover:not(.active) { background:#f4f4f5; color:#18181b; }
+  .step-item { display:flex; align-items:center; gap:8px; color:#a1a1aa; font-size:13px; font-weight:500; }
+  .step-item.current { color:#18181b; }
+  .step-item.done { color:#059669; }
+  .step-circle { width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:1.5px solid currentColor; font-size:11px; font-weight:600; }
+  .step-item.done .step-circle { background:#059669; border-color:#059669; color:white; }
+  .step-item.current .step-circle { background:#18181b; border-color:#18181b; color:white; }
+  .flag-card { transition: background 0.15s; }
+  .flag-card.selected { background:#f4f4f5; border-left:3px solid #18181b; }
+  .content-preview h4 { font-weight:600; margin-top:16px; margin-bottom:6px; color:#27272a; }
+  .content-preview p { color:#3f3f46; line-height:1.7; }
+  .content-preview pre { background:#fafafa; border:1px solid #e4e4e7; padding:12px; border-radius:6px; white-space:pre-wrap; font-size:12px; line-height:1.6; }
+  details summary { cursor:pointer; list-style:none; }
+  details summary::-webkit-details-marker { display:none; }
+  .flash { animation: flash 0.5s ease-out; }
+  @keyframes flash { 0% { background:#fef3c7; } 100% { background:transparent; } }
+  .hl-pulse { animation: hl-pulse 2s ease-out; }
+  @keyframes hl-pulse {
+    0%   { background:#fef3c7; }
+    60%  { background:#fef9c3; }
+    100% { background:transparent; }
+  }
+  /* 앵커: 부드러운 노란 배경 + 좌측 굵은 amber 바 (지속) */
+  .hl-anchor {
+    background: #fef3c7 !important;
+    border-left: 4px solid #f59e0b !important;
+    border-radius: 6px !important;
+    padding-left: 12px !important;
+    box-shadow: 0 0 0 2px #fde68a;
+    animation: hl-anchor-flash 0.6s ease-out 3;
+  }
+  @keyframes hl-anchor-flash {
+    0%, 100% { box-shadow: 0 0 0 2px #fde68a; }
+    50%      { box-shadow: 0 0 0 6px #fbbf24; }
+  }
+  .hl-marker {
+    display: inline-block;
+    background: #f59e0b;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin: 0 0 8px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  /* Pane divider (폭 조절 핸들) */
+  .pane-divider {
+    flex-shrink: 0;
+    width: 4px;
+    background: transparent;
+    cursor: col-resize;
+    transition: background 0.15s;
+    position: relative;
+    z-index: 5;
+  }
+  .pane-divider:hover, .pane-divider.dragging { background: #a1a1aa; }
+  .pane-divider::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 2px; height: 32px;
+    background: #e4e4e7;
+    border-radius: 2px;
+  }
+  .pane-divider:hover::after, .pane-divider.dragging::after { background: #71717a; }
+  /* 테이블 컬럼 리사이저 */
+  .col-resizer {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    user-select: none;
+  }
+  .col-resizer:hover, .col-resizer.dragging {
+    background: #94a3b8;
+  }
+  body.resizing, body.resizing * { cursor: col-resize !important; user-select: none !important; }
+  .dot { display:inline-block; width:6px; height:6px; border-radius:999px; }
+  .shim { background: linear-gradient(90deg,#f4f4f5 0%,#e4e4e7 50%,#f4f4f5 100%); background-size:200% 100%; animation: shim 1.2s infinite; }
+  @keyframes shim { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+</style>
+</head>
+<body class="bg-zinc-50 text-zinc-900">
+
+<!-- 전역 토스트 / 에러 -->
+<div id="toast-stack" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm"></div>
+<div id="err-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg">
+  <div class="max-w-6xl mx-auto flex items-start justify-between gap-4">
+    <div class="flex-1"><div class="font-bold text-sm">⚠️ 오류</div><div id="err-msg" class="text-xs mt-1 mono whitespace-pre-wrap"></div></div>
+    <button onclick="document.getElementById('err-banner').classList.add('hidden')" class="text-white text-xl leading-none hover:opacity-70">×</button>
+  </div>
+</div>
+
+<div class="flex h-full min-h-screen">
+
+<!-- ============== SIDEBAR ============== -->
+<aside class="w-60 bg-white border-r border-zinc-200 flex flex-col shrink-0">
+  <div class="h-14 px-5 flex items-center gap-2 border-b border-zinc-200">
+    <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center text-xs font-bold">AW</div>
+    <div>
+      <div class="text-sm font-semibold leading-none">AI World</div>
+      <div class="text-[10px] text-zinc-500 mt-0.5">Harness v1.0</div>
+    </div>
+  </div>
+
+  <nav class="p-3 space-y-1">
+    <button class="nav-btn w-full active" data-tab="control">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      새 코스 만들기
+    </button>
+    <button class="nav-btn w-full" data-tab="exec">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+      진행 상황
+    </button>
+    <button class="nav-btn w-full" data-tab="review">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      검토 & 승인
+      <span id="side-flag-count" class="ml-auto badge bg-zinc-100 text-zinc-600 hidden"></span>
+    </button>
+  </nav>
+
+  <div class="flex-1 overflow-auto scroll-slim px-3">
+    <div class="text-[11px] font-semibold text-zinc-400 mt-4 mb-2 px-2">최근 RUN</div>
+    <div id="runs-list" class="space-y-1 text-xs"></div>
+  </div>
+
+  <div class="p-3 border-t border-zinc-200 text-[11px] text-zinc-500">
+    <div class="flex items-center justify-between">
+      <span>Claude Opus 4.7</span><span class="dot bg-emerald-500"></span>
+    </div>
+    <div class="flex items-center justify-between mt-1">
+      <span>GPT-5.4</span><span class="dot bg-emerald-500"></span>
+    </div>
+  </div>
+</aside>
+
+<!-- ============== MAIN ============== -->
+<main class="flex-1 flex flex-col min-w-0">
+
+  <!-- TOP BAR -->
+  <header class="h-14 border-b border-zinc-200 bg-white flex items-center justify-between px-6 shrink-0">
+    <div>
+      <div id="bread" class="text-sm font-semibold">새 코스 만들기</div>
+      <div id="bread-sub" class="text-[11px] text-zinc-500 mt-0.5">위인·주제 입력해 기획서를 생성합니다</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btn-export" class="hidden inline-flex items-center gap-1.5 text-xs bg-zinc-900 hover:bg-zinc-800 text-white rounded-md px-3 py-1.5 font-medium"
+              title="xlsx — 설정·개요·커리큘럼·위인선정배경·퀴즈·실습·학습자료 7개 탭">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        .xlsx 다운로드
+      </button>
+      <div id="run-pill" class="hidden items-center gap-2 text-xs bg-zinc-100 rounded-full px-3 py-1.5">
+        <span class="dot bg-zinc-400" id="run-pill-dot"></span>
+        <span id="run-pill-id" class="mono text-zinc-600"></span>
+        <span id="run-pill-status" class="font-medium"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- STEPPER (숨김 / 노출: 탭별로 제어) -->
+  <div id="stepper" class="hidden border-b border-zinc-200 bg-white px-6 py-3">
+    <div class="flex items-center gap-4 max-w-3xl">
+      <div class="step-item" data-step="1"><span class="step-circle">1</span><span>입력</span></div>
+      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="step-item" data-step="2"><span class="step-circle">2</span><span>기획</span></div>
+      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="step-item" data-step="3"><span class="step-circle">3</span><span>생성·검증</span></div>
+      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="step-item" data-step="4"><span class="step-circle">4</span><span>검토</span></div>
+      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="step-item" data-step="5"><span class="step-circle">5</span><span>배포</span></div>
+    </div>
+  </div>
+
+  <!-- ============== SCREEN 1 · 새 코스 만들기 ============== -->
+  <section id="tab-control" class="tab-panel flex-1 overflow-auto scroll-slim p-6">
+    <div class="max-w-3xl mx-auto space-y-4">
+      <div class="bg-white border border-zinc-200 rounded-xl p-6">
+        <div class="text-sm font-semibold mb-4">① 코스 입력</div>
+        <div class="space-y-4 text-sm">
+          <label class="block">
+            <div class="text-zinc-600 font-medium mb-1.5">위인</div>
+            <input id="in-figure" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 앤 설리번" />
+          </label>
+          <label class="block">
+            <div class="text-zinc-600 font-medium mb-1.5">주제</div>
+            <input id="in-topic" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: AI 영어 학습/발음/파닉스" />
+          </label>
+          <label class="block">
+            <div class="text-zinc-600 font-medium mb-1.5">학습 대상 <span class="text-zinc-400 font-normal">(구체적 어려움)</span></div>
+            <input id="in-target" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 영어학원비 월 30만원 내는 30대 직장인" />
+          </label>
+          <label class="block">
+            <div class="text-zinc-600 font-medium mb-1.5">학습 목표 <span class="text-zinc-400 font-normal">(쉼표로 3~5개)</span></div>
+            <input id="in-goals" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 프롬프트 기법 체득, 실무 적용, AI 학습 루틴화" />
+          </label>
+          <div>
+            <div class="text-zinc-600 font-medium mb-1.5">카테고리</div>
+            <select id="in-category" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+              <option value="auto">자동 판단 (LLM이 결정)</option>
+              <option>업무생산성</option><option>마케팅</option><option>기획</option>
+              <option>데이터분석</option><option>콘텐츠제작</option><option>자기계발</option>
+              <option value="custom">기타: 직접 입력</option>
+            </select>
+            <input id="in-category-custom" type="text" class="hidden mt-2 w-full border border-zinc-300 rounded-lg px-3 py-2" placeholder="직접 카테고리 이름 입력 (예: 외국어, 코딩교육, 투자)" />
+          </div>
+          <div>
+            <div class="text-zinc-600 font-medium mb-1.5">챕터 구성</div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-zinc-500">파트</span>
+              <input id="in-parts" type="number" min="2" max="10" value="5" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
+              <span class="text-zinc-400">×</span>
+              <span class="text-xs text-zinc-500">파트당 챕터</span>
+              <input id="in-chapters-per-part" type="number" min="1" max="5" value="2" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
+              <span class="text-zinc-400">=</span>
+              <span class="text-sm">총 <b id="total-chapters">10</b>챕터</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-zinc-600 font-medium mb-1.5">예상 학습 시간</div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-zinc-500">챕터당</span>
+              <input id="in-chap-dur" type="number" min="5" max="60" value="15" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
+              <span class="text-xs text-zinc-500">분</span>
+              <span class="text-zinc-400">·</span>
+              <span class="text-sm text-zinc-600">총 <b id="total-duration">2시간 30분</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-zinc-200 rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm font-semibold">② 결과값 조절</div>
+          <div class="text-xs text-zinc-400">기본값 권장 — 필요 시 조정</div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+          <div>
+            <div class="flex justify-between text-zinc-600 mb-1.5"><span>위인 활용 강도</span><span id="knob-voice-val" class="font-medium text-zinc-900">중간</span></div>
+            <input id="knob-voice" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+          </div>
+          <div>
+            <div class="flex justify-between text-zinc-600 mb-1.5"><span>힌트 상세도</span><span id="knob-hint-val" class="font-medium text-zinc-900">표준</span></div>
+            <input id="knob-hint" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+          </div>
+          <div>
+            <div class="flex justify-between text-zinc-600 mb-1.5"><span>검증 엄격도</span><span id="knob-strict-val" class="font-medium text-zinc-900">standard</span></div>
+            <input id="knob-strict" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+          </div>
+          <div>
+            <div class="text-zinc-600 mb-1.5">프롬프트 예시</div>
+            <select id="knob-prompt" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+              <option>good/better 2단</option>
+              <option>good/better/best 3단</option>
+            </select>
+          </div>
+          <div class="md:col-span-2 border-t border-zinc-100 pt-4">
+            <div class="text-zinc-600 mb-2">난이도 프리셋</div>
+            <div class="flex gap-2" id="diff-preset-group">
+              <button type="button" data-preset="beginner" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900">
+                <div class="font-semibold">입문자용</div>
+                <div class="text-[10px] text-zinc-500 mt-0.5">하4·중하2·중3·중상1·상0</div>
+              </button>
+              <button type="button" data-preset="standard" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900 border-zinc-900 bg-zinc-50">
+                <div class="font-semibold">일반 (기본)</div>
+                <div class="text-[10px] text-zinc-500 mt-0.5">하2·중하1·중3·중상2·상2</div>
+              </button>
+              <button type="button" data-preset="advanced" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900">
+                <div class="font-semibold">고급</div>
+                <div class="text-[10px] text-zinc-500 mt-0.5">하0·중하1·중3·중상3·상3</div>
+              </button>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-zinc-600 mb-1.5"><span>챕터당 퀴즈 수</span><span id="knob-quiz-val" class="font-medium text-zinc-900">10</span></div>
+            <input id="knob-quiz" type="range" min="3" max="15" value="10" class="w-full accent-zinc-900" />
+          </div>
+          <div>
+            <div class="flex justify-between text-zinc-600 mb-1.5"><span>챕터당 실습 수</span><span id="knob-prac-val" class="font-medium text-zinc-900">3</span></div>
+            <input id="knob-prac" type="range" min="1" max="5" value="3" class="w-full accent-zinc-900" />
+          </div>
+          <div class="md:col-span-2">
+            <div class="text-zinc-600 mb-1.5">타깃 AI 도구 <span class="text-zinc-400 font-normal text-xs">(실습 모범 프롬프트 기준 모델)</span></div>
+            <select id="knob-ai" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+              <option>ChatGPT</option>
+              <option>Claude</option>
+              <option>Gemini</option>
+              <option>사내 AI</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-5 text-xs text-zinc-600">
+        <div class="text-[11px] font-semibold text-zinc-500 mb-2">③ 고정 프리셋 <span class="font-normal text-zinc-400">(관리자만 변경)</span></div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">서식</div><div class="font-medium text-zinc-800">v1.0 (aiworld-main)</div></div>
+          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">톤앤매너</div><div class="font-medium text-zinc-800">위인 멘토링 시뮬</div></div>
+          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">courseId</div><div class="font-medium text-zinc-800">AW-YYYYMMDD-{seq}</div></div>
+          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">루브릭</div><div class="font-medium text-zinc-800">rubric-v1.yaml</div></div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-generate" class="bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-2.5 rounded-lg font-medium text-sm inline-flex items-center gap-2">
+          기획서 생성
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <div class="text-xs text-zinc-500">Claude Opus 4.7 기준 약 15~40초 소요</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 2 · 진행 상황 ============== -->
+  <section id="tab-exec" class="tab-panel hidden flex-1 overflow-auto scroll-slim">
+    <div class="p-6 space-y-4 max-w-6xl mx-auto">
+
+      <!-- Stats bar -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+        <div class="bg-white border border-zinc-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wide text-zinc-400">위인 선정 배경</div>
+          <div id="stat-fr" class="mt-1 font-semibold">—</div>
+        </div>
+        <div class="bg-white border border-zinc-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wide text-zinc-400">학습자료 (10)</div>
+          <div id="stat-mat" class="mt-1 font-semibold">—</div>
+        </div>
+        <div class="bg-white border border-zinc-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wide text-zinc-400">퀴즈 (10×10)</div>
+          <div id="stat-quiz" class="mt-1 font-semibold">—</div>
+        </div>
+        <div class="bg-white border border-zinc-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wide text-zinc-400">실습 (10×3)</div>
+          <div id="stat-prac" class="mt-1 font-semibold">—</div>
+        </div>
+        <div class="bg-white border border-zinc-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wide text-zinc-400">플래그</div>
+          <div id="stat-flags" class="mt-1 font-semibold">—</div>
+        </div>
+      </div>
+
+      <!-- Director card -->
+      <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+        <div class="px-5 py-3 border-b border-zinc-200 flex items-center justify-between">
+          <div class="text-sm font-semibold">Director · 과정 기획서</div>
+          <div id="bp-status-pill" class="text-xs text-zinc-500">—</div>
+        </div>
+
+        <div id="bp-idle" class="p-8 text-sm text-zinc-500 text-center">Control에서 입력 후 기획서 생성을 시작하세요.</div>
+
+        <div id="bp-loading" class="hidden p-6">
+          <div class="flex items-center gap-4 bg-zinc-50 rounded-lg p-4">
+            <div class="animate-spin h-6 w-6 border-4 border-zinc-200 border-t-zinc-900 rounded-full shrink-0"></div>
+            <div>
+              <div class="text-sm font-medium">Director가 기획서를 작성하고 있습니다</div>
+              <div class="text-xs text-zinc-500 mt-0.5">Claude Opus 4.7 · 15~40초 소요</div>
+            </div>
+          </div>
+          <div class="mt-4 space-y-2">
+            <div class="h-3 rounded shim"></div>
+            <div class="h-3 rounded shim w-4/5"></div>
+            <div class="h-3 rounded shim w-3/5"></div>
+          </div>
+        </div>
+
+        <div id="bp-form" class="hidden p-5 space-y-5">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="badge" style="background:#d1fae5;color:#065f46">✓ 생성 완료</span>
+            <span class="text-zinc-500">아래를 검토하시고 필요한 부분을 수정한 뒤 승인해주세요.</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <label class="block md:col-span-2">
+              <div class="text-zinc-600 font-medium mb-1.5">코스명</div>
+              <input id="f-course_name" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" />
+            </label>
+            <label class="block">
+              <div class="text-zinc-600 font-medium mb-1.5">카테고리</div>
+              <select id="f-category" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+                <option>업무생산성</option><option>마케팅</option><option>기획</option>
+                <option>데이터분석</option><option>콘텐츠제작</option><option>자기계발</option>
+              </select>
+            </label>
+            <label class="block">
+              <div class="text-zinc-600 font-medium mb-1.5">캐릭터명</div>
+              <input id="f-character_name" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+            </label>
+            <label class="block md:col-span-2">
+              <div class="text-zinc-600 font-medium mb-1.5">팔릴 이유 한 줄 <span class="text-zinc-400 font-normal">(40자 이내)</span></div>
+              <input id="f-sell_reason" maxlength="40" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+            </label>
+            <label class="block md:col-span-2">
+              <div class="text-zinc-600 font-medium mb-1.5">프로젝트 결과물</div>
+              <input id="f-project_outcome" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-zinc-600 font-medium mb-2 text-sm">수강 대상 <span class="text-zinc-400 font-normal">(구체적 어려움)</span></div>
+              <div id="f-targets" class="space-y-2"></div>
+            </div>
+            <div>
+              <div class="text-zinc-600 font-medium mb-2 text-sm">수강 효과 <span class="text-zinc-400 font-normal">(구체적 변화)</span></div>
+              <div id="f-effects" class="space-y-2"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-zinc-600 font-medium mb-2 text-sm">커리큘럼 <span class="text-zinc-400 font-normal">(5파트 × 2챕터 = 10챕터)</span></div>
+            <div class="overflow-x-auto border border-zinc-200 rounded-lg">
+              <table id="curriculum-table" class="w-full text-sm" style="table-layout: fixed;">
+                <thead class="bg-zinc-50 text-[11px] text-zinc-500">
+                  <tr>
+                    <th class="px-3 py-2 font-medium text-left relative" style="width: 56px;">구분<span class="col-resizer"></span></th>
+                    <th class="px-3 py-2 font-medium text-left relative" style="width: 180px;">파트명<span class="col-resizer"></span></th>
+                    <th class="px-3 py-2 font-medium text-left relative">챕터명<span class="col-resizer"></span></th>
+                    <th class="px-3 py-2 font-medium text-left relative" style="width: 180px;">프롬프트 기법</th>
+                  </tr>
+                </thead>
+                <tbody id="f-curriculum" class="divide-y divide-zinc-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button id="btn-approve" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-medium text-sm">
+              수정 반영 + 승인 → 생성 시작
+            </button>
+            <button id="btn-regen-bp" class="border border-zinc-300 hover:bg-zinc-50 px-4 py-2 rounded-lg text-sm">
+              같은 입력으로 다시 생성
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban (status) -->
+      <div id="kanban-wrap" class="hidden">
+        <div class="text-sm font-semibold mb-3 flex items-center justify-between">
+          <span>컴포넌트 진행 상태</span>
+          <div class="text-xs text-zinc-500">각 카드는 <b>생성자 모델 ↔ 반대 모델 검증</b> 형식</div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div class="kb-col" data-status="생성중">
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-blue-500"></span>생성중 <span id="kb-c-gen" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="space-y-1.5 mt-1" id="kb-gen"></div>
+          </div>
+          <div class="kb-col" data-status="검증중">
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-amber-500"></span>검증중 <span id="kb-c-val" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="space-y-1.5 mt-1" id="kb-val"></div>
+          </div>
+          <div class="kb-col" data-status="통과">
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-emerald-500"></span>통과 <span id="kb-c-pass" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="space-y-1.5 mt-1" id="kb-pass"></div>
+          </div>
+          <div class="kb-col" data-status="플래그">
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-rose-500"></span>플래그 <span id="kb-c-flag" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="space-y-1.5 mt-1" id="kb-flag"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Minimal log -->
+      <details class="bg-white border border-zinc-200 rounded-lg px-4 py-2 text-sm">
+        <summary class="font-medium text-zinc-600 flex items-center justify-between">
+          <span>이벤트 로그</span>
+          <span class="text-xs text-zinc-400">접기/펴기</span>
+        </summary>
+        <div id="event-log" class="bg-zinc-50 rounded p-3 h-56 overflow-auto mono text-[11px] mt-2 scroll-slim"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 3 · 검토 & 승인 (3-pane) ============== -->
+  <section id="tab-review" class="tab-panel hidden flex-1 flex overflow-hidden">
+
+    <!-- 좌: 내비게이터 -->
+    <div id="review-nav-pane" class="border-r border-zinc-200 bg-white flex flex-col shrink-0" style="width: 256px;">
+      <div class="h-12 px-4 flex items-center justify-between border-b border-zinc-200">
+        <div class="text-sm font-semibold">커리큘럼</div>
+        <div class="text-[11px] text-zinc-500 mono"><span id="nav-done">0</span>/<span id="nav-total">0</span></div>
+      </div>
+      <div id="nav-tree" class="flex-1 overflow-auto scroll-slim p-2 text-sm"></div>
+      <div class="border-t border-zinc-200 p-3 text-[11px] text-zinc-500">
+        <div class="flex items-center justify-between"><span class="kbd">↑↓</span><span>카드 이동</span></div>
+        <div class="flex items-center justify-between mt-1"><span class="kbd">R</span><span>재생성</span></div>
+        <div class="flex items-center justify-between mt-1"><span class="kbd">D</span><span>무시/승인</span></div>
+      </div>
+    </div>
+
+    <!-- 좌↔중 divider -->
+    <div id="div-nav" class="pane-divider" title="드래그로 폭 조절"></div>
+
+    <!-- 중: 콘텐츠 프리뷰 -->
+    <div class="flex-1 flex flex-col min-w-0 bg-white">
+      <div class="h-12 px-5 border-b border-zinc-200 flex items-center justify-between shrink-0">
+        <div id="preview-title" class="text-sm font-semibold truncate">좌측에서 컴포넌트를 선택하세요</div>
+        <div class="flex items-center gap-2">
+          <span id="preview-score" class="badge bg-zinc-100 text-zinc-600 hidden"></span>
+          <span id="preview-model" class="badge bg-zinc-100 text-zinc-600 hidden"></span>
+          <button id="btn-material-docx" class="hidden text-xs border border-zinc-300 hover:bg-zinc-50 rounded-md px-2.5 py-1 font-medium inline-flex items-center gap-1" title="이 학습자료를 .docx로 다운로드">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            .docx
+          </button>
+          <button id="btn-chapter-regen" class="hidden text-xs border border-zinc-300 hover:bg-zinc-50 rounded-md px-2.5 py-1 font-medium">
+            ⟳ 이 챕터 전체 재생성
+          </button>
+        </div>
+      </div>
+      <!-- 챕터 재생성 패널 (숨김) -->
+      <div id="chapter-regen-panel" class="hidden border-b border-zinc-200 bg-amber-50 p-4">
+        <div class="text-xs font-semibold text-amber-900 mb-2">챕터 <span id="cr-chapter"></span> 전체 재생성 — 피드백 반영</div>
+        <textarea id="cr-instruction" rows="3" class="w-full border border-amber-300 rounded-md px-2 py-1.5 text-sm" placeholder="예: 'Water의 기적' 스토리를 더 부각하고, 실습에서는 실제 직장인 회의 상황을 예시로 써줘."></textarea>
+        <div class="flex items-center gap-2 mt-2 text-xs">
+          <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="material" checked> 학습자료</label>
+          <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="quiz" checked> 퀴즈</label>
+          <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="practice" checked> 실습</label>
+          <span class="flex-1"></span>
+          <button id="btn-cr-submit" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-medium">재생성 시작</button>
+          <button id="btn-cr-cancel" class="border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-md">취소</button>
+        </div>
+      </div>
+      <div id="preview-body" class="flex-1 overflow-auto scroll-slim p-6 content-preview">
+        <div class="text-sm text-zinc-400 text-center mt-20">
+          아직 선택된 컴포넌트가 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 중↔우 divider -->
+    <div id="div-action" class="pane-divider" title="드래그로 폭 조절"></div>
+
+    <!-- 우: 플래그/액션 -->
+    <aside id="review-action-pane" class="border-l border-zinc-200 bg-zinc-50 flex flex-col shrink-0" style="width: 384px;">
+      <div class="h-12 px-5 border-b border-zinc-200 bg-white flex items-center justify-between shrink-0">
+        <div class="text-sm font-semibold">플래그 & 액션</div>
+        <div id="review-summary" class="text-[11px] text-zinc-500 mono">—</div>
+      </div>
+
+      <div class="px-4 pt-3 pb-3 bg-white border-b border-zinc-200">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold">무엇을 보시겠어요?</div>
+          <button id="filter-help" class="text-[10px] text-zinc-400 hover:text-zinc-700 underline">도움말</button>
+        </div>
+        <div id="flag-filters" class="flex flex-wrap gap-1.5"></div>
+        <div id="filter-help-panel" class="hidden mt-3 text-[11px] text-zinc-600 leading-5 bg-zinc-50 p-2.5 rounded">
+          <div class="mb-1"><b class="text-zinc-800">출처·사실 확인</b> — 위인 어록·연도·기관명 등 팩트 의심 영역.</div>
+          <div class="mb-1"><b class="text-zinc-800">서식 오류</b> — 퀴즈 보기 개수·실습 고정값 등 규격 위반.</div>
+          <div class="mb-1"><b class="text-zinc-800">애매함 — 사람 확인</b> — 검증자가 통과/실패 경계에서 "중" 판정한 항목.</div>
+          <div class="mb-1"><b class="text-zinc-800">민감 표현</b> — 직군·세대 일반화 등 중립 표현 점검.</div>
+          <div><b class="text-zinc-800">앞뒤 불일치</b> — 기획서나 다른 컴포넌트와 서로 안맞는 부분.</div>
+        </div>
+        <div class="mt-2 flex items-center gap-3 text-xs">
+          <button id="bulk-dismiss" class="text-zinc-500 hover:text-zinc-900">현재 보이는 플래그 모두 무시</button>
+        </div>
+      </div>
+
+      <div id="action-panel" class="flex-1 overflow-auto scroll-slim">
+        <div class="text-sm text-zinc-400 text-center mt-20 px-4">
+          좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.
+        </div>
+      </div>
+    </aside>
+  </section>
+
+</main>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  runId: null,
+  ws: null,
+  bpId: null,
+  blueprint: null,
+  chapterMap: {},      // chapter_id → chapter_name
+  components: [],      // 최신 버전만
+  flags: [],           // 미해결 플래그
+  selectedCompId: null,
+  activeFilters: new Set(['FACT','SCHEMA','BORDERLINE','SENSITIVE','CONSISTENCY']),
+  summary: null,
+  currentTab: 'control',
+};
+
+const TYPE_LABEL = {
+  course_overview:   '과정 기획',
+  figure_rationale:  '위인 선정 배경',
+  material:          '학습자료',
+  quiz:              '퀴즈',
+  practice:          '실습',
+};
+const TYPE_ORDER = ['figure_rationale','material','quiz','practice'];
+const FLAG_META = {
+  FACT:        { label:'출처·사실 확인',   short:'사실',   bg:'#fee2e2', fg:'#991b1b', hint:'위인 어록·일화·통계·수치·기관명 등이 실제 사실에 기반하는지 확인이 필요합니다.' },
+  SCHEMA:      { label:'서식 오류',        short:'서식',   bg:'#fef3c7', fg:'#92400e', hint:'퀴즈·실습·학습자료의 필수 필드 누락 또는 규격 위반. 자동 차단되어야 하는 것이 루프 한도 초과로 올라온 상태입니다.' },
+  BORDERLINE:  { label:'애매함 — 사람 확인',short:'애매',   bg:'#e0e7ff', fg:'#3730a3', hint:'AI 검증자가 통과/미달 경계에서 판정한 항목. 사람 눈으로 최종 확인 필요.' },
+  SENSITIVE:   { label:'민감 표현 가능',   short:'민감',   bg:'#fce7f3', fg:'#9d174d', hint:'특정 직군·세대·성별·국적에 대한 일반화 등 중립 표현으로 바꿀 필요가 있는지 점검하세요.' },
+  CONSISTENCY: { label:'앞뒤 불일치',      short:'모순',   bg:'#d1fae5', fg:'#065f46', hint:'기획서·다른 컴포넌트·같은 챕터 내에서 서로 모순되는 내용이 있습니다.' },
+};
+// 편의용 구(舊) 이름 호환
+const FLAG_COLORS = FLAG_META;
+
+// 루브릭 ID → 친근한 위치·항목 이름
+const RUBRIC_LOC = {
+  // course_overview
+  'overview.course_name.pattern':         { area:'과정 기획', item:'코스명 형식' },
+  'overview.sell_reason.length':          { area:'과정 기획', item:'팔릴 이유 한 줄 길이' },
+  'overview.targets.concrete':            { area:'과정 기획', item:'수강 대상 구체성' },
+  'overview.effects.concrete':            { area:'과정 기획', item:'수강 효과 구체성' },
+  'overview.curriculum.structure':        { area:'과정 기획', item:'커리큘럼 난이도 순서' },
+  'overview.prompt_techniques.unique':    { area:'과정 기획', item:'프롬프트 기법 중복' },
+  'overview.figure_topic.coherence':      { area:'과정 기획', item:'위인-주제 연결성' },
+  // figure_rationale
+  'rationale.background.factual':         { area:'위인 선정 배경', item:'배경 사실성' },
+  'rationale.philosophy.specific':        { area:'위인 선정 배경', item:'핵심 철학 구체성' },
+  'rationale.topic_fit.explicit_link':    { area:'위인 선정 배경', item:'주제 연결고리' },
+  'rationale.episodes.sources_cited':     { area:'위인 선정 배경', item:'에피소드 출처' },
+  'rationale.what_learner_gets.concrete': { area:'위인 선정 배경', item:'학습자 획득 역량' },
+  'rationale.voice.mentor_tone':          { area:'위인 선정 배경', item:'멘토 톤 일관성' },
+  // material
+  'material.sections.six_present':        { area:'학습자료', item:'6개 섹션 구성' },
+  'material.length.1500_2500':            { area:'학습자료', item:'분량 1,500~2,500자' },
+  'material.good_better_best.present':    { area:'학습자료', item:'Good/Better/Best 비교' },
+  'material.checklist.5_to_7':            { area:'학습자료', item:'실전 체크리스트 5~7개' },
+  'material.opener.empathy_line_present': { area:'학습자료', item:'공감 오프너 (첫 섹션)' },
+  'material.category.concept_explanation_present': { area:'학습자료', item:'전문 개념 설명 (SWOT 등)' },
+  'material.templates.situation_specific_present': { area:'학습자료', item:'상황별 복붙 템플릿' },
+  'material.examples.concrete_and_practical': { area:'학습자료', item:'실제적 예시' },
+  'material.voice.mentor_persona':        { area:'학습자료', item:'위인 화법 일관성' },
+  'material.no_error_outputs':            { area:'학습자료', item:'출력물 오류' },
+  'material.bgb.bad_good_better_order':   { area:'학습자료', item:'Bad/Good/Better 3단 순서' },
+  'material.heading.better_prompt_fixed': { area:'학습자료', item:'소제목 "[ 더 좋은 프롬프트 만들기 ]" 포함' },
+  'material.heading.emoji_prefix':        { area:'학습자료', item:'소제목 앞 이모지' },
+  'material.format.table_used':           { area:'학습자료', item:'표 사용' },
+  'material.philosophy.practical_book':   { area:'학습자료', item:'실용서적 톤' },
+  'material.philosophy.logic_strengthened': { area:'학습자료', item:'프롬프트 기법 > 말하기 논리 강화' },
+  'material.opener.tech_vs_plain_contrast': { area:'학습자료', item:'도입부 단순 vs 기법 대조' },
+  'material.bestseller_style.applied':    { area:'학습자료', item:'베스트셀러 화법 적용' },
+  // quiz
+  'quiz.count.total_10':                  { area:'퀴즈', item:'총 10문항' },
+  'quiz.count.type_each_2':               { area:'퀴즈', item:'유형별 2문항' },
+  'quiz.single.choices_4':                { area:'퀴즈 · 단일선택', item:'보기 4개 · 정답 1개' },
+  'quiz.multi.choices_5_answer_2':        { area:'퀴즈 · 복수선택', item:'보기 5개 · 정답 2개' },
+  'quiz.classification.partition_complete': { area:'퀴즈 · 분류', item:'5개 보기 완전 분배' },
+  'quiz.short_answer.hint_includes_initials': { area:'퀴즈 · 단답형', item:'힌트 초성 포함' },
+  'quiz.title.storytelling_format':       { area:'퀴즈', item:'제목 — N번째 수업 형식' },
+  'quiz.question.scenario_based':         { area:'퀴즈', item:'시나리오 기반 문제' },
+  'quiz.explanation.pipe_three_parts':    { area:'퀴즈 · 해설', item:'파이프 3단 (정답/오답/실무)' },
+  'quiz.explanation.ends_with_imnida':    { area:'퀴즈 · 해설', item:"어미 '~입니다.'" },
+  'quiz.single.question_suffix':          { area:'퀴즈 · 단일선택', item:"문제 끝 '~가장 적절한 것은?'" },
+  'quiz.multi.question_suffix':           { area:'퀴즈 · 복수선택', item:"문제 끝 '2개 고르시오'" },
+  'quiz.short_answer.question_suffix':    { area:'퀴즈 · 단답형', item:"문제 끝 '쓰시오'" },
+  'quiz.classification.question_suffix':  { area:'퀴즈 · 분류', item:"문제 끝 '분류하시오'" },
+  'quiz.hint.no_initials_for_non_short':  { area:'퀴즈', item:'비단답형에 초성 금지' },
+  'quiz.single.distractors_plausible':    { area:'퀴즈 · 단일선택', item:'오답 그럴듯함' },
+  'quiz.table.schema_strict':             { area:'퀴즈', item:'12컬럼 서식 준수' },
+  'quiz.persona_consistency':             { area:'퀴즈 · 해설', item:'위인 페르소나 유지' },
+  'quiz.no_content_bleed':                { area:'퀴즈', item:'학습자료 근거 밖 내용 유입' },
+  'quiz.philosophy.understand_over_trap': { area:'퀴즈', item:'이해 중심 (트릭 출제 X)' },
+  'quiz.philosophy.not_parroting_material': { area:'퀴즈', item:'학습자료 단순 복기 금지' },
+  'quiz.philosophy.prompt_writing_check': { area:'퀴즈', item:'프롬프트 작성 체크 질문' },
+  'quiz.hint.pre_submit_role':            { area:'퀴즈 · 힌트', item:'제출 전 유추 정보 역할' },
+  'quiz.explanation.friendly_post_submit':{ area:'퀴즈 · 해설', item:'친절한 설명 3요소' },
+  // practice
+  'practice.count.three_stages':          { area:'실습', item:'3단계 (실험/레슨/도전)' },
+  'practice.difficulty.progression':      { area:'실습', item:'난이도 순서' },
+  'practice.passing_score.progression':   { area:'실습', item:'합격점수 순서' },
+  'practice.problem.has_concrete_context':{ area:'실습 · 문제', item:'구체 맥락 (단일 키워드 금지)' },
+  'practice.answer.format_is_prompt_example': { area:'실습 · 정답', item:'good/better 프롬프트 형식' },
+  'practice.hint.includes_concrete_example':{ area:'실습 · 힌트', item:'구체 예시 정보' },
+  'practice.title.figure_stage':          { area:'실습 · 콘텐츠명', item:'{위인} + 단계 포함' },
+  'practice.question.figure_voice_and_suffix': { area:'실습 · 문제', item:"위인 화법 + '~하시오'" },
+  'practice.criteria.all_suffix_q':       { area:'실습 · 평가항목', item:"모두 '~했나요?' 어미" },
+  'practice.description.principle_and_stars': { area:'실습 · 설명', item:"위인 원칙 + '*' 구분" },
+  'practice.stage1.weak_prompt':          { area:'실습 1 (실험)', item:'의도적 약한 프롬프트' },
+  'practice.stage3.compound_prompt':      { area:'실습 3 (도전)', item:'복합 조건 프롬프트' },
+  'practice.table.schema_strict':         { area:'실습', item:'18컬럼 서식 준수' },
+  'practice.fixed_values':                { area:'실습', item:'고정값 (환경·형식 등)' },
+  'practice.title.self_contained':        { area:'실습 · 콘텐츠명', item:'제목만 보고 이해 가능' },
+  'practice.description.examples_2plus':  { area:'실습 · 설명', item:'구체 예시 2개 이상' },
+  'practice.title.length_40_100':         { area:'실습 · 콘텐츠명', item:'길이 40~100자' },
+  'practice.description.length_94_140':   { area:'실습 · 설명', item:'길이 94~140자' },
+  'practice.criteria.title_max_20':       { area:'실습 · 평가항목', item:'제목 최대 20자' },
+  'practice.criteria.description_max_40': { area:'실습 · 평가항목', item:'설명 최대 40자' },
+  'practice.criteria.distinct_3':         { area:'실습 · 평가항목', item:'서로 다른 3가지 기준' },
+  'practice.passing_scores.default_50_80_80': { area:'실습', item:'기본 합격점수 50/80/80' },
+};
+function parseLocation(raw) {
+  // raw 형태: "quiz > quiz.explanation.pipe_three_parts"  또는  "items[2]/answer"
+  if (!raw) return { area:'', item:'', rawId:'' };
+  const m = raw.match(/[A-Za-z_]+\s*>\s*([\w.]+)/);
+  if (m) {
+    const id = m[1];
+    const info = RUBRIC_LOC[id];
+    if (info) return { area: info.area, item: info.item, rawId: id };
+    return { area: id.split('.')[0], item: id.split('.').slice(1).join('.'), rawId: id };
+  }
+  return { area: '', item: raw, rawId: raw };
+}
+const STATUS_STYLE = {
+  'generated':   { label:'생성완료', color:'bg-sky-100 text-sky-800', col:'pass' },
+  'passed':      { label:'통과',    color:'bg-emerald-100 text-emerald-800', col:'pass' },
+  'flagged':     { label:'플래그',  color:'bg-rose-100 text-rose-800', col:'flag' },
+  'validating':  { label:'검증중',  color:'bg-amber-100 text-amber-800', col:'val' },
+  'regenerating':{ label:'재생성',  color:'bg-amber-100 text-amber-800', col:'gen' },
+  'generating':  { label:'생성중',  color:'bg-blue-100 text-blue-800',  col:'gen' },
+};
+
+// ============================================================
+// UTILS
+// ============================================================
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtTime() { return new Date().toLocaleTimeString('ko-KR',{hour12:false}); }
+function toast(msg, kind='info') {
+  const el = document.createElement('div');
+  const bg = kind==='ok'?'bg-emerald-600': kind==='err'?'bg-rose-600':'bg-zinc-800';
+  el.className = `${bg} text-white px-4 py-2.5 rounded-lg shadow-lg text-sm max-w-sm`;
+  el.textContent = msg;
+  $('toast-stack').appendChild(el);
+  setTimeout(()=> el.classList.add('opacity-0','transition','duration-300'), 2500);
+  setTimeout(()=> el.remove(), 3000);
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+const BREAD = {
+  control: { title:'새 코스 만들기', sub:'위인·주제 입력해 기획서를 생성합니다', stepper:false },
+  exec:    { title:'진행 상황',      sub:'기획서 승인 후 컴포넌트 생성과 교차검증이 이 탭에서 진행됩니다', stepper:true },
+  review:  { title:'검토 & 승인',    sub:'플래그된 항목을 검토하고 재생성 또는 승인합니다', stepper:true },
+};
+function setStep(n) {
+  $('stepper').classList.toggle('hidden', !BREAD[state.currentTab].stepper);
+  document.querySelectorAll('.step-item').forEach(it => {
+    const s = +it.dataset.step;
+    it.classList.remove('current','done');
+    if (s < n) it.classList.add('done');
+    else if (s === n) it.classList.add('current');
+  });
+}
+function switchTab(name) {
+  state.currentTab = name;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-'+name));
+  const b = BREAD[name];
+  $('bread').textContent = b.title;
+  $('bread-sub').textContent = b.sub;
+  $('stepper').classList.toggle('hidden', !b.stepper);
+  if (name === 'review' && state.runId) refreshReview();
+  // stepper state
+  if (name === 'control') setStep(1);
+  else if (name === 'exec') setStep(state.blueprint ? 3 : 2);
+  else if (name === 'review') setStep(4);
+}
+document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+// ============================================================
+// KNOBS
+// ============================================================
+const knobLabels = { 'knob-voice':['낮음','중간','높음'], 'knob-hint':['간략','표준','상세'], 'knob-strict':['fast','standard','strict'] };
+for (const k of Object.keys(knobLabels)) {
+  const el = $(k);
+  el.addEventListener('input', () => $(k+'-val').textContent = knobLabels[k][+el.value - 1]);
+}
+// 퀴즈·실습 수량 표시
+$('knob-quiz').addEventListener('input', (e) => $('knob-quiz-val').textContent = e.target.value);
+$('knob-prac').addEventListener('input', (e) => $('knob-prac-val').textContent = e.target.value);
+
+// 난이도 프리셋 버튼 토글
+const DIFF_PRESETS = {
+  beginner: { 하:4, 중하:2, 중:3, 중상:1, 상:0 },
+  standard: { 하:2, 중하:1, 중:3, 중상:2, 상:2 },
+  advanced: { 하:0, 중하:1, 중:3, 중상:3, 상:3 },
+};
+let _currentPreset = 'standard';
+document.querySelectorAll('#diff-preset-group [data-preset]').forEach(btn => {
+  btn.onclick = () => {
+    _currentPreset = btn.dataset.preset;
+    document.querySelectorAll('#diff-preset-group [data-preset]').forEach(b => {
+      b.classList.remove('border-zinc-900','bg-zinc-50');
+    });
+    btn.classList.add('border-zinc-900','bg-zinc-50');
+  };
+});
+
+// 카테고리 "기타" 선택 시 입력 필드 노출
+$('in-category').addEventListener('change', (e) => {
+  const custom = $('in-category-custom');
+  if (e.target.value === 'custom') {
+    custom.classList.remove('hidden');
+    custom.focus();
+  } else {
+    custom.classList.add('hidden');
+    custom.value = '';
+  }
+});
+
+// 챕터 구성 실시간 합계
+function updateChapterTotals() {
+  const parts = Math.max(1, +($('in-parts').value || 5));
+  const cpp = Math.max(1, +($('in-chapters-per-part').value || 2));
+  $('total-chapters').textContent = parts * cpp;
+}
+$('in-parts').addEventListener('input', updateChapterTotals);
+$('in-chapters-per-part').addEventListener('input', updateChapterTotals);
+
+// 학습 시간 실시간 합계
+function updateDurationTotal() {
+  const parts = Math.max(1, +($('in-parts').value || 5));
+  const cpp = Math.max(1, +($('in-chapters-per-part').value || 2));
+  const m = Math.max(1, +($('in-chap-dur').value || 15));
+  const total = parts * cpp * m;
+  const h = Math.floor(total / 60), rm = total % 60;
+  const label = h > 0 ? `${h}시간${rm ? ' ' + rm + '분' : ''}` : `${rm}분`;
+  $('total-duration').textContent = label;
+}
+$('in-parts').addEventListener('input', updateDurationTotal);
+$('in-chapters-per-part').addEventListener('input', updateDurationTotal);
+$('in-chap-dur').addEventListener('input', updateDurationTotal);
+updateChapterTotals(); updateDurationTotal();
+
+// ============================================================
+// RUN LIST (sidebar)
+// ============================================================
+async function refreshRunsList() {
+  try {
+    const r = await fetch('/api/runs?limit=12');
+    const runs = await r.json();
+    const host = $('runs-list');
+    host.innerHTML = '';
+    runs.forEach(x => {
+      const inputs = x.inputs || {};
+      const statusColor = x.status === 'reviewing' ? 'bg-emerald-500'
+                        : x.status === 'generating' ? 'bg-blue-500'
+                        : x.status === 'error' ? 'bg-rose-500'
+                        : 'bg-zinc-300';
+      const wrap = document.createElement('div');
+      wrap.className = 'group relative rounded hover:bg-zinc-50' + (x.run_id === state.runId ? ' bg-zinc-100' : '');
+      wrap.innerHTML = `
+        <button class="w-full text-left px-2 py-1.5 pr-8 flex items-start gap-2" data-act="open">
+          <span class="dot ${statusColor} mt-1.5 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="mono text-[10px] text-zinc-400 truncate">${esc(x.run_id)}</div>
+            <div class="text-zinc-700 truncate">${esc(inputs.figure || '—')} · ${esc(inputs.topic || '—')}</div>
+          </div>
+        </button>
+        <button class="absolute right-1 top-1.5 w-5 h-5 rounded hover:bg-rose-100 text-zinc-400 hover:text-rose-600 text-xs opacity-0 group-hover:opacity-100 transition" data-act="delete" title="이 Run 삭제">✕</button>
+      `;
+      wrap.querySelector('[data-act="open"]').onclick = () => attachToRun(x.run_id);
+      wrap.querySelector('[data-act="delete"]').onclick = (e) => {
+        e.stopPropagation();
+        deleteRun(x.run_id, inputs);
+      };
+      host.appendChild(wrap);
+    });
+  } catch(e) { console.warn(e); }
+}
+
+async function deleteRun(runId, inputs) {
+  const label = `${inputs?.figure || '—'} · ${inputs?.topic || '—'}`;
+  if (!confirm(`Run을 삭제하시겠어요?\n\n${runId}\n${label}\n\n컴포넌트·플래그·검증 기록까지 모두 사라지며 복구할 수 없습니다.`)) return;
+  try {
+    const r = await fetch(`/api/runs/${runId}`, { method:'DELETE' });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('삭제 완료: ' + runId, 'ok');
+    // 현재 표시 중인 run이라면 상태 초기화
+    if (state.runId === runId) {
+      state.runId = null;
+      state.bpId = null;
+      state.blueprint = null;
+      state.components = [];
+      state.flags = [];
+      state.selectedCompId = null;
+      $('run-pill').classList.add('hidden');
+      $('btn-export').classList.add('hidden');
+      $('bp-form').classList.add('hidden');
+      $('bp-loading').classList.add('hidden');
+      $('bp-idle').classList.remove('hidden');
+      $('kanban-wrap').classList.add('hidden');
+      switchTab('control');
+    }
+    refreshRunsList();
+  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
+}
+
+async function attachToRun(runId) {
+  state.runId = runId;
+  updateRunPill(null);
+  try {
+    const r = await fetch(`/api/runs/${runId}`);
+    const d = await r.json();
+    if (d.blueprint) {
+      state.bpId = d.blueprint.blueprint_id;
+      state.blueprint = d.blueprint.content;
+      state.chapterMap = {};
+      (state.blueprint?.curriculum || []).forEach(c => state.chapterMap[c.chapter_id] = c.chapter_name);
+      showBlueprint(state.blueprint);
+    }
+    state.components = d.components || [];
+    state.flags = d.flags || [];
+    updateRunPill(d.run.status);
+    renderKanban();
+    refreshSummary();
+    refreshRunsList();
+    openWs(runId);
+    // 자동 탭 스위치
+    if (d.run.status === 'reviewing' || d.run.status === 'deployed') switchTab('review');
+    else if (d.run.status === 'generating' || d.run.status === 'awaiting_approval') switchTab('exec');
+    else switchTab('control');
+  } catch(e) { toast('불러오기 실패: '+e.message, 'err'); }
+}
+
+function updateRunPill(status) {
+  const pill = $('run-pill');
+  if (!state.runId) { pill.classList.add('hidden'); return; }
+  pill.classList.remove('hidden'); pill.classList.add('flex');
+  $('run-pill-id').textContent = state.runId;
+  const map = {
+    planning:'기획 중', awaiting_approval:'승인 대기', generating:'생성 중', reviewing:'검토',
+    deployed:'배포됨', error:'오류', aborted:'중단',
+  };
+  $('run-pill-status').textContent = map[status] || (status || '');
+  const dotColor = status==='reviewing'?'bg-emerald-500'
+                 : status==='generating'?'bg-blue-500'
+                 : status==='error'?'bg-rose-500'
+                 : 'bg-zinc-400';
+  $('run-pill-dot').className = 'dot ' + dotColor;
+  // Export 버튼: reviewing/deployed 상태에서만 노출
+  const exp = $('btn-export');
+  if (['reviewing','deployed','generating'].includes(status)) exp.classList.remove('hidden');
+  else exp.classList.add('hidden');
+}
+
+// Export — 기본은 xlsx (학습자료는 Review에서 개별 docx 다운로드 가능)
+$('btn-export').onclick = () => {
+  if (!state.runId) return;
+  window.open(`/api/runs/${state.runId}/export.xlsx`, '_blank');
+  toast('xlsx 다운로드 시작','ok');
+};
+
+// 챕터 재생성 토글
+$('btn-chapter-regen').onclick = () => {
+  const panel = $('chapter-regen-panel');
+  panel.classList.toggle('hidden');
+};
+$('btn-cr-cancel').onclick = () => $('chapter-regen-panel').classList.add('hidden');
+$('btn-cr-submit').onclick = async () => {
+  const chapterId = $('cr-chapter').textContent;
+  const instr = $('cr-instruction').value.trim();
+  const comps = Array.from(document.querySelectorAll('[data-cr]:checked')).map(x=>x.dataset.cr);
+  if (!comps.length) { toast('대상 컴포넌트 선택 필요','err'); return; }
+  if (!instr) { if (!confirm('피드백 없이 진행하시겠어요?')) return; }
+  try {
+    const r = await fetch(`/api/runs/${state.runId}/chapters/${chapterId}/regenerate`, {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ instruction: instr, components: comps })
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast(`챕터 ${chapterId} ${comps.join('·')} 재생성 시작`,'ok');
+    $('chapter-regen-panel').classList.add('hidden');
+    $('cr-instruction').value = '';
+    setTimeout(refreshRunData, 500);
+  } catch(e) { toast('재생성 실패: '+e.message,'err'); }
+};
+
+// ============================================================
+// SUMMARY (stats bar)
+// ============================================================
+async function refreshSummary() {
+  if (!state.runId) return;
+  try {
+    const r = await fetch(`/api/runs/${state.runId}/summary`);
+    const s = await r.json();
+    state.summary = s;
+    updateStatsBar(s);
+    $('side-flag-count').classList.toggle('hidden', !s.flags_total);
+    $('side-flag-count').textContent = s.flags_total;
+  } catch(e) {}
+}
+function statFrag(type, expected) {
+  const stats = state.summary?.matrix?.[type] || {};
+  const pass = stats.passed || 0;
+  const flag = stats.flagged || 0;
+  const other = Object.entries(stats).filter(([k]) => k !== 'passed' && k !== 'flagged').reduce((a,[_,v]) => a+v, 0);
+  const total = pass + flag + other;
+  if (expected && total === 0) return `<span class="text-zinc-400">대기 0/${expected}</span>`;
+  const parts = [];
+  if (pass) parts.push(`<span class="text-emerald-600">✓${pass}</span>`);
+  if (flag) parts.push(`<span class="text-rose-600">⚠${flag}</span>`);
+  if (other) parts.push(`<span class="text-blue-600">…${other}</span>`);
+  return parts.join(' ') + (expected ? `<span class="text-zinc-400 ml-1">/ ${expected}</span>` : '');
+}
+function updateStatsBar(s) {
+  $('stat-fr').innerHTML = statFrag('figure_rationale', 1);
+  $('stat-mat').innerHTML = statFrag('material', 10);
+  $('stat-quiz').innerHTML = statFrag('quiz', 10);
+  $('stat-prac').innerHTML = statFrag('practice', 10);
+  $('stat-flags').innerHTML = s.flags_total > 0
+    ? `<span class="text-rose-600">${s.flags_total}</span> <span class="text-zinc-400 text-xs">미해결</span>`
+    : `<span class="text-emerald-600">0</span> <span class="text-zinc-400 text-xs">클린</span>`;
+}
+
+// ============================================================
+// KANBAN (Screen 2)
+// ============================================================
+function renderKanban() {
+  const cols = { gen:$('kb-gen'), val:$('kb-val'), pass:$('kb-pass'), flag:$('kb-flag') };
+  Object.values(cols).forEach(c => c.innerHTML = '');
+  const counts = { gen:0, val:0, pass:0, flag:0 };
+  state.components.forEach(c => {
+    const meta = STATUS_STYLE[c.status] || { col:'gen', label:c.status, color:'bg-zinc-100 text-zinc-700' };
+    counts[meta.col]++;
+    cols[meta.col].innerHTML += compMiniCard(c, meta);
+  });
+  $('kb-c-gen').textContent = counts.gen;
+  $('kb-c-val').textContent = counts.val;
+  $('kb-c-pass').textContent = counts.pass;
+  $('kb-c-flag').textContent = counts.flag;
+  // reveal kanban wrap once we have components
+  $('kanban-wrap').classList.toggle('hidden', !state.components.length);
+}
+function compMiniCard(c, meta) {
+  const typeKo = TYPE_LABEL[c.type] || c.type;
+  const chapName = c.chapter_id && c.chapter_id !== '-' ? state.chapterMap[c.chapter_id] : '';
+  const title = c.chapter_id && c.chapter_id !== '-' ? `${typeKo} · ${c.chapter_id}` : typeKo;
+  return `<div class="bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs">
+    <div class="font-semibold">${esc(title)}</div>
+    ${chapName ? `<div class="text-zinc-500 truncate mt-0.5">${esc(chapName)}</div>` : ''}
+    <div class="text-[10px] text-zinc-400 mt-1 mono">${esc(c.generator_model)} → ${esc(c.validator_model)}</div>
+  </div>`;
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+$('btn-generate').onclick = async () => {
+  const figure = $('in-figure').value.trim();
+  const topic = $('in-topic').value.trim();
+  const target = $('in-target').value.trim();
+  if (!figure || !topic || !target) { toast('위인·주제·학습 대상은 필수입니다', 'err'); return; }
+  const parts = Math.max(2, Math.min(10, +$('in-parts').value || 5));
+  const cpp = Math.max(1, Math.min(5, +$('in-chapters-per-part').value || 2));
+  const chapDur = Math.max(5, Math.min(60, +$('in-chap-dur').value || 15));
+  let categoryValue = $('in-category').value;
+  if (categoryValue === 'custom') {
+    const custom = $('in-category-custom').value.trim();
+    if (!custom) { toast('카테고리를 직접 입력하거나 다른 항목 선택', 'err'); return; }
+    categoryValue = custom;
+  }
+  const body = {
+    figure, topic, target_learner: target,
+    learning_goals: $('in-goals').value.split(',').map(s=>s.trim()).filter(Boolean),
+    chapters: parts * cpp,
+    parts_count: parts,
+    chapters_per_part: cpp,
+    category: categoryValue,
+    chapter_duration_min: chapDur,
+    mixer: {
+      figure_voice: knobLabels['knob-voice'][+$('knob-voice').value-1],
+      hint_detail: knobLabels['knob-hint'][+$('knob-hint').value-1],
+      validation_strict: knobLabels['knob-strict'][+$('knob-strict').value-1],
+      prompt_level: $('knob-prompt').value,
+      difficulty_preset: _currentPreset,
+      difficulty_distribution: DIFF_PRESETS[_currentPreset],
+      quiz_per_chapter: +$('knob-quiz').value,
+      practice_per_chapter: +$('knob-prac').value,
+      target_ai_tool: $('knob-ai').value,
+    }
+  };
+  try {
+    const res = await fetch('/api/runs', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    state.runId = data.run_id;
+    state.components = [];
+    state.flags = [];
+    state.bpId = null; state.blueprint = null;
+    updateRunPill('planning');
+    switchTab('exec');
+    $('bp-idle').classList.add('hidden');
+    $('bp-form').classList.add('hidden');
+    $('bp-loading').classList.remove('hidden');
+    $('bp-status-pill').textContent = '기획 생성 중…';
+    $('kanban-wrap').classList.add('hidden');
+    $('event-log').innerHTML = '';
+    openWs(state.runId);
+    refreshRunsList();
+    setStep(2);
+  } catch(e) { toast('Generate 실패: '+e.message,'err'); }
+};
+$('btn-regen-bp').onclick = () => $('btn-generate').click();
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+function openWs(runId) {
+  if (state.ws) { try{ state.ws.close(); }catch(e){} }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  state.ws = new WebSocket(`${proto}//${location.host}/ws/runs/${runId}`);
+  state.ws.onmessage = (ev) => handleEvent(JSON.parse(ev.data));
+  setInterval(() => { if (state.ws?.readyState === 1) state.ws.send('ping'); }, 25000);
+}
+function logEvent(t, p) {
+  const el = $('event-log');
+  const div = document.createElement('div');
+  div.className = 'mono text-[11px] py-0.5';
+  let color = 'text-zinc-600';
+  if (t.includes('error') || t === 'component.flagged') color = 'text-rose-600';
+  else if (t === 'component.validated' || t === 'blueprint.completed' || t === 'run.completed') color = 'text-emerald-600';
+  else if (t === 'component.regenerating') color = 'text-amber-600';
+  div.innerHTML = `<span class="text-zinc-400">[${fmtTime()}]</span> <span class="${color}">${esc(t)}</span> <span class="text-zinc-500">${esc(JSON.stringify(p).slice(0, 160))}</span>`;
+  el.appendChild(div); el.scrollTop = el.scrollHeight;
+}
+function handleEvent(m) {
+  const t = m.event, p = m.payload || {};
+  logEvent(t, p);
+  if (t === 'blueprint.completed') {
+    state.bpId = p.blueprint_id;
+    state.blueprint = p.content;
+    state.chapterMap = {};
+    (p.content?.curriculum || []).forEach(c => state.chapterMap[c.chapter_id] = c.chapter_name);
+    $('bp-status-pill').textContent = '승인 대기';
+    showBlueprint(p.content);
+    setStep(2);
+    updateRunPill('awaiting_approval');
+  } else if (t.startsWith('component.')) {
+    // 증분 업데이트 대신 간단히 전체 새로고침 (단순)
+    refreshRunData();
+  } else if (t === 'run.completed') {
+    updateRunPill('reviewing');
+    toast('✅ 전체 생성 완료 — 검토 탭에서 플래그를 확인하세요', 'ok');
+    setStep(4);
+    setTimeout(()=> switchTab('review'), 500);
+  } else if (t === 'component.error' || t === 'blueprint.error') {
+    showError(`[${t}] ${p.error || ''}\n${p.component_id || ''}`);
+  }
+}
+
+async function refreshRunData() {
+  if (!state.runId) return;
+  try {
+    const r = await fetch(`/api/runs/${state.runId}`);
+    const d = await r.json();
+    state.components = d.components || [];
+    state.flags = d.flags || [];
+    updateRunPill(d.run.status);
+    renderKanban();
+    refreshSummary();
+    if (state.currentTab === 'review') renderNavTree();
+  } catch(e) {}
+}
+
+function showError(msg) {
+  $('err-banner').classList.remove('hidden');
+  $('err-msg').textContent = msg;
+}
+
+// ============================================================
+// BLUEPRINT FORM
+// ============================================================
+function showBlueprint(c) {
+  $('bp-loading').classList.add('hidden');
+  $('bp-idle').classList.add('hidden');
+  $('bp-form').classList.remove('hidden');
+  $('bp-status-pill').textContent = '✓ 생성 완료 — 승인 대기';
+  // reset button states
+  document.querySelectorAll('#bp-form input, #bp-form textarea, #bp-form select').forEach(x => x.disabled = false);
+  const b = $('btn-approve'); if (b) { b.disabled = false; b.textContent = '수정 반영 + 승인 → 생성 시작'; }
+  if ($('btn-regen-bp')) $('btn-regen-bp').disabled = false;
+
+  $('f-course_name').value = c.course_name || '';
+  $('f-category').value = c.category || '자기계발';
+  $('f-character_name').value = c.character_name || '';
+  $('f-sell_reason').value = c.sell_reason || '';
+  $('f-project_outcome').value = c.project_outcome || '';
+
+  const renderList = (host, arr, dataAttr) => {
+    host.innerHTML = '';
+    const list = (arr || []).concat(['','','']).slice(0,3);
+    list.forEach((v, i) => {
+      host.insertAdjacentHTML('beforeend',
+        `<div class="flex gap-2">
+           <span class="text-xs text-zinc-400 mt-2 w-4 shrink-0">${i+1})</span>
+           <textarea rows="2" data-${dataAttr}="${i}" class="flex-1 border border-zinc-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none">${esc(v)}</textarea>
+         </div>`);
+    });
+  };
+  renderList($('f-targets'), c.targets, 'targets');
+  renderList($('f-effects'), c.effects, 'effects');
+
+  const cur = $('f-curriculum');
+  cur.innerHTML = '';
+  (c.curriculum || []).forEach((row, i) => {
+    cur.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td class="px-3 py-1 mono text-xs bg-zinc-50/50 text-center text-zinc-500">${esc(row.chapter_id)}</td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="part_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.part_name||'')}"></td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="chapter_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.chapter_name||'')}"></td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="prompt_technique" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.prompt_technique||'')}"></td>
+      </tr>`);
+  });
+}
+
+function collectBlueprintForm() {
+  const targets = Array.from(document.querySelectorAll('[data-targets]'))
+    .sort((a,b)=>+a.dataset.targets - +b.dataset.targets)
+    .map(x=>x.value.trim()).filter(Boolean);
+  const effects = Array.from(document.querySelectorAll('[data-effects]'))
+    .sort((a,b)=>+a.dataset.effects - +b.dataset.effects)
+    .map(x=>x.value.trim()).filter(Boolean);
+  const rows = {};
+  document.querySelectorAll('[data-curr]').forEach(el => {
+    const i = +el.dataset.curr, k = el.dataset.k;
+    rows[i] = rows[i] || {}; rows[i][k] = el.value.trim();
+  });
+  const curriculum = Object.keys(rows).sort((a,b)=>+a-+b).map(i => {
+    const idx = +i;
+    return {
+      chapter_id: `${Math.floor(idx/2)+1}-${(idx%2)+1}`,
+      part_name: rows[i].part_name || '',
+      chapter_name: rows[i].chapter_name || '',
+      prompt_technique: rows[i].prompt_technique || '',
+    };
+  });
+  return {
+    course_name: $('f-course_name').value.trim(),
+    category: $('f-category').value,
+    character_name: $('f-character_name').value.trim(),
+    sell_reason: $('f-sell_reason').value.trim(),
+    project_outcome: $('f-project_outcome').value.trim(),
+    targets, effects, curriculum,
+  };
+}
+
+document.addEventListener('click', async (ev) => {
+  if (ev.target && ev.target.id === 'btn-approve') {
+    const edited = collectBlueprintForm();
+    state.blueprint = edited;
+    state.chapterMap = {};
+    edited.curriculum.forEach(c => state.chapterMap[c.chapter_id] = c.chapter_name);
+    ev.target.disabled = true;
+    ev.target.textContent = '승인 처리 중…';
+    try {
+      const r = await fetch(`/api/runs/${state.runId}/approve-blueprint`, {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ blueprint_id: state.bpId, content: edited })
+      });
+      if (!r.ok) throw new Error('승인 실패 ('+r.status+')');
+      ev.target.textContent = '✓ 승인 — 컴포넌트 생성 시작됨';
+      document.querySelectorAll('#bp-form input, #bp-form textarea, #bp-form select').forEach(x => x.disabled = true);
+      $('btn-regen-bp').disabled = true;
+      $('bp-status-pill').textContent = '승인 완료';
+      setStep(3);
+      toast('승인 완료 — 컴포넌트 생성 시작', 'ok');
+    } catch(e) {
+      showError('승인 실패: '+e.message);
+      ev.target.disabled = false;
+      ev.target.textContent = '수정 반영 + 승인 → 생성 시작';
+    }
+  }
+});
+
+// ============================================================
+// REVIEW (Screen 3) — Navigator + Preview + Actions
+// ============================================================
+async function refreshReview() {
+  await refreshRunData();
+  renderNavTree();
+  renderFilters();
+  if (!state.selectedCompId && state.components.length) {
+    selectComponent(state.components[0].component_id);
+  } else if (state.selectedCompId) {
+    selectComponent(state.selectedCompId);
+  }
+  $('review-summary').textContent = `${state.flags.length} flags`;
+}
+
+function renderNavTree() {
+  const host = $('nav-tree');
+  if (!state.blueprint) { host.innerHTML = '<div class="text-xs text-zinc-400 p-2">기획서가 승인되면 트리가 생성됩니다.</div>'; return; }
+  // Group components by chapter_id; also handle figure_rationale
+  const byKey = {}; // key = `${type}::${chapter_id}` → component
+  state.components.forEach(c => { byKey[`${c.type}::${c.chapter_id}`] = c; });
+  const flagByComp = {};
+  state.flags.forEach(f => { flagByComp[f.component_id] = (flagByComp[f.component_id] || 0) + 1; });
+
+  let html = '';
+  // 위인 선정 배경
+  const fr = byKey['figure_rationale::-'];
+  if (fr) html += renderNavItem(fr, flagByComp[fr.component_id] || 0, 0);
+
+  // 5 parts × 2 chapters
+  const parts = {};
+  (state.blueprint.curriculum || []).forEach(c => {
+    const p = +c.chapter_id.split('-')[0];
+    parts[p] = parts[p] || { name: c.part_name, chapters: [] };
+    parts[p].chapters.push(c);
+  });
+  let totalDone = 0, totalAll = 0;
+  Object.keys(parts).sort().forEach(pId => {
+    const p = parts[pId];
+    html += `<div class="mt-2"><div class="text-[10px] uppercase tracking-wide text-zinc-400 px-2 mb-1">파트 ${pId} · ${esc(p.name)}</div>`;
+    p.chapters.forEach(ch => {
+      html += `<div class="mb-1 ml-1">
+        <div class="text-[11px] font-medium text-zinc-700 px-2 py-0.5">${esc(ch.chapter_id)} · ${esc(ch.chapter_name)}</div>`;
+      TYPE_ORDER.filter(t => t !== 'figure_rationale').forEach(t => {
+        const c = byKey[`${t}::${ch.chapter_id}`];
+        if (!c) return;
+        const n = flagByComp[c.component_id] || 0;
+        totalAll++; if (c.status === 'passed' && n === 0) totalDone++;
+        html += renderNavItem(c, n, 1);
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  $('nav-done').textContent = totalDone;
+  $('nav-total').textContent = totalAll + (fr ? 1 : 0);
+  host.innerHTML = html;
+  host.querySelectorAll('[data-cid]').forEach(el => el.onclick = () => selectComponent(el.dataset.cid));
+}
+
+function renderNavItem(c, flagCount, indent) {
+  const typeKo = TYPE_LABEL[c.type];
+  const statusMeta = STATUS_STYLE[c.status] || { label:c.status, color:'bg-zinc-100 text-zinc-700' };
+  const sel = c.component_id === state.selectedCompId ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100';
+  const pad = indent === 0 ? 'ml-0' : 'ml-3';
+  return `<div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer ${sel} ${pad}" data-cid="${c.component_id}">
+    <span class="font-medium">${esc(typeKo)}</span>
+    ${flagCount ? `<span class="badge bg-rose-100 text-rose-700 text-[10px]">${flagCount}</span>` : ''}
+    <span class="ml-auto text-[10px] ${c.component_id === state.selectedCompId ? 'text-zinc-300' : 'text-zinc-400'}">${esc(statusMeta.label)}</span>
+  </div>`;
+}
+
+async function selectComponent(cid) {
+  state.selectedCompId = cid;
+  _clearAnchor && _clearAnchor();
+  renderNavTree();
+  const c = state.components.find(x => x.component_id === cid);
+  if (!c) return;
+  const typeKo = TYPE_LABEL[c.type];
+  const chapName = state.chapterMap[c.chapter_id] || '';
+  $('preview-title').textContent = `${typeKo}${c.chapter_id && c.chapter_id !== '-' ? ' · ' + c.chapter_id : ''}${chapName ? ' · ' + chapName : ''}`;
+
+  // 챕터 재생성 버튼 노출: chapter_id가 실제 챕터인 컴포넌트일 때만
+  const chapterBtn = $('btn-chapter-regen');
+  if (c.chapter_id && c.chapter_id !== '-') {
+    chapterBtn.classList.remove('hidden');
+    $('cr-chapter').textContent = c.chapter_id;
+  } else {
+    chapterBtn.classList.add('hidden');
+    $('chapter-regen-panel').classList.add('hidden');
+  }
+  // 학습자료(material) 컴포넌트만 docx 다운로드 버튼 노출
+  const docxBtn = $('btn-material-docx');
+  if (c.type === 'material') {
+    docxBtn.classList.remove('hidden');
+    docxBtn.onclick = () => window.open(`/api/components/${c.component_id}/export.docx`, '_blank');
+  } else {
+    docxBtn.classList.add('hidden');
+  }
+
+  // 모델 배지
+  $('preview-model').classList.remove('hidden');
+  $('preview-model').textContent = `${c.generator_model} → ${c.validator_model}`;
+
+  // 콘텐츠 + 점수 조회
+  try {
+    const r = await fetch(`/api/components/${cid}`);
+    const d = await r.json();
+    const score = d.latest_validation?.overall_score;
+    if (score != null) {
+      $('preview-score').classList.remove('hidden');
+      const ok = d.latest_validation.passed;
+      $('preview-score').className = `badge ${ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`;
+      $('preview-score').textContent = `점수 ${Math.round(score)}`;
+    } else {
+      $('preview-score').classList.add('hidden');
+    }
+    renderPreview(c.type, d.content);
+    renderActionPanel(d.flags || state.flags.filter(f => f.component_id === cid));
+  } catch(e) { toast('컴포넌트 로드 실패','err'); }
+}
+
+function renderPreview(type, content) {
+  const host = $('preview-body');
+  if (!content) { host.innerHTML = '<div class="text-sm text-zinc-400">콘텐츠 없음</div>'; return; }
+  let html = '';
+  if (type === 'figure_rationale') html = previewFigureRationale(content);
+  else if (type === 'material') html = previewMaterial(content);
+  else if (type === 'quiz') html = previewQuiz(content);
+  else if (type === 'practice') html = previewPractice(content);
+  else html = `<pre>${esc(JSON.stringify(content, null, 2))}</pre>`;
+  host.innerHTML = html;
+}
+
+function previewFigureRationale(c) {
+  return `
+    <div class="max-w-2xl">
+      <div data-preview-section="fr-opening">
+        <div class="text-xs text-zinc-400 mb-1">OPENING ONE-LINER</div>
+        <blockquote class="border-l-4 border-zinc-900 pl-4 italic text-lg text-zinc-800">"${esc(c.opening_one_liner||'')}"</blockquote>
+      </div>
+      <div data-preview-section="fr-background">
+        <h4>배경</h4>
+        <p>${esc(c.figure_background||'')}</p>
+      </div>
+      <div data-preview-section="fr-philosophy">
+        <h4>핵심 철학</h4>
+        <p>${esc(c.core_philosophy||'')}</p>
+      </div>
+      <div data-preview-section="fr-topic-fit">
+        <h4>주제 적합성</h4>
+        <p>${esc(c.topic_fit_reason||'')}</p>
+      </div>
+      <div data-preview-section="fr-learner">
+        <h4>학습자가 얻는 것</h4>
+        <ul class="list-disc pl-5 space-y-1">
+          ${(c.what_learner_gets||[]).map(x=>`<li>${esc(x)}</li>`).join('')}
+        </ul>
+      </div>
+      <div data-preview-section="fr-episodes">
+        <h4>핵심 에피소드</h4>
+        ${(c.key_episodes||[]).map(ep=>`
+          <div class="border border-zinc-200 rounded-lg p-4 mb-3">
+            <div class="font-semibold">${esc(ep.title)}</div>
+            <p class="mt-1 text-sm">${esc(ep.description)}</p>
+            <div class="text-xs text-zinc-500 mt-2">출처: ${esc(ep.source)}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function previewMaterial(c) {
+  const sections = c.sections || [];
+  const words = sections.reduce((a,s)=>a+(s.body||'').length,0);
+  return `
+    <div class="max-w-3xl" data-preview-section="material-all">
+      <div data-preview-section="material-overview" class="text-xs text-zinc-400 mb-2">챕터 ${esc(c.chapter_id)} · ${sections.length}개 섹션 · ${words.toLocaleString()}자</div>
+      ${sections.map(s=>`
+        <div class="mb-6 p-2" data-preview-kind="${esc(s.kind||'')}">
+          <h4 class="flex items-center gap-2">${esc(s.heading||'')}
+            <span class="badge bg-zinc-100 text-zinc-500 text-[10px]">${esc(s.kind||'')}</span>
+          </h4>
+          <div class="text-sm whitespace-pre-wrap leading-7">${esc(s.body||'')}</div>
+        </div>`).join('')}
+    </div>`;
+}
+function previewQuiz(c) {
+  return `
+    <div class="max-w-3xl" data-preview-section="quiz-items">
+      <div class="text-xs text-zinc-400 mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문항</div>
+      ${(c.items||[]).map((it, i) => `
+        <div class="border border-zinc-200 rounded-lg p-4 mb-3" data-preview-item="${i}" data-preview-type="quiz">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="badge bg-zinc-100 text-zinc-700">${i+1}. ${esc(it.type)}</span>
+            <span class="badge bg-zinc-50 text-zinc-600">난이도 ${esc(it.difficulty)}</span>
+          </div>
+          <div class="font-semibold mb-1">${esc(it.title||'')}</div>
+          <div class="text-sm text-zinc-700 mb-2">${esc(it.question||'')}</div>
+          ${it.choices && it.choices !== '-' ? `<pre class="mb-2">${esc(it.choices)}</pre>` : ''}
+          <div class="text-xs"><b class="text-zinc-500">정답:</b> <span class="mono">${esc(it.answer||'')}</span></div>
+          <div class="text-xs mt-1"><b class="text-zinc-500">힌트:</b> ${esc(it.hint||'')}</div>
+          <details class="mt-2 text-xs">
+            <summary class="text-zinc-500 cursor-pointer">해설 펼치기</summary>
+            <div class="mt-1 text-zinc-700 leading-6">${esc(it.explanation||'').replace(/\\|/g,'<br>')}</div>
+          </details>
+        </div>`).join('')}
+    </div>`;
+}
+function previewPractice(c) {
+  return `
+    <div class="max-w-3xl" data-preview-section="practice-items">
+      <div class="text-xs text-zinc-400 mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문제</div>
+      ${(c.items||[]).map((it, i) => `
+        <div class="border border-zinc-200 rounded-lg p-4 mb-3" data-preview-item="${i}" data-preview-type="practice">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="badge bg-zinc-900 text-white">실습 ${i+1} · ${esc(it.stage||'')}</span>
+            <span class="badge bg-zinc-50 text-zinc-600">난이도 ${esc(it.difficulty)}</span>
+            <span class="badge bg-emerald-50 text-emerald-700">합격 ${esc(it.passing_score)}점</span>
+          </div>
+          <div class="font-semibold mb-1">${esc(it.title||'')}</div>
+          <div class="text-sm text-zinc-700 mb-2">${esc(it.question||'')}</div>
+          <div class="text-xs text-zinc-500 whitespace-pre-wrap mb-2">${esc(it.description||'')}</div>
+          <div class="bg-zinc-50 rounded p-3 text-xs font-mono whitespace-pre-wrap my-2">${esc(it.answer||'')}</div>
+          <div class="text-xs">
+            <b class="text-zinc-500">평가항목:</b>
+            <ul class="list-disc pl-5 mt-1 space-y-0.5">
+              ${(it.criteria||[]).map(cr=>`<li><b>${esc(cr.title)}</b> — <span class="text-zinc-600">${esc(cr.description)}</span></li>`).join('')}
+            </ul>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderActionPanel(flags) {
+  const host = $('action-panel');
+  if (!flags || !flags.length) {
+    host.innerHTML = `<div class="text-sm text-zinc-500 text-center mt-16 px-6">
+      <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl mb-3">✓</div>
+      이 컴포넌트에는 현재 미해결 플래그가 없습니다.
+    </div>`;
+    return;
+  }
+  const filtered = flags.filter(f => state.activeFilters.has(f.flag_type));
+  host.innerHTML = filtered.map(f => flagCardHtml(f)).join('');
+  host.querySelectorAll('[data-act="regen"]').forEach(b => b.onclick = () => regenFromFlag(b.dataset.flagId, b.dataset.cid));
+  host.querySelectorAll('[data-act="dismiss"]').forEach(b => b.onclick = () => dismissFlag(b.dataset.flagId));
+  host.querySelectorAll('[data-act="jump"]').forEach(b => b.onclick = (e) => {
+    e.preventDefault();
+    jumpToSection(b.dataset.rawId, b.dataset.rawPath || '');
+    host.querySelectorAll('.flag-card').forEach(x => x.classList.remove('selected'));
+    b.closest('.flag-card').classList.add('selected');
+  });
+}
+
+// 직전에 앵커 표시한 요소 추적 — 새로 선택 시 지움
+let _lastAnchor = null;
+function _clearAnchor() {
+  if (_lastAnchor) {
+    _lastAnchor.classList.remove('hl-anchor');
+    if (_lastAnchor._marker) { _lastAnchor._marker.remove(); _lastAnchor._marker = null; }
+    _lastAnchor = null;
+  }
+}
+
+// 플래그 → 프리뷰의 정확한 위치 앵커 + 스크롤 + 깜빡임
+function jumpToSection(rubricId, rawPath) {
+  const body = $('preview-body');
+  if (!body) return;
+  _clearAnchor();
+
+  // 1) SCHEMA 플래그의 경우 rawPath에 items[N]/필드 가 들어있음 → 아이템 단위 앵커
+  let target = null;
+  const m = (rawPath || '').match(/items\[(\d+)\]/);
+  if (m) {
+    const idx = +m[1];
+    target = body.querySelector(`[data-preview-item="${idx}"]`);
+  }
+
+  // 2) 루브릭 ID 기반 섹션 매핑
+  if (!target) {
+    const selectors = [];
+    if (rubricId.startsWith('quiz.')) selectors.push('[data-preview-section="quiz-items"]');
+    else if (rubricId.startsWith('practice.')) selectors.push('[data-preview-section="practice-items"]');
+    else if (rubricId.startsWith('material.sections') || rubricId.startsWith('material.length')
+        || rubricId.startsWith('material.good_better_best')) selectors.push('[data-preview-section="material-overview"]');
+    else if (rubricId === 'material.opener.empathy_line_present') selectors.push('[data-preview-kind="empathy_opener"]');
+    else if (rubricId === 'material.category.concept_explanation_present') selectors.push('[data-preview-kind="concept"]');
+    else if (rubricId === 'material.templates.situation_specific_present') selectors.push('[data-preview-kind="template"]');
+    else if (rubricId === 'material.checklist.5_to_7') selectors.push('[data-preview-kind="reflection"]');
+    else if (rubricId.startsWith('material.')) selectors.push('[data-preview-section="material-all"]');
+    else if (rubricId === 'rationale.episodes.sources_cited') selectors.push('[data-preview-section="fr-episodes"]');
+    else if (rubricId === 'rationale.voice.mentor_tone') selectors.push('[data-preview-section="fr-opening"]');
+    else if (rubricId === 'rationale.topic_fit.explicit_link') selectors.push('[data-preview-section="fr-topic-fit"]');
+    else if (rubricId === 'rationale.philosophy.specific') selectors.push('[data-preview-section="fr-philosophy"]');
+    else if (rubricId === 'rationale.background.factual') selectors.push('[data-preview-section="fr-background"]');
+    else if (rubricId === 'rationale.what_learner_gets.concrete') selectors.push('[data-preview-section="fr-learner"]');
+    for (const s of selectors) {
+      target = body.querySelector(s);
+      if (target) break;
+    }
+  }
+
+  if (!target) target = body.firstElementChild || body;
+
+  // 1) 클래스 추가 (배경·보더·애니메이션)
+  target.classList.add('hl-anchor');
+  _lastAnchor = target;
+
+  // 2) 인라인 마커 주입 — "⚐ 여기를 확인하세요"
+  const marker = document.createElement('div');
+  marker.className = 'hl-marker';
+  marker.textContent = '⚐ 여기를 확인하세요';
+  // insertBefore의 firstChild 이슈 방지
+  if (target.firstChild) target.insertBefore(marker, target.firstChild);
+  else target.appendChild(marker);
+  _lastAnchor._marker = marker;
+
+  // 3) 수동 스크롤 — preview-body 컨테이너 기준으로 target 위치 계산
+  try {
+    const containerRect = body.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const top = body.scrollTop + (targetRect.top - containerRect.top) - 24;
+    body.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  } catch(e) {
+    try { target.scrollIntoView({ behavior:'smooth', block:'start' }); } catch(_){}
+  }
+}
+function flagCardHtml(f) {
+  const c = FLAG_META[f.flag_type] || FLAG_META.SCHEMA;
+  const loc = parseLocation(f.location_path);
+  const severity = (f.severity || '').trim();
+  const sevClass = severity === '상' ? 'text-rose-600' : severity === '중' ? 'text-amber-600' : 'text-zinc-500';
+  // guide 안에 종종 '[rubric_id] …' 형태가 들어있음 → 그 접두부 제거
+  let guide = (f.guide || '').replace(/^\s*\[[\w.]+\]\s*/,'').trim();
+  return `<div class="flag-card bg-white border-b border-zinc-200" data-flag-id="${f.flag_id}" data-raw-id="${loc.rawId}">
+    <button class="w-full text-left p-4 hover:bg-zinc-50" data-act="jump" data-raw-id="${loc.rawId}" data-raw-path="${esc(f.location_path||'')}">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="badge" style="background:${c.bg};color:${c.fg}" title="${esc(c.hint)}">${esc(c.label)}</span>
+        <span class="text-[10px] font-semibold ${sevClass}">심각도 ${esc(severity)}</span>
+        <span class="ml-auto text-[10px] text-amber-700 font-semibold">⚐ 이 부분 보기</span>
+      </div>
+      <div class="text-[11px] text-zinc-500 mb-1">
+        <span class="font-medium text-zinc-600">${esc(loc.area)}</span>
+        ${loc.item ? `<span class="text-zinc-400"> · </span><span>${esc(loc.item)}</span>` : ''}
+      </div>
+      <div class="text-sm font-semibold text-zinc-800 leading-relaxed mb-1.5">${esc(f.reason || '')}</div>
+      <div class="text-xs text-zinc-600 leading-5">${esc(guide)}</div>
+    </button>
+    <div class="px-4 pb-3">
+      <textarea id="ins-${f.flag_id}" rows="2" class="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-xs placeholder:text-zinc-400" placeholder="수정 지시 (선택 — 예: '고속터미널만 쓰지 말고, 30대 직장인이 평일 저녁 한식 모임 찾는 구체 맥락 포함')"></textarea>
+      <div class="flex gap-1.5 mt-2">
+        <button data-act="regen" data-flag-id="${f.flag_id}" data-cid="${f.component_id}" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-medium">재생성</button>
+        <button data-act="dismiss" data-flag-id="${f.flag_id}" class="border border-zinc-300 hover:bg-zinc-50 px-3 py-1.5 rounded text-xs">무시</button>
+      </div>
+      <details class="mt-2 text-[10px] text-zinc-400">
+        <summary class="cursor-pointer">AI 판정 원문 / 원시 ID</summary>
+        <div class="mt-1 mono">${esc(loc.rawId)}</div>
+      </details>
+    </div>
+  </div>`;
+}
+
+async function regenFromFlag(flagId, cid) {
+  const instr = $('ins-'+flagId).value.trim();
+  toast('재생성 요청 중…');
+  try {
+    const r = await fetch(`/api/components/${cid}/regenerate-item`, {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ item_index: 0, instruction: instr, flag_id: flagId })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'HTTP '+r.status);
+    toast('새 버전 생성 완료: '+d.new_component_id, 'ok');
+    await refreshReview();
+  } catch(e) { toast('재생성 실패: '+e.message, 'err'); }
+}
+async function dismissFlag(flagId) {
+  try {
+    await fetch(`/api/flags/${flagId}/resolve`, {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ resolution: 'dismissed' })
+    });
+    await refreshReview();
+  } catch(e) { toast('실패: '+e.message, 'err'); }
+}
+
+function renderFilters() {
+  const host = $('flag-filters');
+  const types = ['FACT','SCHEMA','BORDERLINE','SENSITIVE','CONSISTENCY'];
+  const counts = {};
+  state.flags.forEach(f => counts[f.flag_type] = (counts[f.flag_type]||0)+1);
+  host.innerHTML = types.map(t => {
+    const on = state.activeFilters.has(t);
+    const meta = FLAG_META[t];
+    const style = on
+      ? `background:${meta.bg};color:${meta.fg};border:1px solid ${meta.fg};`
+      : 'background:#fff;color:#a1a1aa;border:1px solid #e4e4e7;';
+    const dim = on ? '' : 'opacity:0.6;';
+    return `<button data-ft="${t}" class="text-[11px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1" style="${style}${dim}" title="${esc(meta.hint)}">
+      ${esc(meta.label)}
+      <span class="mono text-[10px] opacity-80">${counts[t]||0}</span>
+    </button>`;
+  }).join('');
+  host.querySelectorAll('[data-ft]').forEach(b => b.onclick = () => {
+    const t = b.dataset.ft;
+    if (state.activeFilters.has(t)) state.activeFilters.delete(t); else state.activeFilters.add(t);
+    renderFilters();
+    if (state.selectedCompId) selectComponent(state.selectedCompId);
+  });
+}
+
+// 필터 도움말 토글
+$('filter-help').onclick = () => $('filter-help-panel').classList.toggle('hidden');
+
+// 벌크 dismiss
+$('bulk-dismiss').onclick = async () => {
+  if (!state.selectedCompId) return;
+  const comp = state.flags.filter(f => f.component_id === state.selectedCompId && state.activeFilters.has(f.flag_type));
+  if (!comp.length) { toast('대상 플래그 없음'); return; }
+  if (!confirm(`이 컴포넌트의 ${comp.length}개 플래그를 모두 무시하시겠습니까?`)) return;
+  try {
+    await fetch('/api/flags/bulk-resolve', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ flag_ids: comp.map(f=>f.flag_id), resolution:'dismissed' })
+    });
+    toast(`${comp.length}건 무시됨`, 'ok');
+    await refreshReview();
+  } catch(e) { toast('실패: '+e.message,'err'); }
+};
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', (ev) => {
+  if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+  if (state.currentTab !== 'review') return;
+  const comps = state.components;
+  const idx = comps.findIndex(c => c.component_id === state.selectedCompId);
+  if (ev.key === 'ArrowDown' || ev.key === 'j') {
+    if (idx < comps.length - 1) selectComponent(comps[idx+1].component_id);
+    ev.preventDefault();
+  } else if (ev.key === 'ArrowUp' || ev.key === 'k') {
+    if (idx > 0) selectComponent(comps[idx-1].component_id);
+    ev.preventDefault();
+  }
+});
+
+// ============================================================
+// RESIZER (Pane divider & Table column)
+// ============================================================
+function makeHorizontalResizer(divider, target, opts) {
+  // opts: { min, max, direction: 'right-of' | 'left-of' }
+  //  - 'right-of' : divider is to the right of `target`. Drag right → target grows.
+  //  - 'left-of'  : divider is to the left of  `target`. Drag right → target shrinks.
+  if (!divider || !target) return;
+  divider.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    divider.classList.add('dragging');
+    document.body.classList.add('resizing');
+    const startX = e.clientX;
+    const startW = target.offsetWidth;
+    const onMove = (ev) => {
+      const delta = ev.clientX - startX;
+      const sign = opts.direction === 'left-of' ? -1 : 1;
+      const newW = Math.max(opts.min, Math.min(opts.max, startW + sign * delta));
+      target.style.width = newW + 'px';
+    };
+    const onUp = () => {
+      divider.classList.remove('dragging');
+      document.body.classList.remove('resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      try { localStorage.setItem('pane-'+target.id, target.style.width); } catch(_){}
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+}
+
+function initPaneResizers() {
+  const navPane = $('review-nav-pane');
+  const actPane = $('review-action-pane');
+  // 저장된 폭 복원
+  try {
+    const w1 = localStorage.getItem('pane-review-nav-pane');
+    const w2 = localStorage.getItem('pane-review-action-pane');
+    if (w1) navPane.style.width = w1;
+    if (w2) actPane.style.width = w2;
+  } catch(_){}
+  makeHorizontalResizer($('div-nav'), navPane, { min: 200, max: 500, direction: 'right-of' });
+  makeHorizontalResizer($('div-action'), actPane, { min: 280, max: 640, direction: 'left-of' });
+}
+
+function initTableColResizers(table) {
+  if (!table) return;
+  const ths = table.querySelectorAll('th');
+  ths.forEach((th, i) => {
+    const handle = th.querySelector('.col-resizer');
+    if (!handle) return;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      handle.classList.add('dragging');
+      document.body.classList.add('resizing');
+      const startX = e.clientX;
+      const startW = th.offsetWidth;
+      const onMove = (ev) => {
+        const newW = Math.max(40, startW + (ev.clientX - startX));
+        th.style.width = newW + 'px';
+      };
+      const onUp = () => {
+        handle.classList.remove('dragging');
+        document.body.classList.remove('resizing');
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+refreshRunsList();
+setInterval(refreshRunsList, 15000);
+switchTab('control');
+// 리사이저 활성화 (리뷰 3-pane + 기획서 커리큘럼 테이블)
+initPaneResizers();
+initTableColResizers($('curriculum-table'));
+</script>
+</body>
+</html>

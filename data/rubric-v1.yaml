@@ -1,0 +1,300 @@
+# AI World Rubric v1.0
+# 5개 과정 검토 결과 + 진규·재정 피드백 + 기존 aiworld-main의 self-check를 통합한 평가 루브릭
+# 각 항목은 LLM-as-judge 검증자가 상/중/하로 판정.
+# severity_if_fail: 이 항목이 실패(하)일 때 플래그 심각도.
+
+version: "1.0"
+updated_at: "2026-04-22"
+
+components:
+
+  # ---------- 코스 기획 ----------
+  course_overview:
+    - id: overview.course_name.pattern
+      description: 코스명이 "{위인}의 {동사} — {부제목}" 패턴을 따르는가
+      severity_if_fail: 중
+    - id: overview.sell_reason.length
+      description: 팔릴 이유 한 줄이 40자 이내
+      severity_if_fail: 중
+      auto_check: length_le(sell_reason, 40)
+    - id: overview.targets.concrete
+      description: 수강대상 3개가 구체적 어려움을 묘사 (추상적 표현 금지)
+      severity_if_fail: 상
+    - id: overview.effects.concrete
+      description: 수강효과 3개가 구체적 변화를 묘사 (추상적 표현 금지)
+      severity_if_fail: 상
+    - id: overview.curriculum.structure
+      description: 커리큘럼이 기초(P1~2) → 심화(P3~4) → 종합(P5) 순서를 따름
+      severity_if_fail: 중
+    - id: overview.prompt_techniques.unique
+      description: 프롬프트 기법이 10개 챕터에 중복 없이 배정
+      severity_if_fail: 상
+      auto_check: unique_across(curriculum.prompt_technique)
+    - id: overview.figure_topic.coherence
+      description: 위인의 교육 철학과 프롬프트 기법이 자연스럽게 연결
+      severity_if_fail: 중
+
+  # ---------- 위인 선정 배경 (figure rationale) ----------
+  figure_rationale:
+    - id: rationale.background.factual
+      description: 위인 배경(이력·시대·업적)이 사실 기반이며 허구 없음
+      severity_if_fail: 상
+    - id: rationale.philosophy.specific
+      description: 위인의 핵심 철학이 구체적으로 기술됨 (추상적 미덕 나열 금지)
+      severity_if_fail: 상
+    - id: rationale.topic_fit.explicit_link
+      description: 위인 철학 → 주제(프롬프트 기법)의 연결고리가 명시적으로 서술됨
+      severity_if_fail: 상
+    - id: rationale.episodes.sources_cited
+      description: 인용 에피소드마다 출처(서적/기사/인터뷰 + 연도) 명시
+      severity_if_fail: 상
+    - id: rationale.what_learner_gets.concrete
+      description: 학습자가 이 위인에게 얻는 것 3~5개가 추상 아닌 구체 역량으로 기술
+      severity_if_fail: 중
+    - id: rationale.voice.mentor_tone
+      description: 위인 멘토링 시뮬레이션 톤 일관 (교과서적 표현 금지)
+      severity_if_fail: 중
+
+  # ---------- 학습자료 ----------
+  material:
+    - id: material.sections.six_present
+      description: "정확히 6개 섹션 (도입·핵심개념·Bad/Good/Better·실전시나리오·체크리스트·요약)"
+      severity_if_fail: 상
+    - id: material.length.1500_2500
+      description: 전체 분량 1,500~2,500자
+      severity_if_fail: 중
+    - id: material.bgb.bad_good_better_order
+      description: "Bad → Good → Better 3단 비교 섹션 필수 (기존 Good/Better/Best 아님)"
+      severity_if_fail: 상
+      auto_check: body contains 'Bad' and 'Good' and 'Better'
+    - id: material.heading.better_prompt_fixed
+      description: "소제목 중 하나가 정확히 '[ 더 좋은 프롬프트 만들기 ]' 포함"
+      severity_if_fail: 상
+      auto_check: any(section.heading contains '더 좋은 프롬프트 만들기')
+    - id: material.heading.emoji_prefix
+      description: "각 섹션 heading 앞에 이모지 아이콘 1개 붙음"
+      severity_if_fail: 중
+      auto_check: each section.heading starts with emoji
+    - id: material.format.table_used
+      description: "본문에 마크다운 표 최소 1개 사용 (비교·분류 시 표가 기본)"
+      severity_if_fail: 중
+      auto_check: any section.body contains '|---|'
+    - id: material.philosophy.practical_book
+      description: "실용서적 톤 (교양서·교과서 X) — '그냥 좋은 이야기' 없음"
+      severity_if_fail: 상
+    - id: material.philosophy.logic_strengthened
+      description: "'말로 지시하기보다 프롬프트 기법을 활용해야' 라는 논리가 본문 전반에 강화됨"
+      severity_if_fail: 중
+    - id: material.opener.tech_vs_plain_contrast
+      description: "도입부에 단순 프롬프트 vs 기법 적용 프롬프트 비교 장면 포함"
+      severity_if_fail: 중
+    - id: material.bestseller_style.applied
+      description: "주제 관련 베스트셀러의 예시·문법 스타일이 일부 적용됨"
+      severity_if_fail: 하
+    - id: material.checklist.5_to_7
+      description: 실전 체크리스트 5~7항목
+      severity_if_fail: 중
+    - id: material.opener.empathy_line_present
+      description: "첫 섹션(도입부)이 공감 오프너 형태 ('이런 적 있지 않나요')"
+      severity_if_fail: 중
+    - id: material.category.concept_explanation_present
+      description: 카테고리별 전문 개념 설명 포함 (예 SWOT·확률×영향도·기대손실액 수준)
+      severity_if_fail: 상
+    - id: material.templates.situation_specific_present
+      description: 상황별 복붙 템플릿 존재 + 구체 시나리오 포함
+      severity_if_fail: 상
+    - id: material.examples.concrete_and_practical
+      description: 실제적 예시 충분 (개념 나열만 불합격)
+      severity_if_fail: 상
+    - id: material.voice.mentor_persona
+      description: 위인 화법 일관
+      severity_if_fail: 중
+    - id: material.no_error_outputs
+      description: 오류난 출력물 없음
+      severity_if_fail: 상
+
+  # ---------- 퀴즈 ----------
+  quiz:
+    - id: quiz.count.total_10
+      description: 총 10문항인가
+      severity_if_fail: 상
+      auto_check: len(items) == 10
+    - id: quiz.count.type_each_2
+      description: 각 유형(OX/단일선택/복수선택/분류/단답형)이 정확히 2개씩
+      severity_if_fail: 상
+      auto_check: each_type_count_eq(2)
+    - id: quiz.single.choices_4
+      description: 단일선택은 보기 4개 + 정답 1개
+      severity_if_fail: 상
+      auto_check: single_choice_4_and_1
+    - id: quiz.multi.choices_5_answer_2
+      description: 복수선택은 보기 정확히 5개 + 정답 정확히 2개 ⚠️ 위반 빈번
+      severity_if_fail: 상
+      auto_check: multi_choice_5_and_2
+    - id: quiz.classification.partition_complete
+      description: 분류 퀴즈의 5개 보기가 2그룹에 누락·중복 없이 완전 분배
+      severity_if_fail: 상
+      auto_check: classification_partition_check
+    - id: quiz.short_answer.hint_includes_initials
+      description: 단답형 힌트에 초성 포함
+      severity_if_fail: 중
+      auto_check: regex_match(hint, r'[ㄱ-ㅎ]+\s')
+    - id: quiz.title.storytelling_format
+      description: "제목이 '{위인}의 N번째 수업 — {스토리텔링 부제}' 패턴 (교과서식 제목 금지)"
+      severity_if_fail: 중
+    - id: quiz.question.scenario_based
+      description: "문제가 시나리오 기반 ('당신이 ~한 상황에서...') 또는 위인이 직접 묻는 형식"
+      severity_if_fail: 중
+    - id: quiz.explanation.pipe_three_parts
+      description: "해설이 정확히 파이프(|) 구분자 3단 구조 (정답이유 | 오답 피드백 | 실무 팁)"
+      severity_if_fail: 상
+    - id: quiz.explanation.ends_with_imnida
+      description: "해설 모든 문장이 '~입니다.' 어미로 종료 (1인칭 '~라네/~지' 금지)"
+      severity_if_fail: 중
+    - id: quiz.single.question_suffix
+      description: "단일선택 문제가 '~가장 적절한 것은?'으로 종료"
+      severity_if_fail: 중
+    - id: quiz.multi.question_suffix
+      description: "복수선택 문제가 '가장 적절한 것을 2개 고르시오'로 종료"
+      severity_if_fail: 중
+    - id: quiz.short_answer.question_suffix
+      description: "단답형 문제가 '빈칸에 들어갈 단어를 쓰시오.'로 종료"
+      severity_if_fail: 중
+    - id: quiz.classification.question_suffix
+      description: "분류 문제가 '~로 분류하시오' 또는 '~로 올바르게 분류하시오'로 종료"
+      severity_if_fail: 중
+    - id: quiz.hint.no_initials_for_non_short
+      description: "OX·단일·복수·분류 힌트에 초성 사용 금지 (단답형만 초성 허용)"
+      severity_if_fail: 중
+    - id: quiz.single.distractors_plausible
+      description: "단일선택 오답은 '그럴듯하지만 다른 개념' (명백한 오답 금지)"
+      severity_if_fail: 중
+    - id: quiz.table.schema_strict
+      description: 12컬럼 테이블 서식 엄격 준수 (진규·재정 공통 단점 해결)
+      severity_if_fail: 상
+      auto_check: json_schema_validate(quiz_item)
+    - id: quiz.persona_consistency
+      description: 해설에서 위인 페르소나 유지 (에피소드·비유)
+      severity_if_fail: 중
+    - id: quiz.no_content_bleed
+      description: 학습자료 근거 밖 내용 섞이지 않음
+      severity_if_fail: 상
+    - id: quiz.philosophy.understand_over_trap
+      description: "'틀리게 만들기'가 아닌 '학습자료 이해 확인'이 목적으로 설계됨"
+      severity_if_fail: 중
+    - id: quiz.philosophy.not_parroting_material
+      description: "학습자료 예시를 그대로 되묻지 않고 응용·변형해 출제"
+      severity_if_fail: 중
+    - id: quiz.philosophy.prompt_writing_check
+      description: "'어떤 프롬프트를 작성해야 하는지' 체크하는 질문이 절반 이상"
+      severity_if_fail: 중
+    - id: quiz.hint.pre_submit_role
+      description: "힌트는 제출 전 수강생이 정답을 유추할 수 있는 정보 (정답 직접 노출 X)"
+      severity_if_fail: 하
+    - id: quiz.explanation.friendly_post_submit
+      description: "해설은 제출 후 수강생이 확인할 친절한 설명 (정답 이유·오답 피드백·실무 팁)"
+      severity_if_fail: 중
+
+  # ---------- 실습 ----------
+  practice:
+    - id: practice.count.three_stages
+      description: 3문제(실험/레슨/도전) 모두 존재하고 순서 맞음
+      severity_if_fail: 상
+      auto_check: stages_are_[실험,레슨,도전]
+    - id: practice.difficulty.progression
+      description: 난이도 하/중하 → 중 → 상/중상 순서
+      severity_if_fail: 상
+    - id: practice.passing_score.progression
+      description: 합격점수 50/55 → 75 → 80/85 순서 (하 난이도 0점 허용)
+      severity_if_fail: 중
+    - id: practice.problem.has_concrete_context
+      description: "문제에 구체 예시·맥락 포함 (단일 키워드만 던지는 문제 금지 - 페르소나 챕터 예- '고속터미널' 단일 키워드는 [상] 실패)"
+      severity_if_fail: 상
+    - id: practice.answer.format_is_prompt_example
+      description: 정답이 "프롬프트 good/better 2단 예시" 형태 (가이드 문장형 정답 금지)
+      severity_if_fail: 상
+    - id: practice.hint.includes_concrete_example
+      description: 힌트에 프롬프트 작성용 구체 예시 정보 포함 (개념 설명만으로는 [상] 실패)
+      severity_if_fail: 상
+    - id: practice.title.figure_stage
+      description: 콘텐츠명에 "{위인} + 단계(실험/레슨/도전)" 포함
+      severity_if_fail: 중
+    - id: practice.question.figure_voice_and_suffix
+      description: 문제에 위인 화법 + "~하시오." 어미
+      severity_if_fail: 중
+    - id: practice.criteria.all_suffix_q
+      description: 평가항목 3개 제목 모두 "~했나요?" 어미
+      severity_if_fail: 중
+      auto_check: all_criteria_titles_end_with_했나요?
+    - id: practice.description.principle_and_stars
+      description: 설명에 위인 원칙 + "*" 기호로 조건 구분
+      severity_if_fail: 하
+    - id: practice.stage1.weak_prompt
+      description: 실습 1 정답이 의도적으로 약한 프롬프트
+      severity_if_fail: 중
+    - id: practice.stage3.compound_prompt
+      description: 실습 3 정답이 상황+페르소나+출력형식 복합 조합
+      severity_if_fail: 중
+    - id: practice.table.schema_strict
+      description: 18컬럼 테이블 서식 엄격 준수
+      severity_if_fail: 상
+      auto_check: json_schema_validate(practice_item)
+    - id: practice.fixed_values
+      description: 실습환경=ChatGPT, 응답형식=텍스트, is_free=FALSE, clip_group_id=-, 파일URL=- 고정값 준수
+      severity_if_fail: 상
+      auto_check: fixed_values_check
+    - id: practice.title.self_contained
+      description: "제목만 보고 학습자가 '무엇을 해야 하는지' 즉시 이해 가능 (설명 없이도)"
+      severity_if_fail: 상
+    - id: practice.description.examples_2plus
+      description: "설명에 구체 예시 2개 이상 포함 (제목과 중복 금지)"
+      severity_if_fail: 중
+      auto_check: description contains 2+ example markers
+    - id: practice.title.length_40_100
+      description: "콘텐츠명(title) 공백 포함 40~100자"
+      severity_if_fail: 중
+      auto_check: 40 <= len(title) <= 100
+    - id: practice.description.length_94_140
+      description: "문제 설명(description) 공백 포함 94~140자"
+      severity_if_fail: 중
+      auto_check: 94 <= len(description) <= 140
+    - id: practice.criteria.title_max_20
+      description: "평가항목 제목 각 최대 20자"
+      severity_if_fail: 하
+      auto_check: each criterion.title length <= 20
+    - id: practice.criteria.description_max_40
+      description: "평가항목 설명 각 최대 40자"
+      severity_if_fail: 하
+      auto_check: each criterion.description length <= 40
+    - id: practice.criteria.distinct_3
+      description: "평가항목 3개가 서로 다른 기준 (동일 관점 반복 금지)"
+      severity_if_fail: 중
+    - id: practice.passing_scores.default_50_80_80
+      description: "기본 합격점수 50/80/80 (실험=50, 레슨=80, 도전=80)"
+      severity_if_fail: 하
+      auto_check: passing_scores match [50,80,80] for default config
+
+# ----------------------------------------------------------------------
+# 판정 → 플래그 매핑 룰
+# ----------------------------------------------------------------------
+judgment_mapping:
+  # LLM 검증자는 항목별로 {pass, marginal, fail} 판정.
+  # pass     -> 통과
+  # marginal -> BORDERLINE 플래그 (사람 확인)
+  # fail     -> 재생성 루프 진입. 단 severity_if_fail=상 이면 SCHEMA/FACT/CONSISTENCY 중 해당 타입으로 플래그
+  thresholds:
+    overall_pass: 80       # 100점 만점, 합계 점수
+    item_pass_min: 중      # 모든 항목 최소 '중' 이상
+    borderline_band: 5     # 통과선 ±5점
+
+flag_type_mapping:
+  # 각 루브릭 항목이 실패했을 때 어떤 플래그 타입으로 들어가는지
+  default: SCHEMA
+  fact_check_ids:
+    - intro.episode.source_cited
+    - material.no_error_outputs
+  consistency_ids:
+    - quiz.no_content_bleed
+    - overview.figure_topic.coherence
+  sensitive_ids: []   # 추후 추가
+  # 나머지는 default(SCHEMA)

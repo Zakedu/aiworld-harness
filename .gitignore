@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+*.pyc
+__pycache__/
+venv/
+.venv/
+data/aiworld.db
+data/aiworld.db-journal
+data/aiworld.db-wal
+data/aiworld.db-shm
+.DS_Store
+*.log
+node_modules/
+dist/
+.vscode/
+.idea/
