@@ -9,6 +9,7 @@ Quiz Generator — 챕터 1개의 퀴즈 10문항 세트 생성.
 """
 from __future__ import annotations
 from .base import call_model
+from ..prompts_store import resolve as resolve_prompt
 
 SYSTEM_PROMPT = """당신은 수강생이 퀴즈를 통해 학습자료 내용을 잘 **이해**했는지 확인하는 교육 설계자입니다.
 "위인 멘토링 시뮬레이션" 톤으로 10문항을 설계합니다.
@@ -162,7 +163,8 @@ async def generate_quiz_chapter(
     provider: str = "openai",
 ) -> dict:
     user = _user_prompt(chapter, blueprint, material_excerpt, mixer)
-    return await call_model(provider, SYSTEM_PROMPT, user, json_mode=True, temperature=0.5)  # type: ignore
+    sys = resolve_prompt("quiz_generator", SYSTEM_PROMPT)
+    return await call_model(provider, sys, user, json_mode=True, temperature=0.5)  # type: ignore
 
 
 async def regenerate_quiz_item(
@@ -189,4 +191,5 @@ async def regenerate_quiz_item(
         "이 문항 1개만 — 위 시스템 프롬프트의 모든 규칙을 지키며 — 단일 item JSON 오브젝트로 재작성하라. "
         "전체 배열이 아닌 단일 오브젝트 출력. 원 유형/난이도는 유지(사용자 지시로 명시적 변경 요청 없으면)."
     )
-    return await call_model(provider, SYSTEM_PROMPT, user, json_mode=True, temperature=0.5)  # type: ignore
+    sys = resolve_prompt("quiz_generator", SYSTEM_PROMPT)
+    return await call_model(provider, sys, user, json_mode=True, temperature=0.5)  # type: ignore

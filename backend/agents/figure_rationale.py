@@ -87,4 +87,5 @@ async def generate_rationale(inputs: dict, blueprint: dict, mixer: dict, provide
         )
         + "\n\n위 정보 기반으로 **위인 선정 배경**을 위 출력 JSON 구조로 반환하라."
     )
-    return await call_model(provider, SYSTEM_PROMPT, user, json_mode=True, temperature=0.5, max_tokens=6000)  # type: ignore
+    sys = resolve_prompt("figure_rationale", SYSTEM_PROMPT)
+    return await call_model(provider, sys, user, json_mode=True, temperature=0.5, max_tokens=6000)  # type: ignore

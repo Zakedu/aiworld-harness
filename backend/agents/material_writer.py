@@ -7,6 +7,7 @@ Material Writer — 챕터 1개의 학습자료 본문 생성 (6섹션 구조, 1
 """
 from __future__ import annotations
 from .base import call_model
+from ..prompts_store import resolve as resolve_prompt
 
 SYSTEM_PROMPT = """당신은 AI 프롬프트 강의를 만드는 **실용서적 작가**이자, "위인 멘토링 시뮬레이션" 콘셉트의 교육 콘텐츠 설계자입니다.
 
@@ -149,4 +150,5 @@ async def generate_material(
         f"{fb_block}\n"
         "위 조건으로 학습자료 본문을 위 출력 JSON 구조로 반환하라."
     )
-    return await call_model(provider, SYSTEM_PROMPT, user, json_mode=True, temperature=0.6, max_tokens=8000)  # type: ignore
+    sys = resolve_prompt("material_writer", SYSTEM_PROMPT)
+    return await call_model(provider, sys, user, json_mode=True, temperature=0.6, max_tokens=8000)  # type: ignore

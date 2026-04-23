@@ -6,6 +6,7 @@ BestPractice few-shot: references/bestpractice-columbus.md
 """
 from __future__ import annotations
 from .base import call_model
+from ..prompts_store import resolve as resolve_prompt
 
 SYSTEM_PROMPT = """당신은 AI 교육 콘텐츠 기획 전문가입니다.
 "위인 멘토링 시뮬레이션" 콘셉트로 AI World 코스를 설계합니다.
@@ -143,4 +144,5 @@ def _user_prompt(inputs: dict, mixer: dict) -> str:
 
 async def generate_blueprint(inputs: dict, mixer: dict, provider: str = "claude") -> dict:
     user = _user_prompt(inputs, mixer)
-    return await call_model(provider, SYSTEM_PROMPT, user, json_mode=True, temperature=0.5)  # type: ignore
+    sys = resolve_prompt("course_planner", SYSTEM_PROMPT)
+    return await call_model(provider, sys, user, json_mode=True, temperature=0.5)  # type: ignore

@@ -23,6 +23,7 @@ from .ws import ws_manager
 from . import orchestrator
 from .exporters.xlsx_export import build_xlsx
 from .exporters.zip_export import build_zip
+from .prompts_store import AGENT_REGISTRY, get_override, set_override, clear_override, get_default
 
 app = FastAPI(title="AI World Harness", version="1.0")
 
@@ -343,6 +344,80 @@ def resolve_flag(flag_id: str, body: FlagResolve):
         )
         conn.commit()
     return {"ok": True}
+
+
+# ============================================================
+# Admin — 환경설정 · 프롬프트 열람/수정
+# ============================================================
+
+@app.get("/api/admin/config")
+def admin_config():
+    """환경설정 요약 (API 키는 마스킹). 수정은 불가, 열람만."""
+    from .config import (
+        ANTHROPIC_API_KEY, OPENAI_API_KEY, CLAUDE_MODEL, OPENAI_MODEL,
+        CROSS_MATRIX, MAX_REGEN_RETRIES, RUBRIC_OVERALL_PASS, HOST, PORT,
+    )
+    def mask(k: str) -> str:
+        if not k:
+            return "(not set)"
+        if len(k) <= 14:
+            return "***"
+        return f"{k[:10]}…{k[-4:]}"
+    return {
+        "models": {"claude": CLAUDE_MODEL, "openai": OPENAI_MODEL},
+        "api_keys": {
+            "anthropic": mask(ANTHROPIC_API_KEY),
+            "openai": mask(OPENAI_API_KEY),
+        },
+        "cross_matrix": {k: list(v) for k, v in CROSS_MATRIX.items()},
+        "retry_limit": MAX_REGEN_RETRIES,
+        "overall_pass": RUBRIC_OVERALL_PASS,
+        "server": {"host": HOST, "port": PORT},
+    }
+
+
+@app.get("/api/admin/prompts")
+def admin_prompts_list():
+    """생성자 5 + 검증자 5 = 총 10개 에이전트 시스템 프롬프트 현재 상태."""
+    result = []
+    for key, (label, category) in AGENT_REGISTRY.items():
+        default = get_default(key)
+        override = get_override(key)
+        result.append({
+            "key": key,
+            "label": label,
+            "category": category,  # "generator" | "validator"
+            "default": default,
+            "override": override,
+            "effective": override or default,
+            "is_overridden": bool(override),
+            "default_length": len(default),
+            "effective_length": len(override or default),
+        })
+    return result
+
+
+class PromptOverrideBody(BaseModel):
+    text: str
+
+
+@app.put("/api/admin/prompts/{agent}")
+def admin_prompts_save(agent: str, body: PromptOverrideBody):
+    if agent not in AGENT_REGISTRY:
+        raise HTTPException(404, f"unknown agent: {agent}")
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(400, "프롬프트 내용이 비어있습니다")
+    set_override(agent, text)
+    return {"ok": True, "agent": agent, "length": len(text)}
+
+
+@app.delete("/api/admin/prompts/{agent}")
+def admin_prompts_reset(agent: str):
+    if agent not in AGENT_REGISTRY:
+        raise HTTPException(404)
+    clear_override(agent)
+    return {"ok": True, "agent": agent}
 
 
 @app.get("/api/presets/{key}")

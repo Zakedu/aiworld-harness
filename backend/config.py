@@ -35,12 +35,13 @@ MAX_REGEN_RETRIES = int(os.getenv("MAX_REGEN_RETRIES", "3"))
 RUBRIC_OVERALL_PASS = int(os.getenv("RUBRIC_OVERALL_PASS", "80"))
 
 # --- Cross-validation matrix (컴포넌트 → (generator, validator)) ---
-# v1.0: 'part_intro'가 'figure_rationale'로 교체됨 (파트별 5개 → 코스당 1개)
+# v1.1 단순화: 전부 Claude 생성 → GPT-5.4 검증 (명확한 역할 분리)
+# 각 컴포넌트의 프롬프트는 타입별로 고유 (생성·검증 모두)
 CROSS_MATRIX: dict[str, tuple[str, str]] = {
     "course_overview":   ("claude", "openai"),
-    "figure_rationale":  ("openai", "claude"),
+    "figure_rationale":  ("claude", "openai"),
     "material":          ("claude", "openai"),
-    "quiz":              ("openai", "claude"),
+    "quiz":              ("claude", "openai"),
     "practice":          ("claude", "openai"),
 }
 
