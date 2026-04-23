@@ -452,3 +452,6 @@ owner(Jake) PC에서는 `./scripts/auto-pull-watcher.sh`가 30초마다 `origin/
 ---
 
 *v1.1 · 2026-04-23*
+
+
+<!-- 테스트: pull watcher 실시간 검증 — 2026-04-23 -->
