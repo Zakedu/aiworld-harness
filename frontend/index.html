@@ -946,6 +946,15 @@ async function deleteRun(runId, inputs) {
 }
 
 async function attachToRun(runId) {
+  // Run 전환 시 이전 Run의 잔존 상태 초기화 (플래그·선택 컴포넌트가 섞이는 것 방지)
+  if (state.runId !== runId) {
+    state.selectedCompId = null;
+    state.components = [];
+    state.flags = [];
+    state.blueprint = null;
+    state.bpId = null;
+    resetReviewUI();
+  }
   state.runId = runId;
   updateRunPill(null);
   try {
@@ -1137,6 +1146,8 @@ $('btn-generate').onclick = async () => {
     state.components = [];
     state.flags = [];
     state.bpId = null; state.blueprint = null;
+    state.selectedCompId = null;
+    resetReviewUI();
     updateRunPill('planning');
     switchTab('exec');
     $('bp-idle').classList.add('hidden');
@@ -1325,16 +1336,48 @@ document.addEventListener('click', async (ev) => {
 // ============================================================
 // REVIEW (Screen 3) — Navigator + Preview + Actions
 // ============================================================
+function resetReviewUI() {
+  // Run 전환/삭제 시 Review 화면 초기화 — 이전 Run의 프리뷰/플래그 카드가 남지 않도록
+  const pb = $('preview-body');
+  if (pb) pb.innerHTML = '<div class="text-sm text-zinc-400 text-center mt-20">아직 선택된 컴포넌트가 없습니다.</div>';
+  const ap = $('action-panel');
+  if (ap) ap.innerHTML = '<div class="text-sm text-zinc-400 text-center mt-20 px-4">좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.</div>';
+  const pt = $('preview-title'); if (pt) pt.textContent = '컴포넌트 선택';
+  ['preview-model','preview-score','btn-chapter-regen','btn-material-docx'].forEach(id => {
+    const el = $(id); if (el) el.classList.add('hidden');
+  });
+  const rs = $('review-summary'); if (rs) rs.textContent = '—';
+}
+
 async function refreshReview() {
   await refreshRunData();
   renderNavTree();
   renderFilters();
+  // selectedCompId가 현재 Run의 컴포넌트 중 하나인지 확인 (Run 전환 후 stale 방지)
+  const validSel = state.selectedCompId &&
+    state.components.some(c => c.component_id === state.selectedCompId);
+  if (!validSel) {
+    state.selectedCompId = null;
+    resetReviewUI();
+  }
   if (!state.selectedCompId && state.components.length) {
     selectComponent(state.components[0].component_id);
   } else if (state.selectedCompId) {
     selectComponent(state.selectedCompId);
   }
-  $('review-summary').textContent = `${state.flags.length} flags`;
+  updateReviewSummary();
+}
+
+function updateReviewSummary() {
+  // "플래그 & 액션" 우측 헤더 — 스코프(이 Run / 선택 컴포넌트)를 명확히 표기
+  const total = state.flags.length;
+  const selN = state.selectedCompId
+    ? state.flags.filter(f => f.component_id === state.selectedCompId).length
+    : 0;
+  const label = state.selectedCompId
+    ? `선택 ${selN} · 이 Run 총 ${total}건 미해결`
+    : `이 Run 총 ${total}건 미해결`;
+  $('review-summary').textContent = label;
 }
 
 function renderNavTree() {
@@ -1399,7 +1442,13 @@ async function selectComponent(cid) {
   _clearAnchor && _clearAnchor();
   renderNavTree();
   const c = state.components.find(x => x.component_id === cid);
-  if (!c) return;
+  if (!c) {
+    // cid가 현재 Run의 컴포넌트가 아님 (stale) — UI 정리
+    state.selectedCompId = null;
+    resetReviewUI();
+    updateReviewSummary();
+    return;
+  }
   const typeKo = TYPE_LABEL[c.type];
   const chapName = state.chapterMap[c.chapter_id] || '';
   $('preview-title').textContent = `${typeKo}${c.chapter_id && c.chapter_id !== '-' ? ' · ' + c.chapter_id : ''}${chapName ? ' · ' + chapName : ''}`;
@@ -1441,6 +1490,7 @@ async function selectComponent(cid) {
     }
     renderPreview(c.type, d.content);
     renderActionPanel(d.flags || state.flags.filter(f => f.component_id === cid));
+    updateReviewSummary();
   } catch(e) { toast('컴포넌트 로드 실패','err'); }
 }
 
