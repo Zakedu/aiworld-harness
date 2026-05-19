@@ -1,0 +1,86 @@
+# AI World 표준 용어 사전
+# 콘텐츠 생성 시 일관된 용어 사용을 강제하기 위한 기준.
+# glossary_validator.py 가 이 파일을 로드하여 위반 항목을 감지한다.
+
+terms:
+  # ── 퀴즈 유형 ───────────────────────────────────────
+  - canonical: "단일선택"
+    forbidden: ["선다형", "객관식", "단일 선택", "사지선다", "사지 선다"]
+    context: "quiz type"
+
+  - canonical: "복수선택"
+    forbidden: ["다답형", "복수 선택", "복선택", "다지선다"]
+    context: "quiz type"
+
+  - canonical: "분류"
+    forbidden: ["분류형", "분류하기", "분류 퀴즈"]
+    context: "quiz type"
+
+  - canonical: "단답형"
+    forbidden: ["단답", "주관식", "단답 형식", "단문형"]
+    context: "quiz type"
+
+  - canonical: "OX"
+    forbidden: ["O/X", "O×X", "OX형", "참/거짓", "true/false"]
+    context: "quiz type"
+
+  # ── BGB 마커 ────────────────────────────────────────
+  - canonical: "Bad/Good/Better"
+    forbidden:
+      - "나쁨/좋음/더좋음"
+      - "bad/good/best"
+      - "Bad/Good/Best"
+      - "worst/good/best"
+      - "Bad → Good → Best"
+    context: "example section"
+
+  # ── 컴포넌트 명칭 ────────────────────────────────────
+  - canonical: "학습자료"
+    forbidden: ["강의자료", "교재", "학습 자료", "강의 자료"]
+    context: "component name"
+
+  - canonical: "실전 체크리스트"
+    forbidden: ["체크리스트", "점검표", "실전체크리스트"]
+    context: "section name"
+
+  - canonical: "프롬프트 기법"
+    forbidden: ["프롬프팅 기법", "프롬프트 방법", "프롬프트 스킬", "프롬프팅 방법"]
+    context: "technique term"
+
+  # ── 해설 어미 ────────────────────────────────────────
+  - canonical: "~입니다. (해설 어미)"
+    forbidden: []  # 패턴으로 처리 (아래 patterns 참조)
+    context: "explanation style"
+
+patterns:
+  # ── 위인 화법 감지 ───────────────────────────────────
+  - name: "위인 화법 (material 금지)"
+    regex: "(라네|이라네|지네|일세|이라네|이지|하였네|했네|이었네)\\."
+    forbidden_in: ["material", "quiz", "practice"]
+    allowed_in: ["story"]
+    message: "위인 화법 어미 감지. material/quiz/practice에서는 학습자 관점(~입니다.)으로 작성해야 합니다."
+    severity: "warn"
+
+  # ── BGB 마커 괄호 설명 ───────────────────────────────
+  - name: "BGB 마커 형식 오류"
+    regex: "===\\s*(Bad|Good|Better)\\s+[^=]+==="
+    forbidden_in: ["material"]
+    allowed_in: []
+    message: "BGB 마커에 괄호/설명 포함 감지. '=== Bad ===' 형태만 허용됩니다."
+    severity: "error"
+
+  # ── 해설 어미 체크 ───────────────────────────────────
+  - name: "해설 어미 오류"
+    regex: "explanation.*?(라네|지네|일세)\\."
+    forbidden_in: ["quiz", "practice", "special_quiz"]
+    allowed_in: []
+    message: "해설(explanation)에 위인 어미 감지. '~입니다.' 어미를 사용해야 합니다."
+    severity: "warn"
+
+  # ── 이모지 (학습자료 본문 금지) ─────────────────────
+  - name: "이모지 (material body 권고)"
+    regex: "[\\U0001F600-\\U0001F64F\\U0001F300-\\U0001F5FF\\U0001F680-\\U0001F6FF\\u2600-\\u26FF]"
+    forbidden_in: []   # 경고만, forbidden_in 없이 message만 활용
+    allowed_in: []
+    message: "이모지 감지. 학습자료 본문에서 이모지 사용을 최소화하세요."
+    severity: "info"

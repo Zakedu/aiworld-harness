@@ -23,6 +23,7 @@ from .ws import ws_manager
 from . import orchestrator
 from .exporters.xlsx_export import build_xlsx
 from .exporters.zip_export import build_zip
+from .exporters.sql_export import build_sql
 from .prompts_store import AGENT_REGISTRY, get_override, set_override, clear_override, get_default
 
 app = FastAPI(title="AI World Harness", version="1.0")
@@ -210,8 +211,9 @@ def get_component(component_id: str):
 
 @app.get("/api/runs/{run_id}/export.xlsx")
 def export_xlsx(run_id: str):
+    """비개발자용 — 내용 중심 (SQL 컬럼 없음)."""
     try:
-        filename, data = build_xlsx(run_id)
+        filename, data = build_xlsx(run_id, mode="user")
     except ValueError as e:
         raise HTTPException(404, str(e))
     headers = {
@@ -220,6 +222,52 @@ def export_xlsx(run_id: str):
     return StreamingResponse(
         iter([data]),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
+
+
+@app.get("/api/runs/{run_id}/export.dev.xlsx")
+def export_xlsx_dev(run_id: str):
+    """개발자용 — SQL 컬럼·설정·course_practice_quiz 탭."""
+    try:
+        filename, data = build_xlsx(run_id, mode="dev")
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    headers = {
+        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
+    }
+    return StreamingResponse(
+        iter([data]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
+
+
+@app.post("/api/runs/{run_id}/revalidate")
+async def revalidate_run(run_id: str):
+    """generated/validation_error 컴포넌트 일괄 재검증."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT run_id FROM runs WHERE run_id=?", (run_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "run not found")
+    import asyncio
+    asyncio.create_task(orchestrator.revalidate_run(run_id))
+    return {"status": "revalidation_started", "run_id": run_id}
+
+
+@app.get("/api/runs/{run_id}/export.sql")
+def export_sql(run_id: str):
+    """INSERT SQL 파일 다운로드 — quiz / practice / course_practice_quiz 3개 테이블."""
+    try:
+        filename, sql_text = build_sql(run_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    headers = {
+        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
+    }
+    return StreamingResponse(
+        iter([sql_text.encode("utf-8")]),
+        media_type="text/plain; charset=utf-8",
         headers=headers,
     )
 
@@ -264,6 +312,18 @@ def export_component_docx(component_id: str):
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers=headers,
     )
+
+
+@app.get("/api/runs/{run_id}/chapters/{chapter_id}/material.html",
+         response_class=HTMLResponse)
+def export_material_html(run_id: str, chapter_id: str):
+    """챕터 학습자료를 프리미엄 HTML로 반환 (브라우저에서 직접 열기 / PDF 저장)."""
+    from .exporters.html_export import build_material_html
+    try:
+        html_content = build_material_html(run_id, chapter_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    return HTMLResponse(content=html_content)
 
 
 @app.delete("/api/runs/{run_id}")
@@ -374,6 +434,33 @@ def admin_config():
         "overall_pass": RUBRIC_OVERALL_PASS,
         "server": {"host": HOST, "port": PORT},
     }
+
+
+@app.post("/api/admin/api-key")
+async def update_api_key(body: dict):
+    """API 키를 .env 파일에 업데이트."""
+    import re, pathlib
+    key_name = body.get("key")   # "OPENAI_API_KEY" | "ANTHROPIC_API_KEY"
+    key_value = body.get("value", "").strip()
+    allowed = {"OPENAI_API_KEY", "ANTHROPIC_API_KEY"}
+    if key_name not in allowed:
+        raise HTTPException(400, "허용되지 않은 키 이름")
+    if not key_value:
+        raise HTTPException(400, "키 값이 비어있습니다")
+
+    env_path = pathlib.Path(".env")
+    if not env_path.exists():
+        raise HTTPException(500, ".env 파일을 찾을 수 없습니다")
+
+    text = env_path.read_text()
+    pattern = rf"^{key_name}=.*$"
+    new_line = f"{key_name}={key_value}"
+    if re.search(pattern, text, re.MULTILINE):
+        text = re.sub(pattern, new_line, text, flags=re.MULTILINE)
+    else:
+        text = text.rstrip("\n") + f"\n{new_line}\n"
+    env_path.write_text(text)
+    return {"status": "ok", "key": key_name}
 
 
 @app.get("/api/admin/prompts")

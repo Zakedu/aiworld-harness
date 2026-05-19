@@ -72,22 +72,37 @@
     },
     "material_chapter": {
       "type": "object",
-      "description": "챕터별 학습자료 본문 (기존 Google Docs 1개에 대응)",
+      "description": "챕터별 학습자료 본문 — 순수 학습 콘텐츠 7섹션 (스토리/브릿지는 story_chapter로 분리)",
       "required": ["chapter_id", "sections"],
       "properties": {
         "chapter_id": { "$ref": "#/definitions/chapter_id" },
         "sections": {
           "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
           "items": {
             "type": "object",
             "required": ["heading", "body"],
             "properties": {
               "heading": { "type": "string" },
               "body":    { "type": "string" },
-              "kind":    { "type": "string", "enum": ["empathy_opener", "concept", "template", "example", "reflection"] }
+              "kind":    { "type": "string", "enum": ["background_knowledge", "empathy_opener", "concept", "example", "template", "reflection"] }
             }
           }
         }
+      }
+    },
+    "story_chapter": {
+      "type": "object",
+      "description": "챕터별 인트로 스토리 — 씬 내러티브 + 이미지 생성 프롬프트. story_writer가 생성.",
+      "required": ["chapter_id", "scene_title", "character_name", "opening_scene", "mission_briefing", "scene_image_prompt"],
+      "properties": {
+        "chapter_id":         { "$ref": "#/definitions/chapter_id" },
+        "scene_title":        { "type": "string", "maxLength": 15, "description": "6자 내외 동사형 씬 제목" },
+        "character_name":     { "type": "string", "description": "위인 이름 단독" },
+        "opening_scene":      { "type": "string", "minLength": 50, "maxLength": 300, "description": "시네마틱 장면 묘사 2~3문장 (한국어)" },
+        "mission_briefing":   { "type": "string", "minLength": 80, "maxLength": 400, "description": "기법 연결 내러티브 3~4문장, '오늘 당신의 미션은...'으로 마무리 (한국어)" },
+        "scene_image_prompt": { "type": "string", "minLength": 80, "maxLength": 600, "description": "[Insert your scene here] 자리에 바로 쓸 영문 씬 묘사" }
       }
     },
     "quiz_item": {
@@ -116,6 +131,8 @@
         "clip_group_id": { "type": "string", "default": "-" },
         "is_free":       { "type": "string", "enum": ["FALSE"], "default": "FALSE" },
         "stage":         { "type": "string", "enum": ["실험", "레슨", "도전"] },
+        "learning_point": { "type": "string", "description": "이 실습이 검증하는 핵심 학습 능력 1줄" },
+        "practice_role":  { "type": "string", "enum": ["BAD", "GOOD"], "description": "실험=BAD, 레슨/도전=GOOD" },
         "title":         { "type": "string", "maxLength": 100, "description": "{위인}의 {단계} — {구체적 동작}" },
         "question":      { "type": "string", "maxLength": 150, "description": "위인 화법 + ~하시오 어미" },
         "description":   { "type": "string", "maxLength": 140, "description": "위인 원칙 + * 기호로 조건 구분" },
@@ -174,6 +191,7 @@
     { "$ref": "#/definitions/curriculum_row" },
     { "$ref": "#/definitions/figure_rationale" },
     { "$ref": "#/definitions/material_chapter" },
+    { "$ref": "#/definitions/story_chapter" },
     { "$ref": "#/definitions/quiz_chapter_set" },
     { "$ref": "#/definitions/practice_chapter_set" }
   ]

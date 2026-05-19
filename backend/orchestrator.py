@@ -16,9 +16,10 @@ from typing import Any
 from .config import CROSS_MATRIX, MAX_REGEN_RETRIES
 from .db import get_conn
 from .ws import ws_manager
-from .agents import course_planner, quiz_generator, practice_generator, material_writer, figure_rationale
+from .agents import course_planner, quiz_generator, practice_generator, material_writer, figure_rationale, story_writer, special_quiz_generator
 from .validators.schema_validator import validate_component
 from .validators.rubric_validator import rubric_validate, extract_flags_from_results
+from .validators.glossary_validator import validate_component as glossary_validate
 
 
 def new_id(prefix: str) -> str:
@@ -88,11 +89,14 @@ async def _generate_all_components(run_id: str, blueprint_id: str):
     inputs = json.loads(r["inputs_json"]) if r else {}
     await _generate_figure_rationale(run_id, blueprint_id, blueprint, inputs)
 
-    # Step B: 챕터별 학습자료 먼저 생성 (퀴즈·실습의 근거 자료)
+    # Step B: 학습자료 + 스토리 병렬 생성 (퀴즈·실습의 근거 자료)
     material_tasks = [
         _generate_material(run_id, blueprint_id, blueprint, ch) for ch in curriculum
     ]
-    await asyncio.gather(*material_tasks, return_exceptions=True)
+    story_tasks = [
+        _generate_story_chapter(run_id, blueprint_id, blueprint, ch) for ch in curriculum
+    ]
+    await asyncio.gather(*material_tasks, *story_tasks, return_exceptions=True)
 
     # Step C: 학습자료 기반으로 퀴즈·실습 병렬 생성
     tasks = []
@@ -100,6 +104,28 @@ async def _generate_all_components(run_id: str, blueprint_id: str):
         tasks.append(_generate_and_validate(run_id, blueprint_id, blueprint, chapter, "quiz"))
         tasks.append(_generate_and_validate(run_id, blueprint_id, blueprint, chapter, "practice"))
     await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Step D: 파트 티저 / 파트 종합 / 최종 회고 생성
+    await _generate_special_quizzes(run_id, blueprint_id, blueprint, curriculum)
+
+    # 누락 컴포넌트 감지 (병렬 생성 중 조용히 실패한 항목)
+    missing: list[dict] = []
+    with get_conn() as conn:
+        for ch in curriculum:
+            cid = ch["chapter_id"]
+            for ctype in ("material", "story", "quiz", "practice"):
+                row = conn.execute(
+                    "SELECT 1 FROM components WHERE run_id=? AND type=? AND chapter_id=? LIMIT 1",
+                    (run_id, ctype, cid),
+                ).fetchone()
+                if not row:
+                    missing.append({
+                        "chapter_id": cid,
+                        "chapter_name": ch.get("chapter_name", ""),
+                        "type": ctype,
+                    })
+    if missing:
+        await emit(run_id, "run.missing_components", {"missing": missing})
 
     with get_conn() as conn:
         conn.execute("UPDATE runs SET status='reviewing' WHERE run_id=?", (run_id,))
@@ -132,8 +158,8 @@ async def _generate_and_validate(
         mat_obj = json.loads(mat["content_json"])
         material_excerpt = "\n\n".join(
             f"## {s.get('heading','')}\n{s.get('body','')}"
-            for s in (mat_obj.get("sections") or [])
-        )[:6000]  # 프롬프트 길이 제한
+            for s in _body_sections(mat_obj.get("sections") or [])
+        )[:6000]  # 브릿지 섹션 제외 — 교육 본문만 전달
     else:
         # fallback: material 생성 실패 시 최소 요약
         material_excerpt = (
@@ -174,8 +200,21 @@ async def _generate_and_validate(
     while True:
         # 1) Schema validator (코드)
         schema_result = validate_component(component_type, current_content)
-        # 2) Rubric validator (LLM, 반대 모델)
-        rubric_result = await rubric_validate(component_type, current_content, val_provider)
+        # 2) Rubric validator (LLM, 반대 모델) — 실패 시 조용히 무시되지 않도록 try/except
+        try:
+            rubric_result = await rubric_validate(component_type, current_content, val_provider)
+        except Exception as val_err:
+            import logging
+            logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {val_err}")
+            with get_conn() as conn:
+                conn.execute("UPDATE components SET status='validation_error' WHERE component_id=?",
+                             (current_component_id,))
+                conn.commit()
+            await emit(run_id, "component.validation_error", {
+                "component_id": current_component_id, "type": component_type,
+                "chapter_id": chapter_id, "error": str(val_err)[:300]
+            })
+            return
         passed = schema_result["passed"] and rubric_result.get("passed", False)
 
         with get_conn() as conn:
@@ -300,10 +339,123 @@ async def _generate_material(run_id: str, blueprint_id: str, blueprint: dict, ch
     await _run_validators(run_id, cid, "material", content, val, chapter_id=chapter_id)
 
 
+async def _generate_story_chapter(run_id: str, blueprint_id: str, blueprint: dict, chapter: dict):
+    gen, val = CROSS_MATRIX["story"]
+    chapter_id = chapter["chapter_id"]
+    cid = new_id(f"story-{chapter_id}")
+    await emit(run_id, "component.generating", {
+        "component_id": cid, "type": "story",
+        "chapter_id": chapter_id, "generator": gen,
+    })
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT content_json FROM components WHERE run_id=? AND type='figure_rationale' ORDER BY version DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+    figure_content = json.loads(row["content_json"]) if row else None
+    try:
+        content = await story_writer.generate_story(chapter, blueprint, figure_content, provider=gen)
+    except Exception as e:
+        await emit(run_id, "component.error", {"component_id": cid, "error": str(e)})
+        return
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO components(component_id, run_id, blueprint_id, type, chapter_id, version, generator_model, validator_model, content_json, status) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (cid, run_id, blueprint_id, "story", chapter_id, 1, gen, val,
+             json.dumps(content, ensure_ascii=False), "generated"),
+        )
+        conn.commit()
+    await emit(run_id, "component.generated", {"component_id": cid, "type": "story", "chapter_id": chapter_id})
+
+
+async def _generate_special_quizzes(
+    run_id: str, blueprint_id: str, blueprint: dict, curriculum: list[dict]
+):
+    """Step D: 파트 티저 + 파트 종합 + 최종 회고 생성."""
+    gen, val = CROSS_MATRIX["special_quiz"]
+
+    # 챕터를 파트별로 그룹화
+    parts: dict[str, dict] = {}
+    for ch in curriculum:
+        cid = ch["chapter_id"]
+        part_num = cid.split("-")[0]
+        if part_num not in parts:
+            parts[part_num] = {"part_id": part_num, "part_name": ch.get("part_name", f"파트 {part_num}"), "chapters": []}
+        parts[part_num]["chapters"].append(ch)
+
+    # DB에서 각 챕터 학습자료 발췌 수집
+    def _collect_excerpts(run_id: str, chapter_ids: list[str]) -> dict[str, str]:
+        excerpts: dict[str, str] = {}
+        with get_conn() as conn:
+            for cid in chapter_ids:
+                row = conn.execute(
+                    "SELECT content_json FROM components WHERE run_id=? AND type='material' AND chapter_id=? ORDER BY version DESC LIMIT 1",
+                    (run_id, cid),
+                ).fetchone()
+                if row:
+                    mat = json.loads(row["content_json"])
+                    sections = mat.get("sections", [])
+                    excerpts[cid] = " ".join(s.get("body", "")[:300] for s in sections)[:800]
+        return excerpts
+
+    async def _save_special(role: str, part_id: str, content: dict):
+        chapter_id = f"{part_id}-{role}"
+        cid = new_id(f"special_quiz-{chapter_id}")
+        content["quiz_role"] = role
+        content["part_id"] = part_id
+        with get_conn() as conn:
+            conn.execute(
+                "INSERT INTO components(component_id, run_id, blueprint_id, type, chapter_id, version, generator_model, validator_model, content_json, status) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (cid, run_id, blueprint_id, "special_quiz", chapter_id, 1, gen, val,
+                 json.dumps(content, ensure_ascii=False), "generated"),
+            )
+            conn.commit()
+        await emit(run_id, "component.generated", {
+            "component_id": cid, "type": "special_quiz",
+            "chapter_id": chapter_id, "quiz_role": role,
+        })
+        await _run_validators(run_id, cid, "special_quiz", content, val, chapter_id=chapter_id)
+
+    # 각 파트 티저 + 종합 병렬 생성
+    part_tasks = []
+    for part_num, part_info in parts.items():
+        chapters = part_info["chapters"]
+        excerpts = _collect_excerpts(run_id, [ch["chapter_id"] for ch in chapters])
+
+        async def _gen_part(pnum=part_num, pname=part_info["part_name"], chs=chapters, exs=excerpts):
+            try:
+                teaser = await special_quiz_generator.generate_part_teaser(pnum, pname, chs, blueprint, gen)
+                await _save_special("teaser", pnum, teaser)
+            except Exception as e:
+                await emit(run_id, "component.error", {"type": "special_quiz", "quiz_role": "teaser", "error": str(e)})
+            try:
+                summary = await special_quiz_generator.generate_part_summary(pnum, pname, chs, blueprint, exs, gen)
+                await _save_special("part_summary", pnum, summary)
+            except Exception as e:
+                await emit(run_id, "component.error", {"type": "special_quiz", "quiz_role": "part_summary", "error": str(e)})
+
+        part_tasks.append(_gen_part())
+
+    await asyncio.gather(*part_tasks, return_exceptions=True)
+
+    # 최종 회고
+    all_parts_info = [
+        {"part_id": pnum, "part_name": pinfo["part_name"], "chapters": pinfo["chapters"]}
+        for pnum, pinfo in parts.items()
+    ]
+    try:
+        final = await special_quiz_generator.generate_final_review(blueprint, all_parts_info, gen)
+        await _save_special("final_review", "final", final)
+    except Exception as e:
+        await emit(run_id, "component.error", {"type": "special_quiz", "quiz_role": "final_review", "error": str(e)})
+
+
+
 async def _run_validators(run_id: str, component_id: str, component_type: str, content: dict, val_provider: str, chapter_id: str = "-"):
     """단발성 검증 (재생성 루프 없음) — part_intro·material용."""
     schema_result = validate_component(component_type, content) if component_type in {"material"} else {"passed": True, "errors": []}
     rubric_result = await rubric_validate(component_type, content, val_provider)
+    glossary_violations = glossary_validate(content, component_type)
     passed = schema_result.get("passed", True) and rubric_result.get("passed", False)
     with get_conn() as conn:
         conn.execute(
@@ -325,6 +477,14 @@ async def _run_validators(run_id: str, component_id: str, component_type: str, c
                 "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
                 (new_id("flag"), f["component_id"], f["run_id"], f["flag_type"], f["severity"],
                  f["location_path"], f["reason"], f["guide"], f["origin_text"]),
+            )
+        sev_map = {"error": "상", "warn": "중", "info": "하"}
+        for v in glossary_violations:
+            conn.execute(
+                "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
+                (new_id("flag"), component_id, run_id, "GLOSSARY",
+                 sev_map.get(v.get("severity", "warn"), "중"),
+                 "glossary", v["message"], "glossary.yaml 참조", ""),
             )
         conn.commit()
     await emit(run_id, "component.validated" if passed else "component.flagged",
@@ -367,6 +527,10 @@ async def regenerate_chapter(run_id: str, chapter_id: str, instruction: str, com
     with get_conn() as conn:
         conn.execute("UPDATE runs SET status='generating' WHERE run_id=?", (run_id,))
         conn.commit()
+
+    # material 재생성 시 quiz·practice 자동 cascade
+    if "material" in components:
+        components = list(set(components) | {"quiz", "practice"})
 
     updated_material = None
 
@@ -425,11 +589,18 @@ def _latest_version(run_id, comp_type, chapter_id):
     return (row["v"] or 0) if row else 0
 
 
+_BRIDGE_KINDS = {"bridge_opener", "bridge_demo", "bridge_preview"}
+
+
+def _body_sections(sections: list) -> list:
+    return [s for s in sections if s.get("kind") not in _BRIDGE_KINDS]
+
+
 def _material_excerpt(run_id, chapter, material_content):
     if material_content:
         return "\n\n".join(
             f"## {s.get('heading','')}\n{s.get('body','')}"
-            for s in (material_content.get("sections") or [])
+            for s in _body_sections(material_content.get("sections") or [])
         )[:6000]
     with get_conn() as conn:
         row = conn.execute(
@@ -440,7 +611,7 @@ def _material_excerpt(run_id, chapter, material_content):
         m = json.loads(row["content_json"])
         return "\n\n".join(
             f"## {s.get('heading','')}\n{s.get('body','')}"
-            for s in (m.get("sections") or [])
+            for s in _body_sections(m.get("sections") or [])
         )[:6000]
     return f"[{chapter.get('chapter_name','')}] 기법: {chapter.get('prompt_technique','')}"
 
@@ -548,3 +719,43 @@ async def regenerate_item(
         "source": component_id, "target": new_cid, "item_index": item_index,
     })
     return {"new_component_id": new_cid, "new_content": new_content}
+
+
+# ------------------------------------------------------------------
+# 재검증 — 기존 generated/validation_error 컴포넌트 일괄 검증
+# ------------------------------------------------------------------
+
+async def revalidate_run(run_id: str):
+    """generated 또는 validation_error 상태 컴포넌트 전체 재검증."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT c.component_id, c.type, c.chapter_id, c.content_json, c.validator_model
+            FROM components c
+            INNER JOIN (
+                SELECT type, chapter_id, MAX(version) AS maxv
+                FROM components WHERE run_id=?
+                GROUP BY type, chapter_id
+            ) m ON c.type=m.type AND c.chapter_id=m.chapter_id AND c.version=m.maxv
+            WHERE c.run_id=? AND c.status IN ('generated','validation_error')
+            """,
+            (run_id, run_id),
+        ).fetchall()
+
+    if not rows:
+        return {"revalidated": 0}
+
+    await emit(run_id, "revalidation.started", {"total": len(rows)})
+    count = 0
+    for row in rows:
+        try:
+            content = json.loads(row["content_json"])
+            val_provider = row["validator_model"] or "openai"
+            await _run_validators(run_id, row["component_id"], row["type"], content, val_provider, row["chapter_id"])
+            count += 1
+        except Exception as e:
+            import logging
+            logging.warning(f"[Revalidate] {row['type']} {row['chapter_id']}: {e}")
+
+    await emit(run_id, "revalidation.completed", {"revalidated": count, "total": len(rows)})
+    return {"revalidated": count}

@@ -25,7 +25,7 @@ async def call_model(
     *,
     json_mode: bool = True,
     temperature: float = 0.4,
-    max_tokens: int = 8000,
+    max_tokens: int = 12000,
 ) -> dict[str, Any] | str:
     """Dispatch to the right provider. json_mode=True → 응답을 dict로 파싱."""
     provider = provider.lower()

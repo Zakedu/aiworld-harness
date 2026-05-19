@@ -5,70 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI World Harness</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 <style>
-  :root { --c-accent: #0f172a; --c-brand: #059669; }
+  :root {
+    --color-pitch-black: #08090a;
+    --color-graphite: #0f1011;
+    --color-deep-slate: #161718;
+    --color-charcoal-grey: #23252a;
+    --color-muted-ash: #323334;
+    --color-gunmetal: #383b3f;
+    --color-porcelain: #f7f8f8;
+    --color-light-steel: #d0d6e0;
+    --color-storm-cloud: #8a8f98;
+    --color-fog-grey: #62666d;
+    --color-neon-lime: #e4f222;
+    --color-warning-red: #eb5757;
+    --color-emerald: #27a644;
+  }
   html, body { height: 100%; }
   body {
-    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    font-feature-settings: "ss01","ss06";
-    letter-spacing: -0.01em;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv01","ss03";
+    letter-spacing: -0.013em;
   }
-  .mono { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace; }
+  .mono { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; }
   .scroll-slim::-webkit-scrollbar { width: 6px; height: 6px; }
-  .scroll-slim::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+  .scroll-slim::-webkit-scrollbar-thumb { background: var(--color-muted-ash); border-radius: 3px; }
   .scroll-slim::-webkit-scrollbar-track { background: transparent; }
-  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:500; white-space:nowrap; }
-  .kbd { font-family: ui-monospace; font-size:11px; padding:1px 5px; border:1px solid #e4e4e7; border-bottom-width:2px; border-radius:4px; background:#fafafa; }
-  .nav-btn { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; font-size:14px; color:#52525b; }
-  .nav-btn.active { background:#18181b; color:white; }
-  .nav-btn:hover:not(.active) { background:#f4f4f5; color:#18181b; }
-  .step-item { display:flex; align-items:center; gap:8px; color:#a1a1aa; font-size:13px; font-weight:500; }
-  .step-item.current { color:#18181b; }
-  .step-item.done { color:#059669; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; white-space:nowrap; background:var(--color-gunmetal); color:var(--color-storm-cloud); }
+  .kbd { font-family: ui-monospace; font-size:11px; padding:1px 5px; border:1px solid var(--color-charcoal-grey); border-bottom-width:2px; border-radius:4px; background:var(--color-deep-slate); color:var(--color-storm-cloud); }
+  .nav-btn { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:6px; font-size:14px; color:var(--color-storm-cloud); }
+  .nav-btn.active { background:var(--color-charcoal-grey); color:var(--color-porcelain); }
+  .nav-btn:hover:not(.active) { background:var(--color-charcoal-grey); color:var(--color-porcelain); }
+  .step-item { display:flex; align-items:center; gap:8px; color:var(--color-fog-grey); font-size:13px; font-weight:500; }
+  .step-item.current { color:var(--color-porcelain); }
+  .step-item.done { color:var(--color-neon-lime); }
   .step-circle { width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:1.5px solid currentColor; font-size:11px; font-weight:600; }
-  .step-item.done .step-circle { background:#059669; border-color:#059669; color:white; }
-  .step-item.current .step-circle { background:#18181b; border-color:#18181b; color:white; }
+  .step-item.done .step-circle { background:var(--color-neon-lime); border-color:var(--color-neon-lime); color:var(--color-pitch-black); }
+  .step-item.current .step-circle { background:var(--color-porcelain); border-color:var(--color-porcelain); color:var(--color-pitch-black); }
   .flag-card { transition: background 0.15s; }
-  .flag-card.selected { background:#f4f4f5; border-left:3px solid #18181b; }
-  .content-preview h4 { font-weight:600; margin-top:16px; margin-bottom:6px; color:#27272a; }
-  .content-preview p { color:#3f3f46; line-height:1.7; }
-  .content-preview pre { background:#fafafa; border:1px solid #e4e4e7; padding:12px; border-radius:6px; white-space:pre-wrap; font-size:12px; line-height:1.6; }
+  .flag-card.selected { background:var(--color-charcoal-grey); border-left:3px solid var(--color-neon-lime); }
+  .content-preview h4 { font-weight:600; margin-top:16px; margin-bottom:6px; color:var(--color-porcelain); }
+  .content-preview p { color:var(--color-light-steel); line-height:1.7; }
+  .content-preview pre { background:var(--color-graphite); border:1px solid var(--color-charcoal-grey); padding:12px; border-radius:6px; white-space:pre-wrap; font-size:12px; line-height:1.6; color:var(--color-light-steel); }
+  .bgb-block { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; }
+  .tok-keyword { color: #c084fc; }
+  .tok-string  { color: #4ade80; }
+  .tok-var     { color: #60a5fa; }
+  .tok-bold    { color: #fbbf24; font-weight: 600; }
   details summary { cursor:pointer; list-style:none; }
   details summary::-webkit-details-marker { display:none; }
   .flash { animation: flash 0.5s ease-out; }
-  @keyframes flash { 0% { background:#fef3c7; } 100% { background:transparent; } }
+  @keyframes flash { 0% { background:var(--color-charcoal-grey); } 100% { background:transparent; } }
   .hl-pulse { animation: hl-pulse 2s ease-out; }
   @keyframes hl-pulse {
-    0%   { background:#fef3c7; }
-    60%  { background:#fef9c3; }
+    0%   { background:var(--color-charcoal-grey); }
+    60%  { background:var(--color-muted-ash); }
     100% { background:transparent; }
   }
-  /* 앵커: 부드러운 노란 배경 + 좌측 굵은 amber 바 (지속) */
   .hl-anchor {
-    background: #fef3c7 !important;
-    border-left: 4px solid #f59e0b !important;
+    background: rgba(228,242,34,0.08) !important;
+    border-left: 4px solid var(--color-neon-lime) !important;
     border-radius: 6px !important;
     padding-left: 12px !important;
-    box-shadow: 0 0 0 2px #fde68a;
+    box-shadow: 0 0 0 2px rgba(228,242,34,0.15);
     animation: hl-anchor-flash 0.6s ease-out 3;
   }
   @keyframes hl-anchor-flash {
-    0%, 100% { box-shadow: 0 0 0 2px #fde68a; }
-    50%      { box-shadow: 0 0 0 6px #fbbf24; }
+    0%, 100% { box-shadow: 0 0 0 2px rgba(228,242,34,0.15); }
+    50%      { box-shadow: 0 0 0 6px rgba(228,242,34,0.25); }
   }
   .hl-marker {
     display: inline-block;
-    background: #f59e0b;
-    color: white;
+    background: var(--color-neon-lime);
+    color: var(--color-pitch-black);
     font-size: 11px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 999px;
     margin: 0 0 8px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
   }
-  /* Pane divider (폭 조절 핸들) */
   .pane-divider {
     flex-shrink: 0;
     width: 4px;
@@ -78,17 +96,16 @@
     position: relative;
     z-index: 5;
   }
-  .pane-divider:hover, .pane-divider.dragging { background: #a1a1aa; }
+  .pane-divider:hover, .pane-divider.dragging { background: var(--color-muted-ash); }
   .pane-divider::after {
     content: "";
     position: absolute;
     top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 2px; height: 32px;
-    background: #e4e4e7;
+    background: var(--color-charcoal-grey);
     border-radius: 2px;
   }
-  .pane-divider:hover::after, .pane-divider.dragging::after { background: #71717a; }
-  /* 테이블 컬럼 리사이저 */
+  .pane-divider:hover::after, .pane-divider.dragging::after { background: var(--color-fog-grey); }
   .col-resizer {
     position: absolute;
     right: 0; top: 0; bottom: 0;
@@ -96,16 +113,26 @@
     cursor: col-resize;
     user-select: none;
   }
-  .col-resizer:hover, .col-resizer.dragging {
-    background: #94a3b8;
-  }
+  .col-resizer:hover, .col-resizer.dragging { background: var(--color-muted-ash); }
   body.resizing, body.resizing * { cursor: col-resize !important; user-select: none !important; }
   .dot { display:inline-block; width:6px; height:6px; border-radius:999px; }
-  .shim { background: linear-gradient(90deg,#f4f4f5 0%,#e4e4e7 50%,#f4f4f5 100%); background-size:200% 100%; animation: shim 1.2s infinite; }
+  .shim { background: linear-gradient(90deg,var(--color-charcoal-grey) 0%,var(--color-muted-ash) 50%,var(--color-charcoal-grey) 100%); background-size:200% 100%; animation: shim 1.2s infinite; }
   @keyframes shim { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+  /* dark input base */
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--color-pitch-black);
+    color: var(--color-porcelain);
+    border-color: var(--color-gunmetal);
+  }
+  input[type="text"]::placeholder, input[type="number"]::placeholder, textarea::placeholder { color: var(--color-fog-grey); }
+  select option { background: var(--color-graphite); }
+  /* table dark */
+  table thead { background: var(--color-deep-slate); }
+  table thead th { color: var(--color-storm-cloud); }
+  table tbody tr { border-color: var(--color-charcoal-grey); }
 </style>
 </head>
-<body class="bg-zinc-50 text-zinc-900">
+<body class="bg-[#08090a] text-[#f7f8f8]">
 
 <!-- 전역 토스트 / 에러 -->
 <div id="toast-stack" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm"></div>
@@ -119,12 +146,12 @@
 <div class="flex h-full min-h-screen">
 
 <!-- ============== SIDEBAR ============== -->
-<aside class="w-60 bg-white border-r border-zinc-200 flex flex-col shrink-0">
-  <div class="h-14 px-5 flex items-center gap-2 border-b border-zinc-200">
-    <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center text-xs font-bold">AW</div>
+<aside class="w-60 bg-[#0f1011] border-r border-[#23252a] flex flex-col shrink-0">
+  <div class="h-14 px-5 flex items-center gap-2 border-b border-[#23252a]">
+    <div class="w-7 h-7 rounded-md bg-[#e4f222] text-[#08090a] flex items-center justify-center text-xs font-bold">AW</div>
     <div>
       <div class="text-sm font-semibold leading-none">AI World</div>
-      <div class="text-[10px] text-zinc-500 mt-0.5">Harness v1.0</div>
+      <div class="text-[10px] text-[#8a8f98] mt-0.5">Harness v2.0</div>
     </div>
   </div>
 
@@ -140,7 +167,11 @@
     <button class="nav-btn w-full" data-tab="review">
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       검토 & 승인
-      <span id="side-flag-count" class="ml-auto badge bg-zinc-100 text-zinc-600 hidden"></span>
+      <span id="side-flag-count" class="ml-auto badge bg-[#383b3f] text-[#8a8f98] hidden"></span>
+    </button>
+    <button class="nav-btn w-full" data-tab="deploy">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      배포
     </button>
     <button class="nav-btn w-full" data-tab="admin">
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -149,11 +180,11 @@
   </nav>
 
   <div class="flex-1 overflow-auto scroll-slim px-3">
-    <div class="text-[11px] font-semibold text-zinc-400 mt-4 mb-2 px-2">최근 RUN</div>
+    <div class="text-[11px] font-semibold text-[#62666d] mt-4 mb-2 px-2">최근 RUN</div>
     <div id="runs-list" class="space-y-1 text-xs"></div>
   </div>
 
-  <div class="p-3 border-t border-zinc-200 text-[11px] text-zinc-500">
+  <div class="p-3 border-t border-[#23252a] text-[11px] text-[#8a8f98]">
     <div class="flex items-center justify-between">
       <span>Claude Opus 4.7</span><span class="dot bg-emerald-500"></span>
     </div>
@@ -167,36 +198,32 @@
 <main class="flex-1 flex flex-col min-w-0">
 
   <!-- TOP BAR -->
-  <header class="h-14 border-b border-zinc-200 bg-white flex items-center justify-between px-6 shrink-0">
+  <header class="h-14 border-b border-[#23252a] bg-[#0f1011] flex items-center justify-between px-6 shrink-0">
     <div>
       <div id="bread" class="text-sm font-semibold">새 코스 만들기</div>
-      <div id="bread-sub" class="text-[11px] text-zinc-500 mt-0.5">위인·주제 입력해 기획서를 생성합니다</div>
+      <div id="bread-sub" class="text-[11px] text-[#8a8f98] mt-0.5">위인·주제 입력해 기획서를 생성합니다</div>
     </div>
     <div class="flex items-center gap-2">
-      <button id="btn-export" class="hidden inline-flex items-center gap-1.5 text-xs bg-zinc-900 hover:bg-zinc-800 text-white rounded-md px-3 py-1.5 font-medium"
-              title="xlsx — 설정·개요·커리큘럼·위인선정배경·퀴즈·실습·학습자료 7개 탭">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        .xlsx 다운로드
-      </button>
-      <div id="run-pill" class="hidden items-center gap-2 text-xs bg-zinc-100 rounded-full px-3 py-1.5">
+
+      <div id="run-pill" class="hidden items-center gap-2 text-xs bg-[#23252a] rounded-full px-3 py-1.5">
         <span class="dot bg-zinc-400" id="run-pill-dot"></span>
-        <span id="run-pill-id" class="mono text-zinc-600"></span>
+        <span id="run-pill-id" class="mono text-[#8a8f98]"></span>
         <span id="run-pill-status" class="font-medium"></span>
       </div>
     </div>
   </header>
 
   <!-- STEPPER (숨김 / 노출: 탭별로 제어) -->
-  <div id="stepper" class="hidden border-b border-zinc-200 bg-white px-6 py-3">
+  <div id="stepper" class="hidden border-b border-[#23252a] bg-[#0f1011] px-6 py-3">
     <div class="flex items-center gap-4 max-w-3xl">
       <div class="step-item" data-step="1"><span class="step-circle">1</span><span>입력</span></div>
-      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="flex-1 h-px bg-[#23252a]"></div>
       <div class="step-item" data-step="2"><span class="step-circle">2</span><span>기획</span></div>
-      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="flex-1 h-px bg-[#23252a]"></div>
       <div class="step-item" data-step="3"><span class="step-circle">3</span><span>생성·검증</span></div>
-      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="flex-1 h-px bg-[#23252a]"></div>
       <div class="step-item" data-step="4"><span class="step-circle">4</span><span>검토</span></div>
-      <div class="flex-1 h-px bg-zinc-200"></div>
+      <div class="flex-1 h-px bg-[#23252a]"></div>
       <div class="step-item" data-step="5"><span class="step-circle">5</span><span>배포</span></div>
     </div>
   </div>
@@ -204,113 +231,113 @@
   <!-- ============== SCREEN 1 · 새 코스 만들기 ============== -->
   <section id="tab-control" class="tab-panel flex-1 overflow-auto scroll-slim p-6">
     <div class="max-w-3xl mx-auto space-y-4">
-      <div class="bg-white border border-zinc-200 rounded-xl p-6">
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-6">
         <div class="text-sm font-semibold mb-4">① 코스 입력</div>
         <div class="space-y-4 text-sm">
           <label class="block">
-            <div class="text-zinc-600 font-medium mb-1.5">위인</div>
-            <input id="in-figure" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 앤 설리번" />
+            <div class="text-[#8a8f98] font-medium mb-1.5">위인</div>
+            <input id="in-figure" class="w-full border border-[#383b3f] rounded-md px-3 py-2 focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]" placeholder="예: 앤 설리번" />
           </label>
           <label class="block">
-            <div class="text-zinc-600 font-medium mb-1.5">주제</div>
-            <input id="in-topic" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: AI 영어 학습/발음/파닉스" />
+            <div class="text-[#8a8f98] font-medium mb-1.5">주제</div>
+            <input id="in-topic" class="w-full border border-[#383b3f] rounded-md px-3 py-2 focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]" placeholder="예: AI 영어 학습/발음/파닉스" />
           </label>
           <label class="block">
-            <div class="text-zinc-600 font-medium mb-1.5">학습 대상 <span class="text-zinc-400 font-normal">(구체적 어려움)</span></div>
-            <input id="in-target" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 영어학원비 월 30만원 내는 30대 직장인" />
+            <div class="text-[#8a8f98] font-medium mb-1.5">학습 대상 <span class="text-[#62666d] font-normal">(구체적 어려움)</span></div>
+            <input id="in-target" class="w-full border border-[#383b3f] rounded-md px-3 py-2 focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]" placeholder="예: 영어학원비 월 30만원 내는 30대 직장인" />
           </label>
           <label class="block">
-            <div class="text-zinc-600 font-medium mb-1.5">학습 목표 <span class="text-zinc-400 font-normal">(쉼표로 3~5개)</span></div>
-            <input id="in-goals" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" placeholder="예: 프롬프트 기법 체득, 실무 적용, AI 학습 루틴화" />
+            <div class="text-[#8a8f98] font-medium mb-1.5">학습 목표 <span class="text-[#62666d] font-normal">(쉼표로 3~5개)</span></div>
+            <input id="in-goals" class="w-full border border-[#383b3f] rounded-md px-3 py-2 focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]" placeholder="예: 프롬프트 기법 체득, 실무 적용, AI 학습 루틴화" />
           </label>
           <div>
-            <div class="text-zinc-600 font-medium mb-1.5">카테고리</div>
-            <select id="in-category" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+            <div class="text-[#8a8f98] font-medium mb-1.5">카테고리</div>
+            <select id="in-category" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]">
               <option value="auto">자동 판단 (LLM이 결정)</option>
               <option>업무생산성</option><option>마케팅</option><option>기획</option>
               <option>데이터분석</option><option>콘텐츠제작</option><option>자기계발</option>
               <option value="custom">기타: 직접 입력</option>
             </select>
-            <input id="in-category-custom" type="text" class="hidden mt-2 w-full border border-zinc-300 rounded-lg px-3 py-2" placeholder="직접 카테고리 이름 입력 (예: 외국어, 코딩교육, 투자)" />
+            <input id="in-category-custom" type="text" class="hidden mt-2 w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" placeholder="직접 카테고리 이름 입력 (예: 외국어, 코딩교육, 투자)" />
           </div>
           <div>
-            <div class="text-zinc-600 font-medium mb-1.5">챕터 구성</div>
+            <div class="text-[#8a8f98] font-medium mb-1.5">챕터 구성</div>
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs text-zinc-500">파트</span>
-              <input id="in-parts" type="number" min="2" max="10" value="5" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
-              <span class="text-zinc-400">×</span>
-              <span class="text-xs text-zinc-500">파트당 챕터</span>
-              <input id="in-chapters-per-part" type="number" min="1" max="5" value="2" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
-              <span class="text-zinc-400">=</span>
+              <span class="text-xs text-[#8a8f98]">파트</span>
+              <input id="in-parts" type="number" min="2" max="10" value="5" class="w-16 border border-[#383b3f] rounded-md px-2 py-1.5 text-center bg-[#08090a] text-[#f7f8f8]" />
+              <span class="text-[#62666d]">×</span>
+              <span class="text-xs text-[#8a8f98]">파트당 챕터</span>
+              <input id="in-chapters-per-part" type="number" min="1" max="5" value="2" class="w-16 border border-[#383b3f] rounded-md px-2 py-1.5 text-center bg-[#08090a] text-[#f7f8f8]" />
+              <span class="text-[#62666d]">=</span>
               <span class="text-sm">총 <b id="total-chapters">10</b>챕터</span>
             </div>
           </div>
           <div>
-            <div class="text-zinc-600 font-medium mb-1.5">예상 학습 시간</div>
+            <div class="text-[#8a8f98] font-medium mb-1.5">예상 학습 시간</div>
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs text-zinc-500">챕터당</span>
-              <input id="in-chap-dur" type="number" min="5" max="60" value="15" class="w-16 border border-zinc-300 rounded-lg px-2 py-1.5 text-center" />
-              <span class="text-xs text-zinc-500">분</span>
-              <span class="text-zinc-400">·</span>
-              <span class="text-sm text-zinc-600">총 <b id="total-duration">2시간 30분</b></span>
+              <span class="text-xs text-[#8a8f98]">챕터당</span>
+              <input id="in-chap-dur" type="number" min="5" max="60" value="15" class="w-16 border border-[#383b3f] rounded-md px-2 py-1.5 text-center bg-[#08090a] text-[#f7f8f8]" />
+              <span class="text-xs text-[#8a8f98]">분</span>
+              <span class="text-[#62666d]">·</span>
+              <span class="text-sm text-[#8a8f98]">총 <b id="total-duration">2시간 30분</b></span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white border border-zinc-200 rounded-xl p-6">
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="text-sm font-semibold">② 결과값 조절</div>
-          <div class="text-xs text-zinc-400">기본값 권장 — 필요 시 조정</div>
+          <div class="text-xs text-[#62666d]">기본값 권장 — 필요 시 조정</div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
           <div>
-            <div class="flex justify-between text-zinc-600 mb-1.5"><span>위인 활용 강도</span><span id="knob-voice-val" class="font-medium text-zinc-900">중간</span></div>
-            <input id="knob-voice" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+            <div class="flex justify-between text-[#8a8f98] mb-1.5"><span>위인 활용 강도</span><span id="knob-voice-val" class="font-medium text-[#f7f8f8]">중간</span></div>
+            <input id="knob-voice" type="range" min="1" max="3" value="2" class="w-full accent-[#e4f222]" />
           </div>
           <div>
-            <div class="flex justify-between text-zinc-600 mb-1.5"><span>힌트 상세도</span><span id="knob-hint-val" class="font-medium text-zinc-900">표준</span></div>
-            <input id="knob-hint" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+            <div class="flex justify-between text-[#8a8f98] mb-1.5"><span>힌트 상세도</span><span id="knob-hint-val" class="font-medium text-[#f7f8f8]">표준</span></div>
+            <input id="knob-hint" type="range" min="1" max="3" value="2" class="w-full accent-[#e4f222]" />
           </div>
           <div>
-            <div class="flex justify-between text-zinc-600 mb-1.5"><span>검증 엄격도</span><span id="knob-strict-val" class="font-medium text-zinc-900">standard</span></div>
-            <input id="knob-strict" type="range" min="1" max="3" value="2" class="w-full accent-zinc-900" />
+            <div class="flex justify-between text-[#8a8f98] mb-1.5"><span>검증 엄격도</span><span id="knob-strict-val" class="font-medium text-[#f7f8f8]">standard</span></div>
+            <input id="knob-strict" type="range" min="1" max="3" value="2" class="w-full accent-[#e4f222]" />
           </div>
           <div>
-            <div class="text-zinc-600 mb-1.5">프롬프트 예시</div>
-            <select id="knob-prompt" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+            <div class="text-[#8a8f98] mb-1.5">프롬프트 예시</div>
+            <select id="knob-prompt" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]">
               <option>good/better 2단</option>
               <option>good/better/best 3단</option>
             </select>
           </div>
-          <div class="md:col-span-2 border-t border-zinc-100 pt-4">
-            <div class="text-zinc-600 mb-2">난이도 프리셋</div>
+          <div class="md:col-span-2 border-t border-[#23252a] pt-4">
+            <div class="text-[#8a8f98] mb-2">난이도 프리셋</div>
             <div class="flex gap-2" id="diff-preset-group">
-              <button type="button" data-preset="beginner" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900">
+              <button type="button" data-preset="beginner" class="flex-1 border border-[#383b3f] rounded-md px-3 py-2 text-xs hover:border-[#e4f222] text-[#d0d6e0] bg-[#0f1011]">
                 <div class="font-semibold">입문자용</div>
-                <div class="text-[10px] text-zinc-500 mt-0.5">하4·중하2·중3·중상1·상0</div>
+                <div class="text-[10px] text-[#8a8f98] mt-0.5">하4·중하2·중3·중상1·상0</div>
               </button>
-              <button type="button" data-preset="standard" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900 border-zinc-900 bg-zinc-50">
+              <button type="button" data-preset="standard" class="flex-1 border border-[#383b3f] rounded-md px-3 py-2 text-xs hover:border-[#e4f222] text-[#d0d6e0] bg-[#0f1011] border-[#e4f222] bg-[#161718]">
                 <div class="font-semibold">일반 (기본)</div>
-                <div class="text-[10px] text-zinc-500 mt-0.5">하2·중하1·중3·중상2·상2</div>
+                <div class="text-[10px] text-[#8a8f98] mt-0.5">하2·중하1·중3·중상2·상2</div>
               </button>
-              <button type="button" data-preset="advanced" class="flex-1 border rounded-lg px-3 py-2 text-xs hover:border-zinc-900">
+              <button type="button" data-preset="advanced" class="flex-1 border border-[#383b3f] rounded-md px-3 py-2 text-xs hover:border-[#e4f222] text-[#d0d6e0] bg-[#0f1011]">
                 <div class="font-semibold">고급</div>
-                <div class="text-[10px] text-zinc-500 mt-0.5">하0·중하1·중3·중상3·상3</div>
+                <div class="text-[10px] text-[#8a8f98] mt-0.5">하0·중하1·중3·중상3·상3</div>
               </button>
             </div>
           </div>
           <div>
-            <div class="flex justify-between text-zinc-600 mb-1.5"><span>챕터당 퀴즈 수</span><span id="knob-quiz-val" class="font-medium text-zinc-900">10</span></div>
-            <input id="knob-quiz" type="range" min="3" max="15" value="10" class="w-full accent-zinc-900" />
+            <div class="flex justify-between text-[#8a8f98] mb-1.5"><span>챕터당 퀴즈 수</span><span id="knob-quiz-val" class="font-medium text-[#f7f8f8]">10</span></div>
+            <input id="knob-quiz" type="range" min="3" max="15" value="10" class="w-full accent-[#e4f222]" />
           </div>
           <div>
-            <div class="flex justify-between text-zinc-600 mb-1.5"><span>챕터당 실습 수</span><span id="knob-prac-val" class="font-medium text-zinc-900">3</span></div>
-            <input id="knob-prac" type="range" min="1" max="5" value="3" class="w-full accent-zinc-900" />
+            <div class="flex justify-between text-[#8a8f98] mb-1.5"><span>챕터당 실습 수</span><span id="knob-prac-val" class="font-medium text-[#f7f8f8]">3</span></div>
+            <input id="knob-prac" type="range" min="1" max="5" value="3" class="w-full accent-[#e4f222]" />
           </div>
           <div class="md:col-span-2">
-            <div class="text-zinc-600 mb-1.5">타깃 AI 도구 <span class="text-zinc-400 font-normal text-xs">(실습 모범 프롬프트 기준 모델)</span></div>
-            <select id="knob-ai" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+            <div class="text-[#8a8f98] mb-1.5">타깃 AI 도구 <span class="text-[#62666d] font-normal text-xs">(실습 모범 프롬프트 기준 모델)</span></div>
+            <select id="knob-ai" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]">
               <option>ChatGPT</option>
               <option>Claude</option>
               <option>Gemini</option>
@@ -320,22 +347,32 @@
         </div>
       </div>
 
-      <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-5 text-xs text-zinc-600">
-        <div class="text-[11px] font-semibold text-zinc-500 mb-2">③ 고정 프리셋 <span class="font-normal text-zinc-400">(관리자만 변경)</span></div>
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm font-semibold">③ clip_group_id <span class="text-[#62666d] font-normal text-xs">(영상 업로드 후 입력 — 비워두면 course_practice_quiz 탭에 placeholder 출력)</span></div>
+          <button type="button" id="btn-clear-clips" class="text-xs text-[#62666d] hover:text-[#d0d6e0]">전체 지우기</button>
+        </div>
+        <div id="clip-grid" class="grid grid-cols-2 gap-2 text-sm">
+          <!-- JS로 챕터 수에 맞게 동적 렌더링 -->
+        </div>
+      </div>
+
+      <div class="bg-[#161718] border border-[#23252a] rounded-lg p-5 text-xs text-[#8a8f98]">
+        <div class="text-[11px] font-semibold text-[#8a8f98] mb-2">④ 고정 프리셋 <span class="font-normal text-[#62666d]">(관리자만 변경)</span></div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">서식</div><div class="font-medium text-zinc-800">v1.0 (aiworld-main)</div></div>
-          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">톤앤매너</div><div class="font-medium text-zinc-800">위인 멘토링 시뮬</div></div>
-          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">courseId</div><div class="font-medium text-zinc-800">AW-YYYYMMDD-{seq}</div></div>
-          <div><div class="text-zinc-400 text-[10px] uppercase tracking-wide">루브릭</div><div class="font-medium text-zinc-800">rubric-v1.yaml</div></div>
+          <div><div class="text-[#62666d] text-[10px] uppercase tracking-wide">서식</div><div class="font-medium text-[#e5e5e6]">v1.0 (aiworld-main)</div></div>
+          <div><div class="text-[#62666d] text-[10px] uppercase tracking-wide">톤앤매너</div><div class="font-medium text-[#e5e5e6]">위인 멘토링 시뮬</div></div>
+          <div><div class="text-[#62666d] text-[10px] uppercase tracking-wide">courseId</div><div class="font-medium text-[#e5e5e6]">AW-YYYYMMDD-{seq}</div></div>
+          <div><div class="text-[#62666d] text-[10px] uppercase tracking-wide">루브릭</div><div class="font-medium text-[#e5e5e6]">rubric-v1.yaml</div></div>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
-        <button id="btn-generate" class="bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-2.5 rounded-lg font-medium text-sm inline-flex items-center gap-2">
+        <button id="btn-generate" class="bg-[#e4f222] hover:bg-[#d4e01f] text-[#08090a] px-6 py-2.5 rounded-md font-medium text-sm inline-flex items-center gap-2">
           기획서 생성
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
         </button>
-        <div class="text-xs text-zinc-500">Claude Opus 4.7 기준 약 15~40초 소요</div>
+        <div class="text-xs text-[#8a8f98]">Claude Opus 4.7 기준 약 15~40초 소요</div>
       </div>
     </div>
   </section>
@@ -345,44 +382,54 @@
     <div class="p-6 space-y-4 max-w-6xl mx-auto">
 
       <!-- Stats bar -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-        <div class="bg-white border border-zinc-200 rounded-lg p-3">
-          <div class="text-[10px] uppercase tracking-wide text-zinc-400">위인 선정 배경</div>
-          <div id="stat-fr" class="mt-1 font-semibold">—</div>
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-2 text-sm">
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">위인 선정 배경</div>
+          <div id="stat-fr" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
         </div>
-        <div class="bg-white border border-zinc-200 rounded-lg p-3">
-          <div class="text-[10px] uppercase tracking-wide text-zinc-400">학습자료 (10)</div>
-          <div id="stat-mat" class="mt-1 font-semibold">—</div>
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">스토리</div>
+          <div id="stat-story" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
+          <div class="text-[10px] text-[#62666d] mt-0.5">챕터당 1씬</div>
         </div>
-        <div class="bg-white border border-zinc-200 rounded-lg p-3">
-          <div class="text-[10px] uppercase tracking-wide text-zinc-400">퀴즈 (10×10)</div>
-          <div id="stat-quiz" class="mt-1 font-semibold">—</div>
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">학습자료</div>
+          <div id="stat-mat" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
+          <div class="text-[10px] text-[#62666d] mt-0.5">챕터당 7섹션</div>
         </div>
-        <div class="bg-white border border-zinc-200 rounded-lg p-3">
-          <div class="text-[10px] uppercase tracking-wide text-zinc-400">실습 (10×3)</div>
-          <div id="stat-prac" class="mt-1 font-semibold">—</div>
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">퀴즈</div>
+          <div id="stat-quiz" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
+          <div class="text-[10px] text-[#62666d] mt-0.5">챕터당 10문항</div>
         </div>
-        <div class="bg-white border border-zinc-200 rounded-lg p-3">
-          <div class="text-[10px] uppercase tracking-wide text-zinc-400">플래그</div>
-          <div id="stat-flags" class="mt-1 font-semibold">—</div>
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">실습</div>
+          <div id="stat-prac" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
+          <div class="text-[10px] text-[#62666d] mt-0.5">실험·레슨·도전</div>
+        </div>
+        <div class="bg-[#0f1011] border border-[#23252a] rounded-md p-3">
+          <div class="text-[10px] uppercase tracking-wide text-[#62666d] font-medium">플래그</div>
+          <div id="stat-flags" class="mt-1 font-semibold text-[#f7f8f8]">—</div>
+          <div class="text-[10px] text-[#62666d] mt-0.5">검토 필요</div>
         </div>
       </div>
 
+
       <!-- Director card -->
-      <div class="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-        <div class="px-5 py-3 border-b border-zinc-200 flex items-center justify-between">
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg overflow-hidden">
+        <div class="px-5 py-3 border-b border-[#23252a] flex items-center justify-between">
           <div class="text-sm font-semibold">Director · 과정 기획서</div>
-          <div id="bp-status-pill" class="text-xs text-zinc-500">—</div>
+          <div id="bp-status-pill" class="text-xs text-[#8a8f98]">—</div>
         </div>
 
-        <div id="bp-idle" class="p-8 text-sm text-zinc-500 text-center">Control에서 입력 후 기획서 생성을 시작하세요.</div>
+        <div id="bp-idle" class="p-8 text-sm text-[#8a8f98] text-center">Control에서 입력 후 기획서 생성을 시작하세요.</div>
 
         <div id="bp-loading" class="hidden p-6">
-          <div class="flex items-center gap-4 bg-zinc-50 rounded-lg p-4">
-            <div class="animate-spin h-6 w-6 border-4 border-zinc-200 border-t-zinc-900 rounded-full shrink-0"></div>
+          <div class="flex items-center gap-4 bg-[#161718] rounded-md p-4">
+            <div class="animate-spin h-6 w-6 border-4 border-[#23252a] border-t-[#e4f222] rounded-full shrink-0"></div>
             <div>
               <div class="text-sm font-medium">Director가 기획서를 작성하고 있습니다</div>
-              <div class="text-xs text-zinc-500 mt-0.5">Claude Opus 4.7 · 15~40초 소요</div>
+              <div class="text-xs text-[#8a8f98] mt-0.5">Claude Opus 4.7 · 15~40초 소요</div>
             </div>
           </div>
           <div class="mt-4 space-y-2">
@@ -394,52 +441,52 @@
 
         <div id="bp-form" class="hidden p-5 space-y-5">
           <div class="flex items-center gap-2 text-xs">
-            <span class="badge" style="background:#d1fae5;color:#065f46">✓ 생성 완료</span>
-            <span class="text-zinc-500">아래를 검토하시고 필요한 부분을 수정한 뒤 승인해주세요.</span>
+            <span class="badge" style="background:#0d2015;color:#6ee7b7">✓ 생성 완료</span>
+            <span class="text-[#8a8f98]">아래를 검토하시고 필요한 부분을 수정한 뒤 승인해주세요.</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <label class="block md:col-span-2">
-              <div class="text-zinc-600 font-medium mb-1.5">코스명</div>
-              <input id="f-course_name" class="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none" />
+              <div class="text-[#8a8f98] font-medium mb-1.5">코스명</div>
+              <input id="f-course_name" class="w-full border border-[#383b3f] rounded-md px-3 py-2 focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]" />
             </label>
             <label class="block">
-              <div class="text-zinc-600 font-medium mb-1.5">카테고리</div>
-              <select id="f-category" class="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white">
+              <div class="text-[#8a8f98] font-medium mb-1.5">카테고리</div>
+              <select id="f-category" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]">
                 <option>업무생산성</option><option>마케팅</option><option>기획</option>
                 <option>데이터분석</option><option>콘텐츠제작</option><option>자기계발</option>
               </select>
             </label>
             <label class="block">
-              <div class="text-zinc-600 font-medium mb-1.5">캐릭터명</div>
-              <input id="f-character_name" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+              <div class="text-[#8a8f98] font-medium mb-1.5">캐릭터명</div>
+              <input id="f-character_name" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" />
             </label>
             <label class="block md:col-span-2">
-              <div class="text-zinc-600 font-medium mb-1.5">팔릴 이유 한 줄 <span class="text-zinc-400 font-normal">(40자 이내)</span></div>
-              <input id="f-sell_reason" maxlength="40" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+              <div class="text-[#8a8f98] font-medium mb-1.5">팔릴 이유 한 줄 <span class="text-[#62666d] font-normal">(40자 이내)</span></div>
+              <input id="f-sell_reason" maxlength="40" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" />
             </label>
             <label class="block md:col-span-2">
-              <div class="text-zinc-600 font-medium mb-1.5">프로젝트 결과물</div>
-              <input id="f-project_outcome" class="w-full border border-zinc-300 rounded-lg px-3 py-2" />
+              <div class="text-[#8a8f98] font-medium mb-1.5">프로젝트 결과물</div>
+              <input id="f-project_outcome" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" />
             </label>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div class="text-zinc-600 font-medium mb-2 text-sm">수강 대상 <span class="text-zinc-400 font-normal">(구체적 어려움)</span></div>
+              <div class="text-[#8a8f98] font-medium mb-2 text-sm">수강 대상 <span class="text-[#62666d] font-normal">(구체적 어려움)</span></div>
               <div id="f-targets" class="space-y-2"></div>
             </div>
             <div>
-              <div class="text-zinc-600 font-medium mb-2 text-sm">수강 효과 <span class="text-zinc-400 font-normal">(구체적 변화)</span></div>
+              <div class="text-[#8a8f98] font-medium mb-2 text-sm">수강 효과 <span class="text-[#62666d] font-normal">(구체적 변화)</span></div>
               <div id="f-effects" class="space-y-2"></div>
             </div>
           </div>
 
           <div>
-            <div class="text-zinc-600 font-medium mb-2 text-sm">커리큘럼 <span class="text-zinc-400 font-normal">(5파트 × 2챕터 = 10챕터)</span></div>
-            <div class="overflow-x-auto border border-zinc-200 rounded-lg">
+            <div class="text-[#8a8f98] font-medium mb-2 text-sm">커리큘럼 <span class="text-[#62666d] font-normal">(5파트 × 2챕터 = 10챕터)</span></div>
+            <div class="overflow-x-auto border border-[#23252a] rounded-md">
               <table id="curriculum-table" class="w-full text-sm" style="table-layout: fixed;">
-                <thead class="bg-zinc-50 text-[11px] text-zinc-500">
+                <thead class="bg-[#161718] text-[11px] text-[#8a8f98]">
                   <tr>
                     <th class="px-3 py-2 font-medium text-left relative" style="width: 56px;">구분<span class="col-resizer"></span></th>
                     <th class="px-3 py-2 font-medium text-left relative" style="width: 180px;">파트명<span class="col-resizer"></span></th>
@@ -447,79 +494,129 @@
                     <th class="px-3 py-2 font-medium text-left relative" style="width: 180px;">프롬프트 기법</th>
                   </tr>
                 </thead>
-                <tbody id="f-curriculum" class="divide-y divide-zinc-100"></tbody>
+                <tbody id="f-curriculum" class="divide-y divide-[#23252a]"></tbody>
               </table>
             </div>
           </div>
 
           <div class="flex items-center gap-2 pt-1">
-            <button id="btn-approve" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-medium text-sm">
+            <button id="btn-approve" class="bg-[#e4f222] hover:bg-[#d4e01f] text-[#08090a] px-5 py-2 rounded-md font-medium text-sm">
               수정 반영 + 승인 → 생성 시작
             </button>
-            <button id="btn-regen-bp" class="border border-zinc-300 hover:bg-zinc-50 px-4 py-2 rounded-lg text-sm">
+            <button id="btn-regen-bp" class="border border-[#383b3f] hover:bg-[#23252a] px-4 py-2 rounded-md text-sm text-[#d0d6e0]">
               같은 입력으로 다시 생성
             </button>
           </div>
         </div>
       </div>
 
+      <!-- 누락 컴포넌트 경고 배너 -->
+      <div id="missing-banner" class="hidden mb-4 bg-[#1f1200] border border-[#3d2600] rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold text-amber-800">⚠️ 누락된 컴포넌트 — 병렬 생성 중 일부가 실패했습니다</span>
+          <button onclick="dismissMissingBanner()" class="text-xs text-amber-600 hover:underline">닫기</button>
+        </div>
+        <div id="missing-list" class="space-y-1"></div>
+      </div>
+
       <!-- Kanban (status) -->
       <div id="kanban-wrap" class="hidden">
         <div class="text-sm font-semibold mb-3 flex items-center justify-between">
           <span>컴포넌트 진행 상태</span>
-          <div class="text-xs text-zinc-500">각 카드는 <b>생성자 모델 ↔ 반대 모델 검증</b> 형식</div>
+          <div class="text-xs text-[#8a8f98]">각 카드는 <b>생성자 모델 ↔ 반대 모델 검증</b> 형식</div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div class="kb-col" data-status="생성중">
-            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-blue-500"></span>생성중 <span id="kb-c-gen" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-blue-500"></span>생성중 <span id="kb-c-gen" class="ml-auto text-[#62666d] mono"></span></div>
             <div class="space-y-1.5 mt-1" id="kb-gen"></div>
           </div>
           <div class="kb-col" data-status="검증중">
-            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-amber-500"></span>검증중 <span id="kb-c-val" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-amber-500"></span>검증중 <span id="kb-c-val" class="ml-auto text-[#62666d] mono"></span></div>
             <div class="space-y-1.5 mt-1" id="kb-val"></div>
           </div>
           <div class="kb-col" data-status="통과">
-            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-emerald-500"></span>통과 <span id="kb-c-pass" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-emerald-500"></span>통과 <span id="kb-c-pass" class="ml-auto text-[#62666d] mono"></span></div>
             <div class="space-y-1.5 mt-1" id="kb-pass"></div>
           </div>
           <div class="kb-col" data-status="플래그">
-            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-rose-500"></span>플래그 <span id="kb-c-flag" class="ml-auto text-zinc-400 mono"></span></div>
+            <div class="px-2 py-1 text-xs font-semibold flex items-center gap-2"><span class="dot bg-rose-500"></span>플래그 <span id="kb-c-flag" class="ml-auto text-[#62666d] mono"></span></div>
             <div class="space-y-1.5 mt-1" id="kb-flag"></div>
           </div>
         </div>
       </div>
 
       <!-- Minimal log -->
-      <details class="bg-white border border-zinc-200 rounded-lg px-4 py-2 text-sm">
-        <summary class="font-medium text-zinc-600 flex items-center justify-between">
+      <details class="bg-[#0f1011] border border-[#23252a] rounded-md px-4 py-2 text-sm">
+        <summary class="font-medium text-[#8a8f98] flex items-center justify-between">
           <span>이벤트 로그</span>
-          <span class="text-xs text-zinc-400">접기/펴기</span>
+          <span class="text-xs text-[#62666d]">접기/펴기</span>
         </summary>
-        <div id="event-log" class="bg-zinc-50 rounded p-3 h-56 overflow-auto mono text-[11px] mt-2 scroll-slim"></div>
+        <div id="event-log" class="bg-[#161718] rounded p-3 h-56 overflow-auto mono text-[11px] mt-2 scroll-slim text-[#8a8f98]"></div>
       </details>
     </div>
   </section>
 
   <!-- ============== ADMIN · 환경설정 · 프롬프트 편집 ============== -->
-  <section id="tab-admin" class="tab-panel hidden flex-1 overflow-auto scroll-slim">
-    <div class="p-6 space-y-4 max-w-4xl mx-auto">
-      <div class="bg-white border border-zinc-200 rounded-xl p-5">
-        <div class="flex items-center justify-between mb-3">
-          <div class="text-sm font-semibold">환경 설정 <span class="text-xs text-zinc-400 font-normal">(읽기전용)</span></div>
-          <button id="admin-refresh" class="text-xs text-zinc-500 hover:text-zinc-900">새로고침</button>
-        </div>
-        <div id="admin-env" class="text-sm text-zinc-500">불러오는 중…</div>
+  <!-- ============== SCREEN 4 · 배포 ============== -->
+  <section id="tab-deploy" class="tab-panel hidden flex-1 overflow-auto scroll-slim p-6">
+    <div class="max-w-xl mx-auto space-y-3 mt-4">
+
+      <!-- 안내 배너 -->
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg px-5 py-4">
+        <div class="text-sm font-semibold mb-1">배포 준비</div>
+        <div class="text-xs text-[#8a8f98] leading-relaxed">검토·승인을 마쳤다면 아래 파일을 다운로드해 개발팀에 전달하세요.<br>엑셀은 콘텐츠 검수용, SQL은 DB 직접 삽입용입니다.</div>
       </div>
 
-      <div class="bg-white border border-zinc-200 rounded-xl p-5">
+      <!-- 엑셀 -->
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-sm font-semibold">엑셀 파일</div>
+          <div class="text-xs text-[#62666d] mt-0.5">기획·퀴즈·실습·학습자료·스토리 전체 포함</div>
+        </div>
+        <button id="btn-dl-xlsx" class="hidden inline-flex items-center gap-1.5 text-xs bg-[#e4f222] hover:bg-[#d4e01f] text-[#08090a] rounded-md px-3 py-1.5 font-semibold"
+                title="퀴즈·실습·학습자료·커리큘럼 전체 포함 Excel">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          엑셀 다운로드
+        </button>
+        <div id="btn-dl-xlsx-placeholder" class="text-xs text-[#62666d]">생성 완료 후 활성화</div>
+      </div>
+
+      <!-- SQL -->
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-sm font-semibold">SQL 파일</div>
+          <div class="text-xs text-[#62666d] mt-0.5">quiz · practice · course_practice_quiz INSERT 문</div>
+        </div>
+        <button id="btn-dl-sql" class="hidden inline-flex items-center gap-1.5 text-xs border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] rounded-md px-3 py-1.5 font-medium"
+                title="quiz / practice / course_practice_quiz 3개 테이블 INSERT SQL">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          SQL 다운로드
+        </button>
+        <div id="btn-dl-sql-placeholder" class="text-xs text-[#62666d]">생성 완료 후 활성화</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="tab-admin" class="tab-panel hidden flex-1 overflow-auto scroll-slim">
+    <div class="p-6 space-y-4 max-w-4xl mx-auto">
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-sm font-semibold">환경 설정 <span class="text-xs text-[#62666d] font-normal">(읽기전용)</span></div>
+          <button id="admin-refresh" class="text-xs text-[#8a8f98] hover:text-[#f7f8f8]">새로고침</button>
+        </div>
+        <div id="admin-env" class="text-sm text-[#8a8f98]">불러오는 중…</div>
+      </div>
+
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-5">
         <div class="text-sm font-semibold mb-3">교차검증 매트릭스</div>
-        <div class="text-xs text-zinc-500 mb-2">컴포넌트마다 생성자·검증자 모델이 반대로 배치되어 blind spot을 막습니다.</div>
+        <div class="text-xs text-[#8a8f98] mb-2">컴포넌트마다 생성자·검증자 모델이 반대로 배치되어 blind spot을 막습니다.</div>
         <div id="admin-matrix" class="text-sm"></div>
       </div>
 
-      <div class="bg-white border border-zinc-200 rounded-xl p-5">
+      <div class="bg-[#0f1011] border border-[#23252a] rounded-lg p-5">
         <div class="text-sm font-semibold mb-1">에이전트 시스템 프롬프트</div>
-        <div class="text-xs text-zinc-500 mb-3">
+        <div class="text-xs text-[#8a8f98] mb-3">
           각 에이전트의 현재 활성 프롬프트. <b>저장</b> 시 DB에 override로 반영되어 다음 LLM 호출부터 즉시 적용.
           <b>기본값으로 재설정</b>하면 코드에 하드코딩된 원본으로 복귀.
         </div>
@@ -532,13 +629,13 @@
   <section id="tab-review" class="tab-panel hidden flex-1 flex overflow-hidden">
 
     <!-- 좌: 내비게이터 -->
-    <div id="review-nav-pane" class="border-r border-zinc-200 bg-white flex flex-col shrink-0" style="width: 256px;">
-      <div class="h-12 px-4 flex items-center justify-between border-b border-zinc-200">
+    <div id="review-nav-pane" class="border-r border-[#23252a] bg-[#0f1011] flex flex-col shrink-0" style="width: 256px;">
+      <div class="h-12 px-4 flex items-center justify-between border-b border-[#23252a]">
         <div class="text-sm font-semibold">커리큘럼</div>
-        <div class="text-[11px] text-zinc-500 mono"><span id="nav-done">0</span>/<span id="nav-total">0</span></div>
+        <div id="nav-count-wrap" class="text-[11px] text-[#8a8f98] mono font-semibold"><span id="nav-done">0</span>/<span id="nav-total">0</span></div>
       </div>
       <div id="nav-tree" class="flex-1 overflow-auto scroll-slim p-2 text-sm"></div>
-      <div class="border-t border-zinc-200 p-3 text-[11px] text-zinc-500">
+      <div class="border-t border-[#23252a] p-3 text-[11px] text-[#8a8f98]">
         <div class="flex items-center justify-between"><span class="kbd">↑↓</span><span>카드 이동</span></div>
         <div class="flex items-center justify-between mt-1"><span class="kbd">R</span><span>재생성</span></div>
         <div class="flex items-center justify-between mt-1"><span class="kbd">D</span><span>무시/승인</span></div>
@@ -549,36 +646,41 @@
     <div id="div-nav" class="pane-divider" title="드래그로 폭 조절"></div>
 
     <!-- 중: 콘텐츠 프리뷰 -->
-    <div class="flex-1 flex flex-col min-w-0 bg-white">
-      <div class="h-12 px-5 border-b border-zinc-200 flex items-center justify-between shrink-0">
+    <div class="flex-1 flex flex-col min-w-0 bg-[#0f1011]">
+      <div class="h-12 px-5 border-b border-[#23252a] flex items-center justify-between shrink-0">
         <div id="preview-title" class="text-sm font-semibold truncate">좌측에서 컴포넌트를 선택하세요</div>
         <div class="flex items-center gap-2">
-          <span id="preview-score" class="badge bg-zinc-100 text-zinc-600 hidden"></span>
-          <span id="preview-model" class="badge bg-zinc-100 text-zinc-600 hidden"></span>
-          <button id="btn-material-docx" class="hidden text-xs border border-zinc-300 hover:bg-zinc-50 rounded-md px-2.5 py-1 font-medium inline-flex items-center gap-1" title="이 학습자료를 .docx로 다운로드">
+          <span id="preview-score" class="badge bg-[#383b3f] text-[#8a8f98] hidden"></span>
+          <span id="preview-model" class="badge bg-[#383b3f] text-[#8a8f98] hidden"></span>
+          <button id="btn-material-html" class="hidden text-xs border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] rounded-md px-2.5 py-1 font-medium inline-flex items-center gap-1" title="학습자료를 HTML로 열기 (PDF 저장 가능)">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            HTML / PDF
+          </button>
+          <button id="btn-material-docx" class="hidden text-xs border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] rounded-md px-2.5 py-1 font-medium inline-flex items-center gap-1" title="이 학습자료를 .docx로 다운로드">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             .docx
           </button>
-          <button id="btn-chapter-regen" class="hidden text-xs border border-zinc-300 hover:bg-zinc-50 rounded-md px-2.5 py-1 font-medium">
+          <button id="btn-chapter-regen" class="hidden text-xs border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] rounded-md px-2.5 py-1 font-medium">
             ⟳ 이 챕터 전체 재생성
           </button>
         </div>
       </div>
       <!-- 챕터 재생성 패널 (숨김) -->
-      <div id="chapter-regen-panel" class="hidden border-b border-zinc-200 bg-amber-50 p-4">
+      <div id="chapter-regen-panel" class="hidden border-b border-[#23252a] bg-[#1a1500] p-4">
         <div class="text-xs font-semibold text-amber-900 mb-2">챕터 <span id="cr-chapter"></span> 전체 재생성 — 피드백 반영</div>
         <textarea id="cr-instruction" rows="3" class="w-full border border-amber-300 rounded-md px-2 py-1.5 text-sm" placeholder="예: 'Water의 기적' 스토리를 더 부각하고, 실습에서는 실제 직장인 회의 상황을 예시로 써줘."></textarea>
         <div class="flex items-center gap-2 mt-2 text-xs">
+          <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="story" checked> 스토리</label>
           <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="material" checked> 학습자료</label>
           <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="quiz" checked> 퀴즈</label>
           <label class="inline-flex items-center gap-1"><input type="checkbox" data-cr="practice" checked> 실습</label>
           <span class="flex-1"></span>
           <button id="btn-cr-submit" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-medium">재생성 시작</button>
-          <button id="btn-cr-cancel" class="border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-md">취소</button>
+          <button id="btn-cr-cancel" class="border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] px-3 py-1.5 rounded-md">취소</button>
         </div>
       </div>
       <div id="preview-body" class="flex-1 overflow-auto scroll-slim p-6 content-preview">
-        <div class="text-sm text-zinc-400 text-center mt-20">
+        <div class="text-sm text-[#62666d] text-center mt-20">
           아직 선택된 컴포넌트가 없습니다.
         </div>
       </div>
@@ -588,32 +690,35 @@
     <div id="div-action" class="pane-divider" title="드래그로 폭 조절"></div>
 
     <!-- 우: 플래그/액션 -->
-    <aside id="review-action-pane" class="border-l border-zinc-200 bg-zinc-50 flex flex-col shrink-0" style="width: 384px;">
-      <div class="h-12 px-5 border-b border-zinc-200 bg-white flex items-center justify-between shrink-0">
+    <aside id="review-action-pane" class="border-l border-[#23252a] bg-[#161718] flex flex-col shrink-0" style="width: 384px;">
+      <div class="h-12 px-5 border-b border-[#23252a] bg-[#0f1011] flex items-center justify-between shrink-0">
         <div class="text-sm font-semibold">플래그 & 액션</div>
-        <div id="review-summary" class="text-[11px] text-zinc-500 mono">—</div>
+        <div class="flex items-center gap-2">
+          <button id="btn-revalidate" class="hidden text-[11px] border border-[#383b3f] hover:bg-[#23252a] text-[#8a8f98] hover:text-[#d0d6e0] rounded px-2 py-1">검증 재실행</button>
+          <div id="review-summary" class="text-[11px] text-[#8a8f98] mono">—</div>
+        </div>
       </div>
 
-      <div class="px-4 pt-3 pb-3 bg-white border-b border-zinc-200">
+      <div class="px-4 pt-3 pb-3 bg-[#0f1011] border-b border-[#23252a]">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold">무엇을 보시겠어요?</div>
-          <button id="filter-help" class="text-[10px] text-zinc-400 hover:text-zinc-700 underline">도움말</button>
+          <div class="text-[11px] text-[#8a8f98] uppercase tracking-wide font-semibold">무엇을 보시겠어요?</div>
+          <button id="filter-help" class="text-[10px] text-[#62666d] hover:text-[#d0d6e0] underline">도움말</button>
         </div>
         <div id="flag-filters" class="flex flex-wrap gap-1.5"></div>
-        <div id="filter-help-panel" class="hidden mt-3 text-[11px] text-zinc-600 leading-5 bg-zinc-50 p-2.5 rounded">
-          <div class="mb-1"><b class="text-zinc-800">출처·사실 확인</b> — 위인 어록·연도·기관명 등 팩트 의심 영역.</div>
-          <div class="mb-1"><b class="text-zinc-800">서식 오류</b> — 퀴즈 보기 개수·실습 고정값 등 규격 위반.</div>
-          <div class="mb-1"><b class="text-zinc-800">애매함 — 사람 확인</b> — 검증자가 통과/실패 경계에서 "중" 판정한 항목.</div>
-          <div class="mb-1"><b class="text-zinc-800">민감 표현</b> — 직군·세대 일반화 등 중립 표현 점검.</div>
-          <div><b class="text-zinc-800">앞뒤 불일치</b> — 기획서나 다른 컴포넌트와 서로 안맞는 부분.</div>
+        <div id="filter-help-panel" class="hidden mt-3 text-[11px] text-[#8a8f98] leading-5 bg-[#161718] p-2.5 rounded border border-[#23252a]">
+          <div class="mb-1"><b class="text-[#e5e5e6]">출처·사실 확인</b> — 위인 어록·연도·기관명 등 팩트 의심 영역.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">서식 오류</b> — 퀴즈 보기 개수·실습 고정값 등 규격 위반.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">애매함 — 사람 확인</b> — 검증자가 통과/실패 경계에서 "중" 판정한 항목.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">민감 표현</b> — 직군·세대 일반화 등 중립 표현 점검.</div>
+          <div><b class="text-[#e5e5e6]">앞뒤 불일치</b> — 기획서나 다른 컴포넌트와 서로 안맞는 부분.</div>
         </div>
         <div class="mt-2 flex items-center gap-3 text-xs">
-          <button id="bulk-dismiss" class="text-zinc-500 hover:text-zinc-900">현재 보이는 플래그 모두 무시</button>
+          <button id="bulk-dismiss" class="text-[#8a8f98] hover:text-[#f7f8f8]">현재 보이는 플래그 모두 무시</button>
         </div>
       </div>
 
       <div id="action-panel" class="flex-1 overflow-auto scroll-slim">
-        <div class="text-sm text-zinc-400 text-center mt-20 px-4">
+        <div class="text-sm text-[#62666d] text-center mt-20 px-4">
           좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.
         </div>
       </div>
@@ -635,6 +740,7 @@ const state = {
   chapterMap: {},      // chapter_id → chapter_name
   components: [],      // 최신 버전만
   flags: [],           // 미해결 플래그
+  missingComponents: [], // 누락 컴포넌트 목록
   selectedCompId: null,
   activeFilters: new Set(['FACT','SCHEMA','BORDERLINE','SENSITIVE','CONSISTENCY']),
   summary: null,
@@ -644,17 +750,33 @@ const state = {
 const TYPE_LABEL = {
   course_overview:   '과정 기획',
   figure_rationale:  '위인 선정 배경',
+  story:             '스토리',
   material:          '학습자료',
   quiz:              '퀴즈',
   practice:          '실습',
+  special_quiz:      '특수 퀴즈',
 };
-const TYPE_ORDER = ['figure_rationale','material','quiz','practice'];
+const SPECIAL_QUIZ_ROLE_LABEL = {
+  teaser:       '파트 티저',
+  part_summary: '파트 종합',
+  final_review: '최종 회고',
+};
+const KIND_LABEL = {
+  'background_knowledge': '배경지식',
+  'empathy_opener': '공감 오프너',
+  'concept':        '핵심 개념',
+  'example':        'Bad/Good/Better',
+  'template':       '실전 시나리오',
+  'reflection':     '체크리스트/요약',
+};
+const TYPE_ORDER = ['figure_rationale','story','material','quiz','practice','special_quiz'];
 const FLAG_META = {
-  FACT:        { label:'출처·사실 확인',   short:'사실',   bg:'#fee2e2', fg:'#991b1b', hint:'위인 어록·일화·통계·수치·기관명 등이 실제 사실에 기반하는지 확인이 필요합니다.' },
-  SCHEMA:      { label:'서식 오류',        short:'서식',   bg:'#fef3c7', fg:'#92400e', hint:'퀴즈·실습·학습자료의 필수 필드 누락 또는 규격 위반. 자동 차단되어야 하는 것이 루프 한도 초과로 올라온 상태입니다.' },
-  BORDERLINE:  { label:'애매함 — 사람 확인',short:'애매',   bg:'#e0e7ff', fg:'#3730a3', hint:'AI 검증자가 통과/미달 경계에서 판정한 항목. 사람 눈으로 최종 확인 필요.' },
-  SENSITIVE:   { label:'민감 표현 가능',   short:'민감',   bg:'#fce7f3', fg:'#9d174d', hint:'특정 직군·세대·성별·국적에 대한 일반화 등 중립 표현으로 바꿀 필요가 있는지 점검하세요.' },
-  CONSISTENCY: { label:'앞뒤 불일치',      short:'모순',   bg:'#d1fae5', fg:'#065f46', hint:'기획서·다른 컴포넌트·같은 챕터 내에서 서로 모순되는 내용이 있습니다.' },
+  FACT:        { label:'출처·사실 확인',   short:'사실',   bg:'#2d0a0a', fg:'#fca5a5', hint:'위인 어록·일화·통계·수치·기관명 등이 실제 사실에 기반하는지 확인이 필요합니다.' },
+  SCHEMA:      { label:'서식 오류',        short:'서식',   bg:'#1f1200', fg:'#fbbf24', hint:'퀴즈·실습·학습자료의 필수 필드 누락 또는 규격 위반. 자동 차단되어야 하는 것이 루프 한도 초과로 올라온 상태입니다.' },
+  BORDERLINE:  { label:'애매함 — 사람 확인',short:'애매',  bg:'#0f0f2e', fg:'#a5b4fc', hint:'AI 검증자가 통과/미달 경계에서 판정한 항목. 사람 눈으로 최종 확인 필요.' },
+  SENSITIVE:   { label:'민감 표현 가능',   short:'민감',   bg:'#2d0a1a', fg:'#f9a8d4', hint:'특정 직군·세대·성별·국적에 대한 일반화 등 중립 표현으로 바꿀 필요가 있는지 점검하세요.' },
+  CONSISTENCY: { label:'앞뒤 불일치',      short:'모순',   bg:'#0d2015', fg:'#6ee7b7', hint:'기획서·다른 컴포넌트·같은 챕터 내에서 서로 모순되는 내용이 있습니다.' },
+  GLOSSARY:    { label:'용어 불일치',      short:'용어',   bg:'#ede9fe', fg:'#5b21b6', hint:'glossary.yaml 표준 용어와 다른 표현이 감지되었습니다. 수정 권장.' },
 };
 // 편의용 구(舊) 이름 호환
 const FLAG_COLORS = FLAG_META;
@@ -677,7 +799,9 @@ const RUBRIC_LOC = {
   'rationale.what_learner_gets.concrete': { area:'위인 선정 배경', item:'학습자 획득 역량' },
   'rationale.voice.mentor_tone':          { area:'위인 선정 배경', item:'멘토 톤 일관성' },
   // material
-  'material.sections.six_present':        { area:'학습자료', item:'6개 섹션 구성' },
+  'material.sections.six_present':        { area:'학습자료', item:'9개 섹션 구성 (브릿지3+본문6)' },
+  'material.bridge.three_present':        { area:'학습자료', item:'브릿지 섹션 3개 (오프닝훅·시연·미리보기)' },
+  'material.bridge.demo_visualize_not_analogy': { area:'학습자료', item:'브릿지 시연 — 가시화 (비유 X)' },
   'material.length.1500_2500':            { area:'학습자료', item:'분량 1,500~2,500자' },
   'material.good_better_best.present':    { area:'학습자료', item:'Good/Better/Best 비교' },
   'material.checklist.5_to_7':            { area:'학습자료', item:'실전 체크리스트 5~7개' },
@@ -757,12 +881,12 @@ function parseLocation(raw) {
   return { area: '', item: raw, rawId: raw };
 }
 const STATUS_STYLE = {
-  'generated':   { label:'생성완료', color:'bg-sky-100 text-sky-800', col:'pass' },
-  'passed':      { label:'통과',    color:'bg-emerald-100 text-emerald-800', col:'pass' },
-  'flagged':     { label:'플래그',  color:'bg-rose-100 text-rose-800', col:'flag' },
-  'validating':  { label:'검증중',  color:'bg-amber-100 text-amber-800', col:'val' },
-  'regenerating':{ label:'재생성',  color:'bg-amber-100 text-amber-800', col:'gen' },
-  'generating':  { label:'생성중',  color:'bg-blue-100 text-blue-800',  col:'gen' },
+  'generated':   { label:'생성완료', color:'bg-[#0a1628] text-sky-400',     col:'pass' },
+  'passed':      { label:'통과',    color:'bg-[#0d2015] text-emerald-400', col:'pass' },
+  'flagged':     { label:'플래그',  color:'bg-[#2d0a0a] text-rose-400',   col:'flag' },
+  'validating':  { label:'검증중',  color:'bg-[#1f1200] text-amber-400',  col:'val'  },
+  'regenerating':{ label:'재생성',  color:'bg-[#1f1200] text-amber-400',  col:'gen'  },
+  'generating':  { label:'생성중',  color:'bg-[#0a1628] text-sky-400',   col:'gen' },
 };
 
 // ============================================================
@@ -788,6 +912,7 @@ const BREAD = {
   control: { title:'새 코스 만들기', sub:'위인·주제 입력해 기획서를 생성합니다', stepper:false },
   exec:    { title:'진행 상황',      sub:'기획서 승인 후 컴포넌트 생성과 교차검증이 이 탭에서 진행됩니다', stepper:true },
   review:  { title:'검토 & 승인',    sub:'플래그된 항목을 검토하고 재생성 또는 승인합니다', stepper:true },
+  deploy:  { title:'배포',           sub:'검토 완료 후 엑셀·SQL 파일을 다운로드해 개발팀에 전달합니다', stepper:true },
   admin:   { title:'환경설정',       sub:'모델·교차검증 매트릭스·에이전트 시스템 프롬프트 열람 및 수정', stepper:false },
 };
 function setStep(n) {
@@ -809,10 +934,12 @@ function switchTab(name) {
   $('stepper').classList.toggle('hidden', !b.stepper);
   if (name === 'review' && state.runId) refreshReview();
   if (name === 'admin') loadAdmin();
+  if (name === 'deploy') refreshDeployTab();
   // stepper state
   if (name === 'control') setStep(1);
   else if (name === 'exec') setStep(state.blueprint ? 3 : 2);
   else if (name === 'review') setStep(4);
+  else if (name === 'deploy') setStep(5);
 }
 document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
@@ -839,9 +966,9 @@ document.querySelectorAll('#diff-preset-group [data-preset]').forEach(btn => {
   btn.onclick = () => {
     _currentPreset = btn.dataset.preset;
     document.querySelectorAll('#diff-preset-group [data-preset]').forEach(b => {
-      b.classList.remove('border-zinc-900','bg-zinc-50');
+      b.classList.remove('border-[#e4f222]','bg-[#161718]');
     });
-    btn.classList.add('border-zinc-900','bg-zinc-50');
+    btn.classList.add('border-[#e4f222]','bg-[#161718]');
   };
 });
 
@@ -857,11 +984,51 @@ $('in-category').addEventListener('change', (e) => {
   }
 });
 
+// ============================================================
+// CLIP GROUP ID GRID
+// ============================================================
+function renderClipGrid() {
+  const parts = parseInt($('in-parts').value) || 5;
+  const cpPart = parseInt($('in-chapters-per-part').value) || 2;
+  const grid = $('clip-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let p = 1; p <= parts; p++) {
+    for (let c = 1; c <= cpPart; c++) {
+      const chapId = `${p}-${c}`;
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2';
+      div.innerHTML = `
+        <span class="text-[#62666d] mono text-xs w-8 shrink-0">${chapId}</span>
+        <input type="text" data-clip-chap="${chapId}" placeholder="-"
+          class="flex-1 border border-[#383b3f] rounded px-2 py-1 text-xs focus:border-[#e4f222] outline-none font-mono bg-[#08090a] text-[#f7f8f8]" />
+      `;
+      grid.appendChild(div);
+    }
+  }
+}
+function getClipGroupIds() {
+  const result = {};
+  document.querySelectorAll('[data-clip-chap]').forEach(el => {
+    result[el.dataset.clipChap] = el.value.trim() || '-';
+  });
+  return result;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const clearBtn = $('btn-clear-clips');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      document.querySelectorAll('[data-clip-chap]').forEach(el => el.value = '');
+    });
+  }
+});
+
 // 챕터 구성 실시간 합계
 function updateChapterTotals() {
   const parts = Math.max(1, +($('in-parts').value || 5));
   const cpp = Math.max(1, +($('in-chapters-per-part').value || 2));
   $('total-chapters').textContent = parts * cpp;
+  renderClipGrid();
 }
 $('in-parts').addEventListener('input', updateChapterTotals);
 $('in-chapters-per-part').addEventListener('input', updateChapterTotals);
@@ -897,16 +1064,16 @@ async function refreshRunsList() {
                         : x.status === 'error' ? 'bg-rose-500'
                         : 'bg-zinc-300';
       const wrap = document.createElement('div');
-      wrap.className = 'group relative rounded hover:bg-zinc-50' + (x.run_id === state.runId ? ' bg-zinc-100' : '');
+      wrap.className = 'group relative rounded hover:bg-[#23252a]' + (x.run_id === state.runId ? ' bg-[#23252a]' : '');
       wrap.innerHTML = `
         <button class="w-full text-left px-2 py-1.5 pr-8 flex items-start gap-2" data-act="open">
           <span class="dot ${statusColor} mt-1.5 shrink-0"></span>
           <div class="min-w-0 flex-1">
-            <div class="mono text-[10px] text-zinc-400 truncate">${esc(x.run_id)}</div>
-            <div class="text-zinc-700 truncate">${esc(inputs.figure || '—')} · ${esc(inputs.topic || '—')}</div>
+            <div class="mono text-[10px] text-[#62666d] truncate">${esc(x.run_id)}</div>
+            <div class="text-[#d0d6e0] truncate">${esc(inputs.figure || '—')} · ${esc(inputs.topic || '—')}</div>
           </div>
         </button>
-        <button class="absolute right-1 top-1.5 w-5 h-5 rounded hover:bg-rose-100 text-zinc-400 hover:text-rose-600 text-xs opacity-0 group-hover:opacity-100 transition" data-act="delete" title="이 Run 삭제">✕</button>
+        <button class="absolute right-1 top-1.5 w-5 h-5 rounded hover:bg-[#2d0a0a] text-[#62666d] hover:text-rose-400 text-xs opacity-0 group-hover:opacity-100 transition" data-act="delete" title="이 Run 삭제">✕</button>
       `;
       wrap.querySelector('[data-act="open"]').onclick = () => attachToRun(x.run_id);
       wrap.querySelector('[data-act="delete"]').onclick = (e) => {
@@ -934,7 +1101,6 @@ async function deleteRun(runId, inputs) {
       state.flags = [];
       state.selectedCompId = null;
       $('run-pill').classList.add('hidden');
-      $('btn-export').classList.add('hidden');
       $('bp-form').classList.add('hidden');
       $('bp-loading').classList.add('hidden');
       $('bp-idle').classList.remove('hidden');
@@ -996,17 +1162,59 @@ function updateRunPill(status) {
                  : status==='error'?'bg-rose-500'
                  : 'bg-zinc-400';
   $('run-pill-dot').className = 'dot ' + dotColor;
-  // Export 버튼: reviewing/deployed 상태에서만 노출
-  const exp = $('btn-export');
-  if (['reviewing','deployed','generating'].includes(status)) exp.classList.remove('hidden');
-  else exp.classList.add('hidden');
+  // 검증 재실행 버튼: reviewing/generating 상태에서 노출
+  const reval = $('btn-revalidate');
+  if (reval) {
+    if (['reviewing','generating'].includes(status)) reval.classList.remove('hidden');
+    else reval.classList.add('hidden');
+  }
+  const active = ['reviewing','deployed','generating'].includes(status);
+  ['btn-dl-xlsx','btn-dl-sql'].forEach(id => {
+    const el = $(id); if (!el) return;
+    if (active) el.classList.remove('hidden'); else el.classList.add('hidden');
+    const ph = $(id + '-placeholder'); if (!ph) return;
+    if (active) ph.classList.add('hidden'); else ph.classList.remove('hidden');
+  });
 }
 
-// Export — 기본은 xlsx (학습자료는 Review에서 개별 docx 다운로드 가능)
-$('btn-export').onclick = () => {
+// 배포 탭 상태 갱신
+function refreshDeployTab() {
+  const active = !!(state.runId && state.components.length > 0);
+  ['btn-dl-xlsx','btn-dl-sql'].forEach(id => {
+    const el = $(id); if (!el) return;
+    if (active) el.classList.remove('hidden'); else el.classList.add('hidden');
+    const ph = $(id + '-placeholder'); if (!ph) return;
+    if (active) ph.classList.add('hidden'); else ph.classList.remove('hidden');
+  });
+}
+
+
+$('btn-dl-xlsx').onclick = () => {
   if (!state.runId) return;
   window.open(`/api/runs/${state.runId}/export.xlsx`, '_blank');
-  toast('xlsx 다운로드 시작','ok');
+  toast('엑셀 다운로드 시작','ok');
+};
+$('btn-dl-sql').onclick = () => {
+  if (!state.runId) return;
+  window.open(`/api/runs/${state.runId}/export.sql`, '_blank');
+  toast('SQL 다운로드 시작','ok');
+};
+$('btn-revalidate').onclick = async () => {
+  if (!state.runId) return;
+  const btn = $('btn-revalidate');
+  btn.disabled = true;
+  btn.textContent = '재검증 중…';
+  try {
+    const r = await fetch(`/api/runs/${state.runId}/revalidate`, { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('검증 재실행 시작 — 완료 후 플래그가 업데이트됩니다', 'ok');
+    setTimeout(refreshReview, 3000);
+  } catch(e) {
+    toast('재검증 실패: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '검증 재실행';
+  }
 };
 
 // 챕터 재생성 토글
@@ -1054,21 +1262,22 @@ function statFrag(type, expected) {
   const flag = stats.flagged || 0;
   const other = Object.entries(stats).filter(([k]) => k !== 'passed' && k !== 'flagged').reduce((a,[_,v]) => a+v, 0);
   const total = pass + flag + other;
-  if (expected && total === 0) return `<span class="text-zinc-400">대기 0/${expected}</span>`;
+  if (expected && total === 0) return `<span class="text-[#62666d]">대기 0/${expected}</span>`;
   const parts = [];
   if (pass) parts.push(`<span class="text-emerald-600">✓${pass}</span>`);
   if (flag) parts.push(`<span class="text-rose-600">⚠${flag}</span>`);
   if (other) parts.push(`<span class="text-blue-600">…${other}</span>`);
-  return parts.join(' ') + (expected ? `<span class="text-zinc-400 ml-1">/ ${expected}</span>` : '');
+  return parts.join(' ') + (expected ? `<span class="text-[#62666d] ml-1">/ ${expected}</span>` : '');
 }
 function updateStatsBar(s) {
   $('stat-fr').innerHTML = statFrag('figure_rationale', 1);
+  $('stat-story').innerHTML = statFrag('story', 10);
   $('stat-mat').innerHTML = statFrag('material', 10);
   $('stat-quiz').innerHTML = statFrag('quiz', 10);
   $('stat-prac').innerHTML = statFrag('practice', 10);
   $('stat-flags').innerHTML = s.flags_total > 0
-    ? `<span class="text-rose-600">${s.flags_total}</span> <span class="text-zinc-400 text-xs">미해결</span>`
-    : `<span class="text-emerald-600">0</span> <span class="text-zinc-400 text-xs">클린</span>`;
+    ? `<span class="text-rose-600">${s.flags_total}</span> <span class="text-[#62666d] text-xs">미해결</span>`
+    : `<span class="text-emerald-600">0</span> <span class="text-[#62666d] text-xs">클린</span>`;
 }
 
 // ============================================================
@@ -1079,7 +1288,7 @@ function renderKanban() {
   Object.values(cols).forEach(c => c.innerHTML = '');
   const counts = { gen:0, val:0, pass:0, flag:0 };
   state.components.forEach(c => {
-    const meta = STATUS_STYLE[c.status] || { col:'gen', label:c.status, color:'bg-zinc-100 text-zinc-700' };
+    const meta = STATUS_STYLE[c.status] || { col:'gen', label:c.status, color:'bg-[#23252a] text-[#d0d6e0]' };
     counts[meta.col]++;
     cols[meta.col].innerHTML += compMiniCard(c, meta);
   });
@@ -1094,10 +1303,10 @@ function compMiniCard(c, meta) {
   const typeKo = TYPE_LABEL[c.type] || c.type;
   const chapName = c.chapter_id && c.chapter_id !== '-' ? state.chapterMap[c.chapter_id] : '';
   const title = c.chapter_id && c.chapter_id !== '-' ? `${typeKo} · ${c.chapter_id}` : typeKo;
-  return `<div class="bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs">
+  return `<div class="bg-[#0f1011] border border-[#23252a] rounded-md px-2.5 py-1.5 text-xs">
     <div class="font-semibold">${esc(title)}</div>
-    ${chapName ? `<div class="text-zinc-500 truncate mt-0.5">${esc(chapName)}</div>` : ''}
-    <div class="text-[10px] text-zinc-400 mt-1 mono">${esc(c.generator_model)} → ${esc(c.validator_model)}</div>
+    ${chapName ? `<div class="text-[#8a8f98] truncate mt-0.5">${esc(chapName)}</div>` : ''}
+    <div class="text-[10px] text-[#62666d] mt-1 mono">${esc(c.generator_model)} → ${esc(c.validator_model)}</div>
   </div>`;
 }
 
@@ -1177,11 +1386,11 @@ function logEvent(t, p) {
   const el = $('event-log');
   const div = document.createElement('div');
   div.className = 'mono text-[11px] py-0.5';
-  let color = 'text-zinc-600';
+  let color = 'text-[#8a8f98]';
   if (t.includes('error') || t === 'component.flagged') color = 'text-rose-600';
   else if (t === 'component.validated' || t === 'blueprint.completed' || t === 'run.completed') color = 'text-emerald-600';
   else if (t === 'component.regenerating') color = 'text-amber-600';
-  div.innerHTML = `<span class="text-zinc-400">[${fmtTime()}]</span> <span class="${color}">${esc(t)}</span> <span class="text-zinc-500">${esc(JSON.stringify(p).slice(0, 160))}</span>`;
+  div.innerHTML = `<span class="text-[#62666d]">[${fmtTime()}]</span> <span class="${color}">${esc(t)}</span> <span class="text-[#8a8f98]">${esc(JSON.stringify(p).slice(0, 160))}</span>`;
   el.appendChild(div); el.scrollTop = el.scrollHeight;
 }
 function handleEvent(m) {
@@ -1199,6 +1408,9 @@ function handleEvent(m) {
   } else if (t.startsWith('component.')) {
     // 증분 업데이트 대신 간단히 전체 새로고침 (단순)
     refreshRunData();
+  } else if (t === 'run.missing_components') {
+    state.missingComponents = p.missing || [];
+    renderMissingBanner();
   } else if (t === 'run.completed') {
     updateRunPill('reviewing');
     toast('✅ 전체 생성 완료 — 검토 탭에서 플래그를 확인하세요', 'ok');
@@ -1228,6 +1440,45 @@ function showError(msg) {
   $('err-msg').textContent = msg;
 }
 
+function renderMissingBanner() {
+  const missing = state.missingComponents;
+  const banner = $('missing-banner');
+  const list = $('missing-list');
+  if (!missing || !missing.length) { banner.classList.add('hidden'); return; }
+  const TYPE_KR = { quiz: '퀴즈', practice: '실습', material: '학습자료', story: '스토리' };
+  list.innerHTML = missing.map(m => `
+    <div class="flex items-center justify-between bg-[#0f1011] border border-[#23252a] rounded px-3 py-1.5 text-xs">
+      <span class="text-[#d0d6e0]"><b>${esc(m.chapter_id)}</b> — ${esc(m.chapter_name)} · <span class="text-amber-700 font-semibold">${TYPE_KR[m.type] || m.type}</span> 누락</span>
+      <button onclick="regenMissing('${esc(m.chapter_id)}','${esc(m.type)}')"
+        class="ml-4 px-2 py-0.5 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">재생성</button>
+    </div>
+  `).join('');
+  banner.classList.remove('hidden');
+}
+
+function dismissMissingBanner() {
+  $('missing-banner').classList.add('hidden');
+}
+
+async function regenMissing(chapterId, compType) {
+  if (!state.runId) return;
+  try {
+    await fetch(`/api/runs/${state.runId}/chapters/${chapterId}/regenerate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ instruction: '', components: [compType] }),
+    });
+    // 해당 항목을 목록에서 제거
+    state.missingComponents = state.missingComponents.filter(
+      m => !(m.chapter_id === chapterId && m.type === compType)
+    );
+    renderMissingBanner();
+    toast(`${chapterId} ${compType} 재생성 시작`, 'ok');
+  } catch(e) {
+    showError('재생성 요청 실패: ' + e.message);
+  }
+}
+
 // ============================================================
 // BLUEPRINT FORM
 // ============================================================
@@ -1253,8 +1504,8 @@ function showBlueprint(c) {
     list.forEach((v, i) => {
       host.insertAdjacentHTML('beforeend',
         `<div class="flex gap-2">
-           <span class="text-xs text-zinc-400 mt-2 w-4 shrink-0">${i+1})</span>
-           <textarea rows="2" data-${dataAttr}="${i}" class="flex-1 border border-zinc-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none">${esc(v)}</textarea>
+           <span class="text-xs text-[#62666d] mt-2 w-4 shrink-0">${i+1})</span>
+           <textarea rows="2" data-${dataAttr}="${i}" class="flex-1 border border-[#383b3f] rounded-md px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-[#e4f222]/20 focus:border-[#e4f222] outline-none bg-[#08090a] text-[#f7f8f8]">${esc(v)}</textarea>
          </div>`);
     });
   };
@@ -1266,10 +1517,10 @@ function showBlueprint(c) {
   (c.curriculum || []).forEach((row, i) => {
     cur.insertAdjacentHTML('beforeend', `
       <tr>
-        <td class="px-3 py-1 mono text-xs bg-zinc-50/50 text-center text-zinc-500">${esc(row.chapter_id)}</td>
-        <td class="px-2 py-1"><input data-curr="${i}" data-k="part_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.part_name||'')}"></td>
-        <td class="px-2 py-1"><input data-curr="${i}" data-k="chapter_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.chapter_name||'')}"></td>
-        <td class="px-2 py-1"><input data-curr="${i}" data-k="prompt_technique" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900/10 rounded outline-none" value="${esc(row.prompt_technique||'')}"></td>
+        <td class="px-3 py-1 mono text-xs bg-[#161718] text-center text-[#8a8f98]">${esc(row.chapter_id)}</td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="part_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-[#23252a] focus:ring-2 focus:ring-[#e4f222]/20 rounded outline-none" value="${esc(row.part_name||'')}"></td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="chapter_name" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-[#23252a] focus:ring-2 focus:ring-[#e4f222]/20 rounded outline-none" value="${esc(row.chapter_name||'')}"></td>
+        <td class="px-2 py-1"><input data-curr="${i}" data-k="prompt_technique" class="w-full border-0 bg-transparent px-1 py-0.5 text-sm focus:bg-[#23252a] focus:ring-2 focus:ring-[#e4f222]/20 rounded outline-none" value="${esc(row.prompt_technique||'')}"></td>
       </tr>`);
   });
 }
@@ -1339,9 +1590,9 @@ document.addEventListener('click', async (ev) => {
 function resetReviewUI() {
   // Run 전환/삭제 시 Review 화면 초기화 — 이전 Run의 프리뷰/플래그 카드가 남지 않도록
   const pb = $('preview-body');
-  if (pb) pb.innerHTML = '<div class="text-sm text-zinc-400 text-center mt-20">아직 선택된 컴포넌트가 없습니다.</div>';
+  if (pb) pb.innerHTML = '<div class="text-sm text-[#62666d] text-center mt-20">아직 선택된 컴포넌트가 없습니다.</div>';
   const ap = $('action-panel');
-  if (ap) ap.innerHTML = '<div class="text-sm text-zinc-400 text-center mt-20 px-4">좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.</div>';
+  if (ap) ap.innerHTML = '<div class="text-sm text-[#62666d] text-center mt-20 px-4">좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.</div>';
   const pt = $('preview-title'); if (pt) pt.textContent = '컴포넌트 선택';
   ['preview-model','preview-score','btn-chapter-regen','btn-material-docx'].forEach(id => {
     const el = $(id); if (el) el.classList.add('hidden');
@@ -1382,7 +1633,7 @@ function updateReviewSummary() {
 
 function renderNavTree() {
   const host = $('nav-tree');
-  if (!state.blueprint) { host.innerHTML = '<div class="text-xs text-zinc-400 p-2">기획서가 승인되면 트리가 생성됩니다.</div>'; return; }
+  if (!state.blueprint) { host.innerHTML = '<div class="text-xs text-[#62666d] p-2">기획서가 승인되면 트리가 생성됩니다.</div>'; return; }
   // Group components by chapter_id; also handle figure_rationale
   const byKey = {}; // key = `${type}::${chapter_id}` → component
   state.components.forEach(c => { byKey[`${c.type}::${c.chapter_id}`] = c; });
@@ -1404,10 +1655,10 @@ function renderNavTree() {
   let totalDone = 0, totalAll = 0;
   Object.keys(parts).sort().forEach(pId => {
     const p = parts[pId];
-    html += `<div class="mt-2"><div class="text-[10px] uppercase tracking-wide text-zinc-400 px-2 mb-1">파트 ${pId} · ${esc(p.name)}</div>`;
+    html += `<div class="mt-2"><div class="text-[10px] uppercase tracking-wide text-[#62666d] px-2 mb-1">파트 ${pId} · ${esc(p.name)}</div>`;
     p.chapters.forEach(ch => {
       html += `<div class="mb-1 ml-1">
-        <div class="text-[11px] font-medium text-zinc-700 px-2 py-0.5">${esc(ch.chapter_id)} · ${esc(ch.chapter_name)}</div>`;
+        <div class="text-[11px] font-medium text-[#d0d6e0] px-2 py-0.5">${esc(ch.chapter_id)} · ${esc(ch.chapter_name)}</div>`;
       TYPE_ORDER.filter(t => t !== 'figure_rationale').forEach(t => {
         const c = byKey[`${t}::${ch.chapter_id}`];
         if (!c) return;
@@ -1419,21 +1670,27 @@ function renderNavTree() {
     });
     html += `</div>`;
   });
+  const navTotalN = totalAll + (fr ? 1 : 0);
   $('nav-done').textContent = totalDone;
-  $('nav-total').textContent = totalAll + (fr ? 1 : 0);
+  $('nav-total').textContent = navTotalN;
+  const wrap = $('nav-count-wrap');
+  if (wrap) {
+    const allDone = navTotalN > 0 && totalDone >= navTotalN;
+    wrap.className = `text-[11px] mono font-semibold ${allDone ? 'text-emerald-500' : 'text-[#8a8f98]'}`;
+  }
   host.innerHTML = html;
   host.querySelectorAll('[data-cid]').forEach(el => el.onclick = () => selectComponent(el.dataset.cid));
 }
 
 function renderNavItem(c, flagCount, indent) {
   const typeKo = TYPE_LABEL[c.type];
-  const statusMeta = STATUS_STYLE[c.status] || { label:c.status, color:'bg-zinc-100 text-zinc-700' };
-  const sel = c.component_id === state.selectedCompId ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100';
+  const statusMeta = STATUS_STYLE[c.status] || { label:c.status, color:'bg-[#23252a] text-[#d0d6e0]' };
+  const sel = c.component_id === state.selectedCompId ? 'bg-[#23252a] text-[#f7f8f8]' : 'hover:bg-[#23252a]';
   const pad = indent === 0 ? 'ml-0' : 'ml-3';
   return `<div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer ${sel} ${pad}" data-cid="${c.component_id}">
     <span class="font-medium">${esc(typeKo)}</span>
-    ${flagCount ? `<span class="badge bg-rose-100 text-rose-700 text-[10px]">${flagCount}</span>` : ''}
-    <span class="ml-auto text-[10px] ${c.component_id === state.selectedCompId ? 'text-zinc-300' : 'text-zinc-400'}">${esc(statusMeta.label)}</span>
+    ${flagCount ? `<span class="badge bg-[#2d0a0a] text-rose-400 text-[10px]">${flagCount}</span>` : ''}
+    <span class="ml-auto text-[10px] ${c.component_id === state.selectedCompId ? 'text-[#f7f8f8]' : 'text-[#62666d]'}">${esc(statusMeta.label)}</span>
   </div>`;
 }
 
@@ -1462,13 +1719,17 @@ async function selectComponent(cid) {
     chapterBtn.classList.add('hidden');
     $('chapter-regen-panel').classList.add('hidden');
   }
-  // 학습자료(material) 컴포넌트만 docx 다운로드 버튼 노출
+  // 학습자료(material) 컴포넌트만 HTML/docx 버튼 노출
   const docxBtn = $('btn-material-docx');
+  const htmlBtn = $('btn-material-html');
   if (c.type === 'material') {
     docxBtn.classList.remove('hidden');
     docxBtn.onclick = () => window.open(`/api/components/${c.component_id}/export.docx`, '_blank');
+    htmlBtn.classList.remove('hidden');
+    htmlBtn.onclick = () => window.open(`/api/runs/${state.runId}/chapters/${c.chapter_id}/material.html`, '_blank');
   } else {
     docxBtn.classList.add('hidden');
+    htmlBtn.classList.add('hidden');
   }
 
   // 모델 배지
@@ -1483,7 +1744,7 @@ async function selectComponent(cid) {
     if (score != null) {
       $('preview-score').classList.remove('hidden');
       const ok = d.latest_validation.passed;
-      $('preview-score').className = `badge ${ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`;
+      $('preview-score').className = `badge ${ok ? 'bg-[#0d2015] text-emerald-400' : 'bg-[#2d0a0a] text-rose-400'}`;
       $('preview-score').textContent = `점수 ${Math.round(score)}`;
     } else {
       $('preview-score').classList.add('hidden');
@@ -1496,12 +1757,14 @@ async function selectComponent(cid) {
 
 function renderPreview(type, content) {
   const host = $('preview-body');
-  if (!content) { host.innerHTML = '<div class="text-sm text-zinc-400">콘텐츠 없음</div>'; return; }
+  if (!content) { host.innerHTML = '<div class="text-sm text-[#62666d]">콘텐츠 없음</div>'; return; }
   let html = '';
   if (type === 'figure_rationale') html = previewFigureRationale(content);
+  else if (type === 'story') html = previewStory(content);
   else if (type === 'material') html = previewMaterial(content);
   else if (type === 'quiz') html = previewQuiz(content);
   else if (type === 'practice') html = previewPractice(content);
+  else if (type === 'special_quiz') html = previewSpecialQuiz(content);
   else html = `<pre>${esc(JSON.stringify(content, null, 2))}</pre>`;
   host.innerHTML = html;
 }
@@ -1510,8 +1773,8 @@ function previewFigureRationale(c) {
   return `
     <div class="max-w-2xl">
       <div data-preview-section="fr-opening">
-        <div class="text-xs text-zinc-400 mb-1">OPENING ONE-LINER</div>
-        <blockquote class="border-l-4 border-zinc-900 pl-4 italic text-lg text-zinc-800">"${esc(c.opening_one_liner||'')}"</blockquote>
+        <div class="text-xs text-[#62666d] mb-1">OPENING ONE-LINER</div>
+        <blockquote class="border-l-4 border-[#e4f222] pl-4 italic text-lg text-[#e5e5e6]">"${esc(c.opening_one_liner||'')}"</blockquote>
       </div>
       <div data-preview-section="fr-background">
         <h4>배경</h4>
@@ -1534,26 +1797,126 @@ function previewFigureRationale(c) {
       <div data-preview-section="fr-episodes">
         <h4>핵심 에피소드</h4>
         ${(c.key_episodes||[]).map(ep=>`
-          <div class="border border-zinc-200 rounded-lg p-4 mb-3">
+          <div class="border border-[#23252a] rounded-md p-4 mb-3">
             <div class="font-semibold">${esc(ep.title)}</div>
             <p class="mt-1 text-sm">${esc(ep.description)}</p>
-            <div class="text-xs text-zinc-500 mt-2">출처: ${esc(ep.source)}</div>
+            <div class="text-xs text-[#8a8f98] mt-2">출처: ${esc(ep.source)}</div>
           </div>`).join('')}
       </div>
     </div>`;
 }
+function previewStory(c) {
+  const field = (label, val) => val ? `
+    <div class="mb-4">
+      <div class="text-[10px] uppercase tracking-widest text-[#62666d] mb-1">${label}</div>
+      <div class="text-sm text-[#e5e5e6] leading-relaxed whitespace-pre-wrap">${esc(val)}</div>
+    </div>` : '';
+  const imgField = (label, val) => val ? `
+    <div class="mb-4">
+      <div class="text-[10px] uppercase tracking-widest text-[#62666d] mb-1">${label}</div>
+      <div class="text-sm font-mono bg-[#161718] border border-[#23252a] rounded p-3 text-[#d0d6e0] leading-relaxed whitespace-pre-wrap">${esc(val)}</div>
+    </div>` : '';
+  return `
+    <div class="max-w-2xl space-y-2 p-1">
+      <div class="text-xs text-[#62666d] mb-3">챕터 ${esc(c.chapter_id||'')} · ${esc(c.scene_title||'')}</div>
+      ${field('씬 제목', c.scene_title)}
+      ${field('위인 캐릭터명', c.character_name)}
+      ${field('오프닝 씬', c.opening_scene)}
+      ${field('미션 브리핑', c.mission_briefing)}
+      ${imgField('Scene — 이미지 프롬프트 (영문)', c.scene_image_prompt)}
+    </div>`;
+}
+
+// marked.js 설정 — 줄바꿈 유지
+const _md = (text) => marked.parse(text || '', { breaks: true, gfm: true });
+
+function _renderBGB(body) {
+  // 확장 매칭: === Bad (설명 포함) === 형태도 지원
+  const parts = body.split(/===\s*(Bad|Good|Better)[^=]*===/i);
+  if (parts.length < 2) return `<div class="prose prose-sm max-w-none text-sm leading-7">${_md(body)}</div>`;
+  const dot   = { bad:'#f87171', good:'#4ade80', better:'#60a5fa' };
+  const sub   = { bad:'개선 전', good:'기본 개선', better:'권장 수준' };
+  let html = '';
+  for (let i = 1; i < parts.length - 1; i += 2) {
+    const key     = parts[i].trim().toLowerCase();
+    const content = (parts[i+1] || '').trim();
+    const d       = dot[key] || '#f87171';
+    const label   = key.charAt(0).toUpperCase() + key.slice(1);
+    html += `<div class="bgb-block mb-4 rounded-lg overflow-hidden border border-zinc-700">
+      <div class="flex items-center gap-2 px-3 py-2.5 bg-zinc-800 border-b border-zinc-700">
+        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${d}"></span>
+        <span class="text-[11px] font-bold tracking-wider uppercase" style="color:${d}">${label}</span>
+        <span class="text-[#8a8f98] text-[11px]">— ${sub[key] || ''}</span>
+      </div>
+      <div class="bg-zinc-950 px-4 py-2.5">${_tokenize(content)}</div>
+    </div>`;
+  }
+  return html;
+}
+
+function _tokenize(text) {
+  const e = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // span 속성은 single quote — "..." 정규식이 class 속성값을 잡지 않도록
+  const tok = line => e(line)
+    .replace(/(프롬프트\s*[:：])/g, "<span class='tok-keyword'>$1</span>")
+    .replace(/"([^"]+)"/g, "<span class='tok-string'>\"$1\"</span>")
+    .replace(/\[([^\]]+)\]/g, "<span class='tok-var'>[$1]</span>")
+    .replace(/\*\*([^*]+)\*\*/g, "<span class='tok-bold'>$1</span>");
+  // 빈 줄은 작은 간격(8px)으로, 내용 줄은 줄바꿈만
+  return '<div class="text-[#d0d6e0] leading-[1.55] text-[12.5px]">' +
+    text.split('\n').map(line =>
+      line.trim() === '' ? '<div class="h-2"></div>' : '<div>' + tok(line) + '</div>'
+    ).join('') +
+  '</div>';
+}
+
+function _renderChecklist(body) {
+  const items = body.split('\n').filter(l => l.trim());
+  return `<ul class="space-y-1.5 mt-1">${items.map(l => {
+    const text = l
+      .replace(/^[\s\-\*]*\[[\sx]\]\s*/, '')
+      .replace(/^[\s\-\*]+/, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1');  // **bold** 마커 제거
+    return `<li class="flex items-start gap-2 text-sm">
+      <span class="mt-0.5 w-4 h-4 flex-shrink-0 border border-[#383b3f] rounded bg-[#23252a]"></span>
+      <span class="leading-relaxed">${esc(text)}</span>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
 function previewMaterial(c) {
   const sections = c.sections || [];
-  const words = sections.reduce((a,s)=>a+(s.body||'').length,0);
+  const chars = sections.reduce((a,s)=>a+(s.body||'').length, 0);
+  const heading = (s) => s.heading
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}]/gu, '')
+    .trim();
+
+  const renderBody = (s) => {
+    const body = s.body || '';
+    const kind = s.kind || '';
+    const hasBGB = /===\s*(Bad|Good|Better)/i.test(body);
+    const hasChecklist = body.includes('[ ]') || body.includes('[x]');
+    // kind 없을 때 body 내용으로 타입 추론
+    if (kind === 'example' || hasBGB) return _renderBGB(body);
+    if (hasChecklist) return _renderChecklist(body);
+    if (kind === 'background_knowledge') return `<div class="bg-[#161718] border border-[#23252a] border-l-2 border-l-[#8a8f98] rounded-r px-4 py-3 text-sm leading-6">${_md(body)}</div>`;
+    if (kind === 'reflection') {
+      const lined = body.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n\n$1');
+      return `<div class="border-l-4 border-[#383b3f] bg-[#161718] rounded-r px-4 py-3.5 text-sm leading-[1.75] [&>p]:mb-3 [&>p:first-child]:mt-0">${_md(lined)}</div>`;
+    }
+    return `<div class="text-sm leading-6 prose prose-sm max-w-none">${_md(body)}</div>`;
+  };
+
   return `
     <div class="max-w-3xl" data-preview-section="material-all">
-      <div data-preview-section="material-overview" class="text-xs text-zinc-400 mb-2">챕터 ${esc(c.chapter_id)} · ${sections.length}개 섹션 · ${words.toLocaleString()}자</div>
+      <div class="text-xs text-[#62666d] mb-4">챕터 ${esc(c.chapter_id)} · ${sections.length}개 섹션 · ${chars.toLocaleString()}자</div>
       ${sections.map(s=>`
-        <div class="mb-6 p-2" data-preview-kind="${esc(s.kind||'')}">
-          <h4 class="flex items-center gap-2">${esc(s.heading||'')}
-            <span class="badge bg-zinc-100 text-zinc-500 text-[10px]">${esc(s.kind||'')}</span>
-          </h4>
-          <div class="text-sm whitespace-pre-wrap leading-7">${esc(s.body||'')}</div>
+        <div class="mb-8 pb-6 border-b border-[#23252a] last:border-0" data-preview-kind="${esc(s.kind||'')}">
+          <div class="flex items-center gap-2 mb-3">
+            <h4 class="font-semibold text-[#f7f8f8]">${esc(heading(s))}</h4>
+            <span class="text-[10px] text-[#62666d] border border-[#383b3f] rounded px-1.5 py-0.5">${esc(KIND_LABEL[s.kind] || s.kind || '')}</span>
+          </div>
+          ${renderBody(s)}
         </div>`).join('')}
     </div>`;
 }
@@ -1562,37 +1925,67 @@ function renderExplanationParts(expl) {
   const parts = (expl || '').split('|').map(s => s.trim()).slice(0, 3);
   const labels = ['정답 이유', '오답 피드백', '실무 팁'];
   const styles = [
-    { bg:'bg-emerald-50', bd:'border-emerald-200', fg:'text-emerald-700' },
-    { bg:'bg-amber-50',   bd:'border-amber-200',   fg:'text-amber-700'   },
-    { bg:'bg-blue-50',    bd:'border-blue-200',    fg:'text-blue-700'    },
+    { bg:'bg-[#0d2015]', bd:'border-[#1a4a2e]', fg:'text-emerald-400' },
+    { bg:'bg-[#1f1200]', bd:'border-[#3d2600]', fg:'text-amber-400'   },
+    { bg:'bg-[#0a1628]', bd:'border-[#1a3058]', fg:'text-sky-400'     },
   ];
   while (parts.length < 3) parts.push(''); // 누락 시 빈칸 3열 유지
   return parts.map((p, i) => {
     const s = styles[i];
     return `<div class="${s.bg} ${s.bd} border rounded-md p-2.5">
       <div class="text-[10px] font-semibold ${s.fg} mb-1">${labels[i]}</div>
-      <div class="text-xs text-zinc-700 leading-5 whitespace-pre-wrap">${esc(p) || '<span class="text-zinc-400">(내용 누락)</span>'}</div>
+      <div class="text-xs text-[#d0d6e0] leading-5 whitespace-pre-wrap">${esc(p) || '<span class="text-[#62666d]">(내용 누락)</span>'}</div>
     </div>`;
   }).join('');
+}
+
+function previewSpecialQuiz(c) {
+  const role = c.quiz_role || '';
+  const roleLabel = SPECIAL_QUIZ_ROLE_LABEL[role] || role;
+  const roleBadgeColor = role === 'teaser' ? 'bg-[#1f1200] text-amber-400'
+    : role === 'part_summary' ? 'bg-[#0d2015] text-emerald-400'
+    : 'bg-[#1a0d2e] text-violet-400';
+  const items = c.items || [];
+  return `
+    <div class="max-w-3xl" data-preview-section="special-quiz">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${roleBadgeColor}">${esc(roleLabel)}</span>
+        <span class="text-xs text-[#62666d]">${esc(c.part_name || '')} · ${items.length}문항</span>
+      </div>
+      ${items.map((it, i) => `
+        <div class="border border-[#23252a] rounded-md p-4 mb-3">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] font-semibold bg-[#23252a] text-[#8a8f98] px-1.5 py-0.5 rounded">${esc(it.type||'')}</span>
+            <span class="text-[10px] text-[#62666d]">${esc(it.difficulty||'')}</span>
+            <span class="text-xs text-[#d0d6e0] font-medium ml-1">${esc(it.title||'')}</span>
+          </div>
+          <p class="text-sm text-[#e5e5e6] mb-2 leading-6">${esc(it.question||'')}</p>
+          ${it.choices && it.choices !== '-' ? `<pre class="text-xs bg-[#161718] border border-[#23252a] rounded p-2 mb-2 whitespace-pre-wrap text-[#d0d6e0]">${esc(it.choices)}</pre>` : ''}
+          <div class="flex gap-4 text-xs mt-2">
+            <span class="text-emerald-700 font-medium">정답: ${esc(it.answer||'')}</span>
+          </div>
+          ${it.explanation ? `<div class="mt-2 text-xs text-[#8a8f98] border-t border-[#23252a] pt-2">${esc(it.explanation)}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
 }
 
 function previewQuiz(c) {
   return `
     <div class="max-w-3xl" data-preview-section="quiz-items">
-      <div class="text-xs text-zinc-400 mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문항</div>
+      <div class="text-xs text-[#62666d] mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문항</div>
       ${(c.items||[]).map((it, i) => `
-        <div class="border border-zinc-200 rounded-lg p-4 mb-3" data-preview-item="${i}" data-preview-type="quiz">
+        <div class="border border-[#23252a] rounded-md p-4 mb-3" data-preview-item="${i}" data-preview-type="quiz">
           <div class="flex items-center gap-2 mb-2">
-            <span class="badge bg-zinc-100 text-zinc-700">${i+1}. ${esc(it.type)}</span>
-            <span class="badge bg-zinc-50 text-zinc-600">난이도 ${esc(it.difficulty)}</span>
+            <span class="badge bg-[#23252a] text-[#d0d6e0]">${i+1}. ${esc(it.type)}</span>
+            <span class="badge bg-[#161718] text-[#8a8f98]">난이도 ${esc(it.difficulty)}</span>
           </div>
           <div class="font-semibold mb-1">${esc(it.title||'')}</div>
-          <div class="text-sm text-zinc-700 mb-2">${esc(it.question||'')}</div>
-          ${it.choices && it.choices !== '-' ? `<pre class="mb-2">${esc(it.choices)}</pre>` : ''}
-          <div class="text-xs"><b class="text-zinc-500">정답:</b> <span class="mono">${esc(it.answer||'')}</span></div>
-          <div class="text-xs mt-1"><b class="text-zinc-500">힌트:</b> ${esc(it.hint||'')}</div>
+          <div class="text-sm text-[#d0d6e0] mb-2">${esc(it.question||'')}</div>
+          ${it.choices && it.choices !== '-' ? `<pre class="mb-2 text-xs bg-[#161718] border border-[#23252a] rounded p-2 whitespace-pre-wrap text-[#d0d6e0]">${esc(it.choices)}</pre>` : ''}
+          <div class="text-xs"><b class="text-[#8a8f98]">정답:</b> <span class="mono">${esc(it.answer||'')}</span></div>
+          <div class="text-xs mt-1"><b class="text-[#8a8f98]">힌트:</b> ${esc(it.hint||'')}</div>
           <details class="mt-2 text-xs">
-            <summary class="text-zinc-500 cursor-pointer">해설 펼치기</summary>
+            <summary class="text-[#8a8f98] cursor-pointer">해설 펼치기</summary>
             <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">${renderExplanationParts(it.explanation)}</div>
           </details>
         </div>`).join('')}
@@ -1601,33 +1994,42 @@ function previewQuiz(c) {
 function previewPractice(c) {
   return `
     <div class="max-w-3xl" data-preview-section="practice-items">
-      <div class="text-xs text-zinc-400 mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문제</div>
-      ${(c.items||[]).map((it, i) => `
-        <div class="border border-zinc-200 rounded-lg p-4 mb-3" data-preview-item="${i}" data-preview-type="practice">
+      <div class="text-xs text-[#62666d] mb-3">챕터 ${esc(c.chapter_id)} · ${(c.items||[]).length}문제</div>
+      ${(c.items||[]).map((it, i) => {
+        const practiceRole = it.practice_role || (it.stage === '실험' ? 'BAD' : 'GOOD');
+        const roleBg = practiceRole === 'BAD' ? '#2d0a0a' : '#0d2015';
+        const roleFg = practiceRole === 'BAD' ? '#fca5a5' : '#6ee7b7';
+        return `
+        <div class="border border-[#23252a] rounded-md p-4 mb-3" data-preview-item="${i}" data-preview-type="practice">
           <div class="flex items-center gap-2 mb-2">
-            <span class="badge bg-zinc-900 text-white">실습 ${i+1} · ${esc(it.stage||'')}</span>
-            <span class="badge bg-zinc-50 text-zinc-600">난이도 ${esc(it.difficulty)}</span>
-            <span class="badge bg-emerald-50 text-emerald-700">합격 ${esc(it.passing_score)}점</span>
+            <span class="badge bg-[#e4f222] text-[#08090a]">실습 ${i+1} · ${esc(it.stage||'')}</span>
+            <span class="badge bg-[#161718] text-[#8a8f98]">난이도 ${esc(it.difficulty)}</span>
+            <span class="badge bg-[#0d2015] text-emerald-400">합격 ${esc(it.passing_score)}점</span>
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="badge text-[11px]" style="background:${roleBg};color:${roleFg}">${esc(practiceRole)}</span>
+            ${it.learning_point ? `<span class="text-xs text-[#8a8f98]">🎯 ${esc(it.learning_point)}</span>` : ''}
           </div>
           <div class="font-semibold mb-1">${esc(it.title||'')}</div>
-          <div class="text-sm text-zinc-700 mb-2">${esc(it.question||'')}</div>
-          <div class="text-xs text-zinc-500 whitespace-pre-wrap mb-2">${esc(it.description||'')}</div>
-          <div class="bg-zinc-50 rounded p-3 text-xs font-mono whitespace-pre-wrap my-2">${esc(it.answer||'')}</div>
+          <div class="text-sm text-[#d0d6e0] mb-2">${esc(it.question||'')}</div>
+          <div class="text-xs text-[#8a8f98] whitespace-pre-wrap mb-2">${esc(it.description||'')}</div>
+          <div class="bg-[#161718] rounded p-3 text-xs font-mono whitespace-pre-wrap my-2 text-[#d0d6e0]">${esc(it.answer||'')}</div>
           <div class="text-xs">
-            <b class="text-zinc-500">평가항목:</b>
+            <b class="text-[#8a8f98]">평가항목:</b>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
-              ${(it.criteria||[]).map(cr=>`<li><b>${esc(cr.title)}</b> — <span class="text-zinc-600">${esc(cr.description)}</span></li>`).join('')}
+              ${(it.criteria||[]).map(cr=>`<li><b>${esc(cr.title)}</b> — <span class="text-[#8a8f98]">${esc(cr.description)}</span></li>`).join('')}
             </ul>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
 function renderActionPanel(flags) {
   const host = $('action-panel');
   if (!flags || !flags.length) {
-    host.innerHTML = `<div class="text-sm text-zinc-500 text-center mt-16 px-6">
-      <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl mb-3">✓</div>
+    host.innerHTML = `<div class="text-sm text-[#8a8f98] text-center mt-16 px-6">
+      <div class="w-12 h-12 mx-auto rounded-full bg-[#0d2015] flex items-center justify-center text-emerald-400 text-2xl mb-3">✓</div>
       이 컴포넌트에는 현재 미해결 플래그가 없습니다.
     </div>`;
     return;
@@ -1721,30 +2123,30 @@ function flagCardHtml(f) {
   const c = FLAG_META[f.flag_type] || FLAG_META.SCHEMA;
   const loc = parseLocation(f.location_path);
   const severity = (f.severity || '').trim();
-  const sevClass = severity === '상' ? 'text-rose-600' : severity === '중' ? 'text-amber-600' : 'text-zinc-500';
+  const sevClass = severity === '상' ? 'text-rose-600' : severity === '중' ? 'text-amber-600' : 'text-[#8a8f98]';
   // guide 안에 종종 '[rubric_id] …' 형태가 들어있음 → 그 접두부 제거
   let guide = (f.guide || '').replace(/^\s*\[[\w.]+\]\s*/,'').trim();
-  return `<div class="flag-card bg-white border-b border-zinc-200" data-flag-id="${f.flag_id}" data-raw-id="${loc.rawId}">
-    <button class="w-full text-left p-4 hover:bg-zinc-50" data-act="jump" data-raw-id="${loc.rawId}" data-raw-path="${esc(f.location_path||'')}">
+  return `<div class="flag-card bg-[#0f1011] border-b border-[#23252a]" data-flag-id="${f.flag_id}" data-raw-id="${loc.rawId}">
+    <button class="w-full text-left p-4 hover:bg-[#23252a]" data-act="jump" data-raw-id="${loc.rawId}" data-raw-path="${esc(f.location_path||'')}">
       <div class="flex items-center gap-2 mb-1.5">
         <span class="badge" style="background:${c.bg};color:${c.fg}" title="${esc(c.hint)}">${esc(c.label)}</span>
         <span class="text-[10px] font-semibold ${sevClass}">심각도 ${esc(severity)}</span>
         <span class="ml-auto text-[10px] text-amber-700 font-semibold">⚐ 이 부분 보기</span>
       </div>
-      <div class="text-[11px] text-zinc-500 mb-1">
-        <span class="font-medium text-zinc-600">${esc(loc.area)}</span>
-        ${loc.item ? `<span class="text-zinc-400"> · </span><span>${esc(loc.item)}</span>` : ''}
+      <div class="text-[11px] text-[#8a8f98] mb-1">
+        <span class="font-medium text-[#8a8f98]">${esc(loc.area)}</span>
+        ${loc.item ? `<span class="text-[#62666d]"> · </span><span>${esc(loc.item)}</span>` : ''}
       </div>
-      <div class="text-sm font-semibold text-zinc-800 leading-relaxed mb-1.5">${esc(f.reason || '')}</div>
-      <div class="text-xs text-zinc-600 leading-5">${esc(guide)}</div>
+      <div class="text-sm font-semibold text-[#e5e5e6] leading-relaxed mb-1.5">${esc(f.reason || '')}</div>
+      <div class="text-xs text-[#8a8f98] leading-5">${esc(guide)}</div>
     </button>
     <div class="px-4 pb-3">
-      <textarea id="ins-${f.flag_id}" rows="2" class="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-xs placeholder:text-zinc-400" placeholder="수정 지시 (선택 — 예: '고속터미널만 쓰지 말고, 30대 직장인이 평일 저녁 한식 모임 찾는 구체 맥락 포함')"></textarea>
+      <textarea id="ins-${f.flag_id}" rows="2" class="w-full border border-[#383b3f] rounded-md px-2 py-1.5 text-xs placeholder:text-[#62666d] bg-[#08090a] text-[#f7f8f8]" placeholder="수정 지시 (선택 — 예: '고속터미널만 쓰지 말고, 30대 직장인이 평일 저녁 한식 모임 찾는 구체 맥락 포함')"></textarea>
       <div class="flex gap-1.5 mt-2">
-        <button data-act="regen" data-flag-id="${f.flag_id}" data-cid="${f.component_id}" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-medium">재생성</button>
-        <button data-act="dismiss" data-flag-id="${f.flag_id}" class="border border-zinc-300 hover:bg-zinc-50 px-3 py-1.5 rounded text-xs">무시</button>
+        <button data-act="regen" data-flag-id="${f.flag_id}" data-cid="${f.component_id}" class="flex-1 bg-[#e4f222] hover:bg-[#d4e01f] text-[#08090a] px-3 py-1.5 rounded text-xs font-medium">재생성</button>
+        <button data-act="dismiss" data-flag-id="${f.flag_id}" class="border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] px-3 py-1.5 rounded text-xs">무시</button>
       </div>
-      <details class="mt-2 text-[10px] text-zinc-400">
+      <details class="mt-2 text-[10px] text-[#62666d]">
         <summary class="cursor-pointer">AI 판정 원문 / 원시 ID</summary>
         <div class="mt-1 mono">${esc(loc.rawId)}</div>
       </details>
@@ -1786,7 +2188,7 @@ function renderFilters() {
     const meta = FLAG_META[t];
     const style = on
       ? `background:${meta.bg};color:${meta.fg};border:1px solid ${meta.fg};`
-      : 'background:#fff;color:#a1a1aa;border:1px solid #e4e4e7;';
+      : 'background:#0f1011;color:#62666d;border:1px solid #23252a;';
     const dim = on ? '' : 'opacity:0.6;';
     return `<button data-ft="${t}" class="text-[11px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1" style="${style}${dim}" title="${esc(meta.hint)}">
       ${esc(meta.label)}
@@ -1853,31 +2255,44 @@ async function loadAdmin() {
     // 환경 설정
     $('admin-env').innerHTML = `
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-        <div><span class="text-zinc-500 text-xs">Claude 모델</span><div class="mono">${esc(cfg.models.claude)}</div></div>
-        <div><span class="text-zinc-500 text-xs">OpenAI 모델</span><div class="mono">${esc(cfg.models.openai)}</div></div>
-        <div><span class="text-zinc-500 text-xs">Anthropic 키</span><div class="mono text-xs text-zinc-600">${esc(cfg.api_keys.anthropic)}</div></div>
-        <div><span class="text-zinc-500 text-xs">OpenAI 키</span><div class="mono text-xs text-zinc-600">${esc(cfg.api_keys.openai)}</div></div>
-        <div><span class="text-zinc-500 text-xs">재시도 상한</span><div>${cfg.retry_limit}회</div></div>
-        <div><span class="text-zinc-500 text-xs">루브릭 합격선</span><div>${cfg.overall_pass}점</div></div>
-        <div><span class="text-zinc-500 text-xs">서버</span><div class="mono text-xs">${esc(cfg.server.host)}:${cfg.server.port}</div></div>
+        <div><span class="text-[#8a8f98] text-xs">Claude 모델</span><div class="mono">${esc(cfg.models.claude)}</div></div>
+        <div><span class="text-[#8a8f98] text-xs">OpenAI 모델</span><div class="mono">${esc(cfg.models.openai)}</div></div>
+        <div><span class="text-[#8a8f98] text-xs">Anthropic 키</span><div class="mono text-xs text-[#8a8f98]">${esc(cfg.api_keys.anthropic)}</div></div>
+        <div><span class="text-[#8a8f98] text-xs">OpenAI 키</span><div class="mono text-xs text-[#8a8f98]">${esc(cfg.api_keys.openai)}</div></div>
+        <div><span class="text-[#8a8f98] text-xs">재시도 상한</span><div>${cfg.retry_limit}회</div></div>
+        <div><span class="text-[#8a8f98] text-xs">루브릭 합격선</span><div>${cfg.overall_pass}점</div></div>
+        <div><span class="text-[#8a8f98] text-xs">서버</span><div class="mono text-xs">${esc(cfg.server.host)}:${cfg.server.port}</div></div>
       </div>
-      <div class="text-[11px] text-zinc-400 mt-3">API 키/모델 변경은 프로젝트 루트 <span class="mono">.env</span> 파일에서 — 저장 시 uvicorn이 자동 재시작합니다.</div>
+      <div class="mt-4 space-y-2">
+        <div class="text-xs text-[#8a8f98] font-medium mb-1">API 키 변경</div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-[#62666d] w-28 shrink-0">Anthropic 키</span>
+          <input id="input-anthropic-key" type="password" placeholder="sk-ant-..." class="flex-1 bg-[#1a1c1f] border border-[#383b3f] rounded px-2 py-1 text-xs mono text-[#d0d6e0] focus:outline-none focus:border-[#52565e]" />
+          <button onclick="saveApiKey('ANTHROPIC_API_KEY','input-anthropic-key')" class="text-xs bg-[#23252a] hover:bg-[#2e3035] border border-[#383b3f] text-[#8a8f98] hover:text-[#d0d6e0] rounded px-2 py-1">저장</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-[#62666d] w-28 shrink-0">OpenAI 키</span>
+          <input id="input-openai-key" type="password" placeholder="sk-proj-..." class="flex-1 bg-[#1a1c1f] border border-[#383b3f] rounded px-2 py-1 text-xs mono text-[#d0d6e0] focus:outline-none focus:border-[#52565e]" />
+          <button onclick="saveApiKey('OPENAI_API_KEY','input-openai-key')" class="text-xs bg-[#23252a] hover:bg-[#2e3035] border border-[#383b3f] text-[#8a8f98] hover:text-[#d0d6e0] rounded px-2 py-1">저장</button>
+        </div>
+        <div class="text-[11px] text-[#62666d] mt-1">저장 후 uvicorn이 자동 재시작합니다.</div>
+      </div>
     `;
 
     // Cross Matrix
     const matrixRows = Object.entries(cfg.cross_matrix).map(([t, pair]) => {
       const [gen, val] = pair;
       const typeKo = TYPE_LABEL[t] || t;
-      return `<tr class="border-b border-zinc-100">
-        <td class="py-1.5 font-medium">${esc(typeKo)} <span class="text-zinc-400 text-xs mono">(${esc(t)})</span></td>
-        <td class="py-1.5 mono text-xs"><span class="badge bg-blue-100 text-blue-800">${esc(gen)}</span></td>
-        <td class="py-1.5 text-zinc-400 text-center w-8">→</td>
-        <td class="py-1.5 mono text-xs"><span class="badge bg-amber-100 text-amber-800">${esc(val)}</span></td>
+      return `<tr class="border-b border-[#23252a]">
+        <td class="py-1.5 font-medium">${esc(typeKo)} <span class="text-[#62666d] text-xs mono">(${esc(t)})</span></td>
+        <td class="py-1.5 mono text-xs"><span class="badge bg-[#0a1628] text-sky-400">${esc(gen)}</span></td>
+        <td class="py-1.5 text-[#62666d] text-center w-8">→</td>
+        <td class="py-1.5 mono text-xs"><span class="badge bg-[#1f1200] text-amber-400">${esc(val)}</span></td>
       </tr>`;
     }).join('');
     $('admin-matrix').innerHTML = `
       <table class="w-full">
-        <thead class="text-xs text-zinc-500 border-b border-zinc-200">
+        <thead class="text-xs text-[#8a8f98] border-b border-[#23252a]">
           <tr><th class="text-left py-1">컴포넌트</th><th class="text-left">생성자</th><th></th><th class="text-left">검증자</th></tr>
         </thead>
         <tbody>${matrixRows}</tbody>
@@ -1888,30 +2303,30 @@ async function loadAdmin() {
     const generators = prompts.filter(p => p.category === 'generator');
     const validators = prompts.filter(p => p.category === 'validator');
     const renderPrompt = (p) => `
-      <details class="border border-zinc-200 rounded-lg overflow-hidden">
-        <summary class="px-4 py-2.5 bg-zinc-50 hover:bg-zinc-100 cursor-pointer flex items-center gap-2">
+      <details class="border border-[#23252a] rounded-md overflow-hidden">
+        <summary class="px-4 py-2.5 bg-[#161718] hover:bg-[#23252a] cursor-pointer flex items-center gap-2">
           <span class="font-medium text-sm">${esc(p.label)}</span>
-          <span class="text-[11px] text-zinc-400 mono">${esc(p.key)}</span>
+          <span class="text-[11px] text-[#62666d] mono">${esc(p.key)}</span>
           <span class="ml-auto flex items-center gap-2">
-            <span class="text-[11px] text-zinc-400">${p.effective_length.toLocaleString()} 자</span>
+            <span class="text-[11px] text-[#62666d]">${p.effective_length.toLocaleString()} 자</span>
             ${p.is_overridden
-              ? '<span class="badge bg-amber-100 text-amber-800">Override 적용중</span>'
-              : '<span class="badge bg-zinc-100 text-zinc-500">기본값</span>'}
+              ? '<span class="badge bg-[#1f1200] text-amber-400">Override 적용중</span>'
+              : '<span class="badge bg-[#383b3f] text-[#8a8f98]">기본값</span>'}
           </span>
         </summary>
         <div class="p-4 space-y-2">
-          <textarea data-prompt-agent="${esc(p.key)}" class="w-full border border-zinc-300 rounded p-2 mono text-xs leading-5" rows="22">${esc(p.effective)}</textarea>
+          <textarea data-prompt-agent="${esc(p.key)}" class="w-full border border-[#383b3f] rounded p-2 mono text-xs leading-5 bg-[#08090a] text-[#f7f8f8]" rows="22">${esc(p.effective)}</textarea>
           <div class="flex items-center gap-2">
-            <button onclick="savePromptOverride('${esc(p.key)}')" class="bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-medium">
+            <button onclick="savePromptOverride('${esc(p.key)}')" class="bg-[#e4f222] hover:bg-[#d4e01f] text-[#08090a] px-3 py-1.5 rounded text-xs font-medium">
               ${p.is_overridden ? '수정 저장' : '이 프롬프트 override 저장'}
             </button>
-            ${p.is_overridden ? `<button onclick="resetPromptOverride('${esc(p.key)}')" class="border border-zinc-300 hover:bg-zinc-50 px-3 py-1.5 rounded text-xs">기본값으로 재설정</button>` : ''}
-            <button onclick="copyPrompt('${esc(p.key)}')" class="text-xs text-zinc-500 hover:text-zinc-900 ml-auto">복사</button>
+            ${p.is_overridden ? `<button onclick="resetPromptOverride('${esc(p.key)}')" class="border border-[#383b3f] hover:bg-[#23252a] text-[#d0d6e0] px-3 py-1.5 rounded text-xs">기본값으로 재설정</button>` : ''}
+            <button onclick="copyPrompt('${esc(p.key)}')" class="text-xs text-[#8a8f98] hover:text-[#f7f8f8] ml-auto">복사</button>
           </div>
           ${p.is_overridden ? `
-            <details class="text-[11px] text-zinc-500 mt-2">
+            <details class="text-[11px] text-[#8a8f98] mt-2">
               <summary class="cursor-pointer">코드 기본값 보기 (${p.default_length.toLocaleString()} 자)</summary>
-              <pre class="mt-1 p-2 bg-zinc-50 rounded mono text-[10px] leading-4 max-h-60 overflow-auto">${esc(p.default)}</pre>
+              <pre class="mt-1 p-2 bg-[#161718] rounded mono text-[10px] leading-4 max-h-60 overflow-auto text-[#d0d6e0]">${esc(p.default)}</pre>
             </details>
           ` : ''}
         </div>
@@ -1920,15 +2335,15 @@ async function loadAdmin() {
     $('admin-prompts').innerHTML = `
       <div class="mb-5">
         <div class="flex items-center gap-2 mb-2">
-          <span class="badge bg-blue-100 text-blue-800">생성자 Generators</span>
-          <span class="text-[11px] text-zinc-500">모두 Claude Opus 4.7 사용 · 컴포넌트 타입마다 고유 프롬프트</span>
+          <span class="badge bg-[#0a1628] text-sky-400">생성자 Generators</span>
+          <span class="text-[11px] text-[#8a8f98]">모두 Claude Opus 4.7 사용 · 컴포넌트 타입마다 고유 프롬프트</span>
         </div>
         <div class="space-y-2">${generators.map(renderPrompt).join('')}</div>
       </div>
       <div>
         <div class="flex items-center gap-2 mb-2">
-          <span class="badge bg-amber-100 text-amber-800">검증자 Validators</span>
-          <span class="text-[11px] text-zinc-500">모두 GPT-5.4 사용 · 컴포넌트 타입마다 고유 평가 기준</span>
+          <span class="badge bg-[#1f1200] text-amber-400">검증자 Validators</span>
+          <span class="text-[11px] text-[#8a8f98]">모두 GPT-5.4 사용 · 컴포넌트 타입마다 고유 평가 기준</span>
         </div>
         <div class="space-y-2">${validators.map(renderPrompt).join('')}</div>
       </div>
@@ -1978,6 +2393,22 @@ function copyPrompt(agent) {
 
 // 초기 바인딩 (페이지 로드 시 한번)
 if ($('admin-refresh')) $('admin-refresh').onclick = loadAdmin;
+
+async function saveApiKey(keyName, inputId) {
+  const val = document.getElementById(inputId)?.value?.trim();
+  if (!val) { toast('키 값을 입력하세요', 'err'); return; }
+  try {
+    const r = await fetch('/api/admin/api-key', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ key: keyName, value: val }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'HTTP ' + r.status); }
+    document.getElementById(inputId).value = '';
+    toast(keyName + ' 저장 완료 — 서버가 재시작됩니다', 'ok');
+    setTimeout(loadAdmin, 3000);
+  } catch(e) { toast('저장 실패: ' + e.message, 'err'); }
+}
 // 전역 노출 (onclick 핸들러용)
 window.savePromptOverride = savePromptOverride;
 window.resetPromptOverride = resetPromptOverride;
@@ -2063,6 +2494,7 @@ function initTableColResizers(table) {
 refreshRunsList();
 setInterval(refreshRunsList, 15000);
 switchTab('control');
+renderClipGrid();
 // 리사이저 활성화 (리뷰 3-pane + 기획서 커리큘럼 테이블)
 initPaneResizers();
 initTableColResizers($('curriculum-table'));

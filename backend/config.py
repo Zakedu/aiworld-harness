@@ -41,8 +41,10 @@ CROSS_MATRIX: dict[str, tuple[str, str]] = {
     "course_overview":   ("claude", "openai"),
     "figure_rationale":  ("claude", "openai"),
     "material":          ("claude", "openai"),
+    "story":             ("claude", "openai"),
     "quiz":              ("claude", "openai"),
     "practice":          ("claude", "openai"),
+    "special_quiz":      ("claude", "openai"),
 }
 
 FRONTEND_DIR = ROOT / "frontend"

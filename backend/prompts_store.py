@@ -16,18 +16,22 @@ from .db import get_conn
 
 # key → (한글 라벨, 카테고리 "generator"|"validator")
 AGENT_REGISTRY = {
-    # 생성자 5종 (Claude Opus 4.7)
-    "course_planner":     ("과정 기획 (Director)", "generator"),
-    "figure_rationale":   ("위인 선정 배경",          "generator"),
-    "material_writer":    ("학습자료",               "generator"),
-    "quiz_generator":     ("퀴즈",                  "generator"),
-    "practice_generator": ("실습",                  "generator"),
-    # 검증자 5종 (GPT-5.4) — 각 컴포넌트 타입별 고유 프롬프트
+    # 생성자 7종 (Claude Opus 4.7)
+    "course_planner":          ("과정 기획 (Director)", "generator"),
+    "figure_rationale":        ("위인 선정 배경",        "generator"),
+    "material_writer":         ("학습자료",             "generator"),
+    "story_writer":            ("스토리",               "generator"),
+    "quiz_generator":          ("퀴즈",                "generator"),
+    "practice_generator":      ("실습",                "generator"),
+    "special_quiz_generator":  ("특수 퀴즈",            "generator"),
+    # 검증자 7종 (GPT-5.4) — 각 컴포넌트 타입별 고유 프롬프트
     "validator_course_overview":  ("과정 기획 검증",      "validator"),
     "validator_figure_rationale": ("위인 선정 배경 검증", "validator"),
-    "validator_material":         ("학습자료 검증",      "validator"),
-    "validator_quiz":             ("퀴즈 검증",         "validator"),
-    "validator_practice":         ("실습 검증",         "validator"),
+    "validator_material":         ("학습자료 검증",       "validator"),
+    "validator_story":            ("스토리 검증",        "validator"),
+    "validator_quiz":             ("퀴즈 검증",          "validator"),
+    "validator_practice":         ("실습 검증",          "validator"),
+    "validator_special_quiz":     ("특수 퀴즈 검증",      "validator"),
 }
 
 
@@ -59,11 +63,13 @@ def get_default(agent: str) -> str:
     # generators
     import importlib
     module_map = {
-        "course_planner":     "backend.agents.course_planner",
-        "figure_rationale":   "backend.agents.figure_rationale",
-        "material_writer":    "backend.agents.material_writer",
-        "quiz_generator":     "backend.agents.quiz_generator",
-        "practice_generator": "backend.agents.practice_generator",
+        "course_planner":          "backend.agents.course_planner",
+        "figure_rationale":        "backend.agents.figure_rationale",
+        "material_writer":         "backend.agents.material_writer",
+        "story_writer":            "backend.agents.story_writer",
+        "quiz_generator":          "backend.agents.quiz_generator",
+        "practice_generator":      "backend.agents.practice_generator",
+        "special_quiz_generator":  "backend.agents.special_quiz_generator",
     }
     mod_path = module_map.get(agent)
     if not mod_path:
