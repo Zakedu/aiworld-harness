@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -130,6 +130,73 @@
   table thead { background: var(--color-deep-slate); }
   table thead th { color: var(--color-storm-cloud); }
   table tbody tr { border-color: var(--color-charcoal-grey); }
+
+  /* ===== LIGHT MODE ===== */
+  html[data-theme="light"] {
+    --color-pitch-black:  #ffffff;
+    --color-deep-slate:   #e8eaed;
+    --color-charcoal-grey:#dde0e6;
+    --color-graphite:     #f2f3f5;
+    --color-storm-cloud:  #5a6070;
+    --color-fog-grey:     #9aa0ad;
+    --color-porcelain:    #1a1a1a;
+    --color-neon-lime:    #5c7a00;
+  }
+  html[data-theme="light"] body { background-color: #ffffff !important; color: #1a1a1a !important; }
+  /* done 스텝 circle은 황록색으로 유지 */
+  html[data-theme="light"] .step-item.done .step-circle { background: #c8e000 !important; border-color: #c8e000 !important; color: #1a1a1a !important; }
+  /* kbd 배지: 라이트 모드에서 진회색 유지 */
+  html[data-theme="light"] .kbd { background: #2d3139 !important; color: #e5e7eb !important; border-color: #1a1c1f !important; }
+  /* 배경 계층: 사이드바 → 패널 → 카드 → 호버 */
+  html[data-theme="light"] .bg-\[\#08090a\] { background-color: #f2f3f5 !important; }
+  html[data-theme="light"] .bg-\[\#0f1011\] { background-color: #f2f3f5 !important; }
+  html[data-theme="light"] .bg-\[\#161718\] { background-color: #f7f8fa !important; }
+  html[data-theme="light"] .bg-\[\#1a1c1f\] { background-color: #f7f8fa !important; }
+  html[data-theme="light"] .bg-\[\#23252a\] { background-color: #eaebee !important; }
+  html[data-theme="light"] .bg-\[\#2e3035\] { background-color: #e0e1e6 !important; }
+  html[data-theme="light"] .bg-\[\#383b3f\] { background-color: #d3d5db !important; }
+  /* 상태 tint */
+  html[data-theme="light"] .bg-\[\#0a1628\] { background-color: #dbeafe !important; }
+  html[data-theme="light"] .bg-\[\#0d2015\] { background-color: #dcfce7 !important; }
+  html[data-theme="light"] .bg-\[\#1a0d2e\] { background-color: #ede9fe !important; }
+  html[data-theme="light"] .bg-\[\#1a1500\] { background-color: #fefce8 !important; }
+  html[data-theme="light"] .bg-\[\#1f1200\] { background-color: #fff7ed !important; }
+  html[data-theme="light"] .bg-\[\#2d0a0a\] { background-color: #fee2e2 !important; }
+  html[data-theme="light"] .bg-\[\#0f0f2e\] { background-color: #ede9fe !important; }
+  html[data-theme="light"] .bg-\[\#2d0a1a\] { background-color: #fce7f3 !important; }
+  html[data-theme="light"] .bg-\[\#1e1035\] { background-color: #f5f3ff !important; }
+  /* 테두리 */
+  html[data-theme="light"] .border-\[\#23252a\] { border-color: #dde0e6 !important; }
+  html[data-theme="light"] .border-\[\#383b3f\] { border-color: #cbd0d8 !important; }
+  html[data-theme="light"] .border-\[\#52565e\] { border-color: #adb3be !important; }
+  html[data-theme="light"] .border-\[\#1a3058\] { border-color: #bfdbfe !important; }
+  html[data-theme="light"] .border-\[\#1a4a2e\] { border-color: #bbf7d0 !important; }
+  html[data-theme="light"] .border-\[\#3d2600\] { border-color: #fed7aa !important; }
+  /* 텍스트 */
+  html[data-theme="light"] .text-\[\#f7f8f8\]  { color: #0f0f0f !important; }
+  html[data-theme="light"] .text-\[\#e5e5e6\]  { color: #1a1a1a !important; }
+  html[data-theme="light"] .text-\[\#d0d6e0\]  { color: #222222 !important; }
+  html[data-theme="light"] .text-\[\#8a8f98\]  { color: #5a6070 !important; }
+  html[data-theme="light"] .text-\[\#62666d\]  { color: #848c9a !important; }
+  /* FLAG 카드 텍스트: 어두운 배경용 밝은색 → 진하게 */
+  html[data-theme="light"] .text-\[\#fca5a5\]  { color: #b91c1c !important; }
+  html[data-theme="light"] .text-\[\#fbbf24\]  { color: #92400e !important; }
+  html[data-theme="light"] .text-\[\#a5b4fc\]  { color: #4338ca !important; }
+  html[data-theme="light"] .text-\[\#c4b5fd\]  { color: #5b21b6 !important; }
+  html[data-theme="light"] .text-\[\#f9a8d4\]  { color: #9d174d !important; }
+  html[data-theme="light"] .text-\[\#6ee7b7\]  { color: #065f46 !important; }
+  /* 입력 */
+  html[data-theme="light"] input:not([type="checkbox"]),
+  html[data-theme="light"] textarea,
+  html[data-theme="light"] select { background-color: #ffffff !important; color: #1a1a1a !important; border-color: #dde0e6 !important; }
+  /* nav 버튼 active/hover */
+  html[data-theme="light"] .nav-btn { color: #5a6070; }
+  html[data-theme="light"] .nav-btn.active { background-color: #e0e1e6 !important; color: #0f0f0f !important; }
+  html[data-theme="light"] .nav-btn:hover { background-color: #eaebee !important; color: #1a1a1a !important; }
+  /* 스크롤바 */
+  html[data-theme="light"] ::-webkit-scrollbar-track { background: #f2f3f5; }
+  html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #d3d5db; }
+  html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #adb3be; }
 </style>
 </head>
 <body class="bg-[#08090a] text-[#f7f8f8]">
@@ -203,8 +270,8 @@
       <div id="bread" class="text-sm font-semibold">새 코스 만들기</div>
       <div id="bread-sub" class="text-[11px] text-[#8a8f98] mt-0.5">위인·주제 입력해 기획서를 생성합니다</div>
     </div>
-    <div class="flex items-center gap-2">
-
+    <div class="flex items-center gap-3">
+      <button id="btn-theme-toggle" onclick="toggleTheme()" title="테마 전환" class="text-[18px] leading-none opacity-60 hover:opacity-100 transition-opacity">☀️</button>
       <div id="run-pill" class="hidden items-center gap-2 text-xs bg-[#23252a] rounded-full px-3 py-1.5">
         <span class="dot bg-zinc-400" id="run-pill-dot"></span>
         <span id="run-pill-id" class="mono text-[#8a8f98]"></span>
@@ -706,11 +773,12 @@
         </div>
         <div id="flag-filters" class="flex flex-wrap gap-1.5"></div>
         <div id="filter-help-panel" class="hidden mt-3 text-[11px] text-[#8a8f98] leading-5 bg-[#161718] p-2.5 rounded border border-[#23252a]">
-          <div class="mb-1"><b class="text-[#e5e5e6]">출처·사실 확인</b> — 위인 어록·연도·기관명 등 팩트 의심 영역.</div>
-          <div class="mb-1"><b class="text-[#e5e5e6]">서식 오류</b> — 퀴즈 보기 개수·실습 고정값 등 규격 위반.</div>
-          <div class="mb-1"><b class="text-[#e5e5e6]">애매함 — 사람 확인</b> — 검증자가 통과/실패 경계에서 "중" 판정한 항목.</div>
-          <div class="mb-1"><b class="text-[#e5e5e6]">민감 표현</b> — 직군·세대 일반화 등 중립 표현 점검.</div>
-          <div><b class="text-[#e5e5e6]">앞뒤 불일치</b> — 기획서나 다른 컴포넌트와 서로 안맞는 부분.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">출처·사실 확인</b> — 어록·연도·기관명·통계 등 팩트 의심 영역.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">서식 오류</b> — 필수 필드 누락, 퀴즈 보기 개수·실습 규격 위반.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">애매함 — 사람 확인</b> — AI 검증자가 통과/실패 경계(중)에서 판정한 항목.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">민감 표현</b> — 직군·세대·성별·국적 일반화 등 중립 표현 점검.</div>
+          <div class="mb-1"><b class="text-[#e5e5e6]">앞뒤 불일치</b> — 기획서·다른 컴포넌트·같은 챕터 내 모순 항목.</div>
+          <div><b class="text-[#e5e5e6]">용어 불일치</b> — 표준 용어(glossary)와 다른 표현 사용. 수정 권장.</div>
         </div>
         <div class="mt-2 flex items-center gap-3 text-xs">
           <button id="bulk-dismiss" class="text-[#8a8f98] hover:text-[#f7f8f8]">현재 보이는 플래그 모두 무시</button>
@@ -776,7 +844,7 @@ const FLAG_META = {
   BORDERLINE:  { label:'애매함 — 사람 확인',short:'애매',  bg:'#0f0f2e', fg:'#a5b4fc', hint:'AI 검증자가 통과/미달 경계에서 판정한 항목. 사람 눈으로 최종 확인 필요.' },
   SENSITIVE:   { label:'민감 표현 가능',   short:'민감',   bg:'#2d0a1a', fg:'#f9a8d4', hint:'특정 직군·세대·성별·국적에 대한 일반화 등 중립 표현으로 바꿀 필요가 있는지 점검하세요.' },
   CONSISTENCY: { label:'앞뒤 불일치',      short:'모순',   bg:'#0d2015', fg:'#6ee7b7', hint:'기획서·다른 컴포넌트·같은 챕터 내에서 서로 모순되는 내용이 있습니다.' },
-  GLOSSARY:    { label:'용어 불일치',      short:'용어',   bg:'#ede9fe', fg:'#5b21b6', hint:'glossary.yaml 표준 용어와 다른 표현이 감지되었습니다. 수정 권장.' },
+  GLOSSARY:    { label:'용어 불일치',      short:'용어',   bg:'#1e1035', fg:'#c4b5fd', hint:'glossary.yaml 표준 용어와 다른 표현이 감지되었습니다. 수정 권장.' },
 };
 // 편의용 구(舊) 이름 호환
 const FLAG_COLORS = FLAG_META;
@@ -893,6 +961,27 @@ const STATUS_STYLE = {
 // UTILS
 // ============================================================
 function $(id) { return document.getElementById(id); }
+
+// 테마 토글
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.dataset.theme === 'light';
+  const next = isLight ? 'dark' : 'light';
+  html.dataset.theme = next;
+  localStorage.setItem('aw-theme', next);
+  updateThemeBtn(next);
+}
+function updateThemeBtn(theme) {
+  const btn = $('btn-theme-toggle');
+  if (!btn) return;
+  btn.textContent = theme === 'light' ? '🌙' : '☀️';
+  btn.title = theme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환';
+}
+(function() {
+  const saved = localStorage.getItem('aw-theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  document.addEventListener('DOMContentLoaded', () => updateThemeBtn(saved));
+})();
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtTime() { return new Date().toLocaleTimeString('ko-KR',{hour12:false}); }
 function toast(msg, kind='info') {
