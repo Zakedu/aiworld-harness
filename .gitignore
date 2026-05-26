@@ -9,6 +9,8 @@ data/aiworld.db
 data/aiworld.db-journal
 data/aiworld.db-wal
 data/aiworld.db-shm
+tmp/
+test_key.py
 .DS_Store
 *.log
 node_modules/
