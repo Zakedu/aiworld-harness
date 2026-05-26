@@ -387,7 +387,7 @@ curriculum 10챕터의 기법 배정은 학습 흐름에 따라 자유롭게 한
   "part_workflow_labels": ["...", "...", "...", "...", "..."],
   "curriculum": [
     {"chapter_id": "1-1", "part_name": "...", "chapter_name": "...", "prompt_technique": "..."},
-    ... 정확히 10개
+    ... 사용자 지정 과정 구조의 총 챕터 수만큼
   ]
 }
 """

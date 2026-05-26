@@ -13,13 +13,19 @@ import json
 import uuid
 from datetime import datetime
 from typing import Any
-from .config import CROSS_MATRIX, MAX_REGEN_RETRIES
+from .config import CROSS_MATRIX, MAX_REGEN_RETRIES, RUBRIC_VALIDATION_TIMEOUT_SECONDS
 from .db import get_conn
 from .ws import ws_manager
 from .agents import course_planner, quiz_generator, practice_generator, material_writer, figure_rationale, story_writer, special_quiz_generator
 from .validators.schema_validator import validate_component
 from .validators.rubric_validator import rubric_validate, extract_flags_from_results
 from .validators.glossary_validator import validate_component as glossary_validate
+
+COMPONENT_TYPES_BY_PHASE = (
+    ("material", "story"),
+    ("quiz", "practice"),
+)
+DEFAULT_RECOVERY_COMPONENTS = ("quiz", "practice")
 
 
 def new_id(prefix: str) -> str:
@@ -40,6 +46,7 @@ async def run_planning(run_id: str, inputs: dict, mixer: dict) -> dict:
 
     try:
         blueprint = await course_planner.generate_blueprint(inputs, mixer, provider=provider)
+        blueprint = _normalize_blueprint(blueprint, inputs)
     except Exception as e:
         err_msg = f"{type(e).__name__}: {str(e)[:500]}"
         await emit(run_id, "blueprint.error", {"error": err_msg, "provider": provider})
@@ -47,6 +54,13 @@ async def run_planning(run_id: str, inputs: dict, mixer: dict) -> dict:
             conn.execute("UPDATE runs SET status='error' WHERE run_id=?", (run_id,))
             conn.commit()
         return {"error": err_msg}
+
+    schema_result = validate_component("course_overview", blueprint)
+    if not schema_result.get("passed"):
+        await emit(run_id, "blueprint.validation_error", {
+            "provider": provider,
+            "errors": schema_result.get("errors", [])[:8],
+        })
 
     blueprint_id = new_id("bp")
     with get_conn() as conn:
@@ -59,6 +73,37 @@ async def run_planning(run_id: str, inputs: dict, mixer: dict) -> dict:
 
     await emit(run_id, "blueprint.completed", {"blueprint_id": blueprint_id, "content": blueprint})
     return {"blueprint_id": blueprint_id, "content": blueprint}
+
+
+def _normalize_blueprint(blueprint: dict, inputs: dict) -> dict:
+    """Keep the blueprint contract complete enough for downstream team-merged prompts."""
+    if not isinstance(blueprint, dict):
+        return blueprint
+    goals = inputs.get("learning_goals") or []
+    if not blueprint.get("learning_objectives"):
+        blueprint["learning_objectives"] = goals[:5] or [
+            f"AI로 {inputs.get('topic', '주제')} 관련 결과물을 작성할 수 있다",
+            "AI 프롬프팅을 활용해 업무 맥락을 구조화할 수 있다",
+            "AI 결과물을 검토하고 개선할 수 있다",
+        ]
+    if not blueprint.get("learner_persona"):
+        blueprint["learner_persona"] = inputs.get("target_learner") or "AI를 실무 결과물 작성에 적용하려는 직장인"
+    if not blueprint.get("adjacent_jobs"):
+        blueprint["adjacent_jobs"] = [
+            {"job_label": "기획 실무자", "job_context": "회의 자료와 보고서 초안을 AI로 구조화해야 하는 상황"},
+            {"job_label": "콘텐츠 담당자", "job_context": "자료를 읽고 교육·마케팅 콘텐츠 초안으로 바꿔야 하는 상황"},
+        ]
+    if len(blueprint.get("adjacent_jobs") or []) < 2:
+        blueprint["adjacent_jobs"] = (blueprint.get("adjacent_jobs") or []) + [
+            {"job_label": "콘텐츠 담당자", "job_context": "자료를 읽고 교육·마케팅 콘텐츠 초안으로 바꿔야 하는 상황"},
+        ]
+    if not blueprint.get("final_part_pattern"):
+        blueprint["final_part_pattern"] = {
+            "id": "integration",
+            "label": "결과물 통합",
+            "rationale": "챕터별 산출물을 하나의 실무 결과물로 묶어 완성도를 높이는 코스입니다.",
+        }
+    return blueprint
 
 
 async def approve_blueprint(run_id: str, blueprint_id: str):
@@ -108,7 +153,24 @@ async def _generate_all_components(run_id: str, blueprint_id: str):
     # Step D: 파트 티저 / 파트 종합 / 최종 회고 생성
     await _generate_special_quizzes(run_id, blueprint_id, blueprint, curriculum)
 
-    # 누락 컴포넌트 감지 (병렬 생성 중 조용히 실패한 항목)
+    # 누락 컴포넌트 감지 + 1회 자동 복구. 병렬 생성 중 예외가 삼켜져도 최종 산출을 최대한 채운다.
+    missing = _find_missing_components(run_id, curriculum)
+    if missing:
+        await emit(run_id, "run.recovering_missing", {"missing": missing})
+        await _recover_missing_components(run_id, blueprint_id, blueprint, curriculum, missing)
+        missing = _find_missing_components(run_id, curriculum)
+
+    if missing:
+        await emit(run_id, "run.missing_components", {"missing": missing})
+
+    with get_conn() as conn:
+        status = "generation_incomplete" if missing else "reviewing"
+        conn.execute("UPDATE runs SET status=? WHERE run_id=?", (status, run_id))
+        conn.commit()
+    await emit(run_id, "run.completed", {"missing_count": len(missing)})
+
+
+def _find_missing_components(run_id: str, curriculum: list[dict]) -> list[dict]:
     missing: list[dict] = []
     with get_conn() as conn:
         for ch in curriculum:
@@ -124,13 +186,131 @@ async def _generate_all_components(run_id: str, blueprint_id: str):
                         "chapter_name": ch.get("chapter_name", ""),
                         "type": ctype,
                     })
-    if missing:
-        await emit(run_id, "run.missing_components", {"missing": missing})
+    return missing
+
+
+def _find_recoverable_components(
+    run_id: str,
+    curriculum: list[dict],
+    component_types: tuple[str, ...] = DEFAULT_RECOVERY_COMPONENTS,
+    include_failed: bool = True,
+) -> list[dict]:
+    """Return missing components, plus failed latest versions when requested."""
+    targets: list[dict] = []
+    wanted = set(component_types)
+    with get_conn() as conn:
+        for ch in curriculum:
+            cid = ch["chapter_id"]
+            for ctype in ("material", "story", "quiz", "practice"):
+                if ctype not in wanted:
+                    continue
+                row = conn.execute(
+                    """
+                    SELECT status FROM components
+                    WHERE run_id=? AND type=? AND chapter_id=?
+                    ORDER BY version DESC LIMIT 1
+                    """,
+                    (run_id, ctype, cid),
+                ).fetchone()
+                if not row or (include_failed and row["status"] == "validation_error"):
+                    targets.append({
+                        "chapter_id": cid,
+                        "chapter_name": ch.get("chapter_name", ""),
+                        "type": ctype,
+                        "reason": "missing" if not row else row["status"],
+                    })
+    return targets
+
+
+def find_recoverable_components_for_run(
+    run_id: str,
+    component_types: tuple[str, ...] = DEFAULT_RECOVERY_COMPONENTS,
+    include_failed: bool = True,
+) -> list[dict]:
+    with get_conn() as conn:
+        bp = conn.execute(
+            "SELECT content_json FROM blueprints WHERE run_id=? ORDER BY version DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+    if not bp:
+        return []
+    blueprint = json.loads(bp["content_json"] or "{}")
+    return _find_recoverable_components(
+        run_id,
+        blueprint.get("curriculum", []),
+        component_types,
+        include_failed=include_failed,
+    )
+
+
+async def recover_run_components(
+    run_id: str,
+    component_types: tuple[str, ...] = DEFAULT_RECOVERY_COMPONENTS,
+    include_failed: bool = True,
+) -> dict:
+    """Regenerate missing or validator-error components for an existing run."""
+    with get_conn() as conn:
+        bp = conn.execute(
+            "SELECT blueprint_id, content_json FROM blueprints WHERE run_id=? ORDER BY version DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+    if not bp:
+        return {"recovered": 0, "missing": []}
+
+    blueprint_id = bp["blueprint_id"]
+    blueprint = json.loads(bp["content_json"] or "{}")
+    curriculum = blueprint.get("curriculum", [])
+    targets = _find_recoverable_components(
+        run_id, curriculum, component_types, include_failed=include_failed
+    )
+    if not targets:
+        missing = _find_missing_components(run_id, curriculum)
+        if not missing:
+            with get_conn() as conn:
+                conn.execute("UPDATE runs SET status='reviewing' WHERE run_id=?", (run_id,))
+                conn.commit()
+        await emit(run_id, "run.recovery_skipped", {"reason": "no recoverable components"})
+        return {"recovered": 0, "missing": []}
 
     with get_conn() as conn:
-        conn.execute("UPDATE runs SET status='reviewing' WHERE run_id=?", (run_id,))
+        conn.execute("UPDATE runs SET status='recovering' WHERE run_id=?", (run_id,))
         conn.commit()
-    await emit(run_id, "run.completed", {})
+
+    await emit(run_id, "run.recovering_missing", {"missing": targets})
+    await _recover_missing_components(run_id, blueprint_id, blueprint, curriculum, targets)
+
+    missing = _find_missing_components(run_id, curriculum)
+    with get_conn() as conn:
+        status = "generation_incomplete" if missing else "reviewing"
+        conn.execute("UPDATE runs SET status=? WHERE run_id=?", (status, run_id))
+        conn.commit()
+    await emit(run_id, "run.recovery_completed", {
+        "requested_count": len(targets),
+        "missing_count": len(missing),
+        "missing": missing,
+    })
+    return {"recovered": len(targets), "missing": missing}
+
+
+async def _recover_missing_components(
+    run_id: str,
+    blueprint_id: str,
+    blueprint: dict,
+    curriculum: list[dict],
+    missing: list[dict],
+):
+    missing_by_type = {(m["type"], m["chapter_id"]) for m in missing}
+    for phase in COMPONENT_TYPES_BY_PHASE:
+        for ctype in phase:
+            for ch in curriculum:
+                if (ctype, ch["chapter_id"]) not in missing_by_type:
+                    continue
+                if ctype == "material":
+                    await _generate_material(run_id, blueprint_id, blueprint, ch)
+                elif ctype == "story":
+                    await _generate_story_chapter(run_id, blueprint_id, blueprint, ch)
+                elif ctype in {"quiz", "practice"}:
+                    await _generate_and_validate(run_id, blueprint_id, blueprint, ch, ctype)
 
 
 async def _generate_and_validate(
@@ -181,8 +361,12 @@ async def _generate_and_validate(
         await emit(run_id, "component.error", {"component_id": component_id, "error": str(e)})
         return
 
-    version = 1
     with get_conn() as conn:
+        latest = conn.execute(
+            "SELECT COALESCE(MAX(version), 0) AS maxv FROM components WHERE run_id=? AND type=? AND chapter_id=?",
+            (run_id, component_type, chapter_id),
+        ).fetchone()
+        version = int(latest["maxv"] or 0) + 1
         conn.execute(
             "INSERT INTO components(component_id, run_id, blueprint_id, type, chapter_id, version, generator_model, validator_model, content_json, status) "
             "VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -202,15 +386,36 @@ async def _generate_and_validate(
         schema_result = validate_component(component_type, current_content)
         # 2) Rubric validator (LLM, 반대 모델) — 실패 시 조용히 무시되지 않도록 try/except
         try:
-            rubric_result = await rubric_validate(component_type, current_content, val_provider)
+            rubric_result = await asyncio.wait_for(
+                rubric_validate(component_type, current_content, val_provider),
+                timeout=RUBRIC_VALIDATION_TIMEOUT_SECONDS,
+            )
         except Exception as val_err:
             import logging
             logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {val_err}")
             with get_conn() as conn:
-                conn.execute("UPDATE components SET status='validation_error' WHERE component_id=?",
+                conn.execute(
+                    "INSERT INTO validations(validation_id, component_id, validator_type, validator_model, rubric_results_json, overall_score, passed) VALUES (?,?,?,?,?,?,?)",
+                    (new_id("val"), current_component_id, "schema+rubric", val_provider,
+                     json.dumps({
+                         "schema": schema_result,
+                         "rubric": {
+                             "passed": False,
+                             "overall_score": 0,
+                             "error": str(val_err)[:1000],
+                         },
+                     }, ensure_ascii=False),
+                     0, 0),
+                )
+                conn.execute("UPDATE components SET status='flagged' WHERE component_id=?",
                              (current_component_id,))
+                conn.execute(
+                    "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (new_id("flag"), current_component_id, run_id, "VALIDATION", "중",
+                     component_type, "LLM 검증 실패", str(val_err)[:500], ""),
+                )
                 conn.commit()
-            await emit(run_id, "component.validation_error", {
+            await emit(run_id, "component.flagged", {
                 "component_id": current_component_id, "type": component_type,
                 "chapter_id": chapter_id, "error": str(val_err)[:300]
             })
@@ -258,10 +463,19 @@ async def _generate_and_validate(
         })
 
         # 새 버전 생성
-        if component_type == "quiz":
-            current_content = await quiz_generator.generate_quiz_chapter(chapter, blueprint, material_excerpt, {}, gen_provider)
-        else:
-            current_content = await practice_generator.generate_practice_chapter(chapter, blueprint, material_excerpt, {}, gen_provider)
+        try:
+            if component_type == "quiz":
+                current_content = await quiz_generator.generate_quiz_chapter(chapter, blueprint, material_excerpt, {}, gen_provider)
+            else:
+                current_content = await practice_generator.generate_practice_chapter(chapter, blueprint, material_excerpt, {}, gen_provider)
+        except Exception as regen_err:
+            await emit(run_id, "component.error", {
+                "component_id": current_component_id,
+                "type": component_type,
+                "chapter_id": chapter_id,
+                "error": str(regen_err)[:500],
+            })
+            return
         new_component_id = new_id(f"{component_type}-{chapter_id}")
         current_version += 1
         with get_conn() as conn:
@@ -453,8 +667,28 @@ async def _generate_special_quizzes(
 
 async def _run_validators(run_id: str, component_id: str, component_type: str, content: dict, val_provider: str, chapter_id: str = "-"):
     """단발성 검증 (재생성 루프 없음) — part_intro·material용."""
-    schema_result = validate_component(component_type, content) if component_type in {"material"} else {"passed": True, "errors": []}
-    rubric_result = await rubric_validate(component_type, content, val_provider)
+    schema_result = validate_component(component_type, content) if component_type in {"figure_rationale", "story", "material"} else {"passed": True, "errors": []}
+    try:
+        rubric_result = await asyncio.wait_for(
+            rubric_validate(component_type, content, val_provider),
+            timeout=RUBRIC_VALIDATION_TIMEOUT_SECONDS,
+        )
+    except Exception as val_err:
+        import logging
+        logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {val_err}")
+        with get_conn() as conn:
+            conn.execute("UPDATE components SET status='validation_error' WHERE component_id=?", (component_id,))
+            conn.execute(
+                "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
+                (new_id("flag"), component_id, run_id, "VALIDATION", "중",
+                 component_type, "LLM 검증 실패", str(val_err)[:500], ""),
+            )
+            conn.commit()
+        await emit(run_id, "component.validation_error", {
+            "component_id": component_id, "type": component_type,
+            "chapter_id": chapter_id, "error": str(val_err)[:300],
+        })
+        return
     glossary_violations = glossary_validate(content, component_type)
     passed = schema_result.get("passed", True) and rubric_result.get("passed", False)
     with get_conn() as conn:

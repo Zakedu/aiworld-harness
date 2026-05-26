@@ -14,7 +14,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 KIND_BADGE = {
     "empathy_opener": "공감 오프너",
     "concept":        "핵심 개념",
-    "example":        "Good / Better / Best",
+    "example":        "Bad / Good / Better",
     "template":       "실전 시나리오",
     "reflection":     "정리 / 체크리스트",
 }

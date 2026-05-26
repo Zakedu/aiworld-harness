@@ -393,7 +393,7 @@ async def generate_material(
         f"챕터: {chapter['chapter_id']} — {chapter['chapter_name']}\n"
         f"파트: {chapter['part_name']}\n"
         f"프롬프트 기법: {chapter['prompt_technique']}\n\n"
-        f"[타깃 AI 도구] Good/Better/Best 프롬프트 예시와 실전 시나리오는 '{ai_tool}' 기준으로 작성\n"
+        f"[타깃 AI 도구] Bad/Good/Better 프롬프트 예시와 실전 시나리오는 '{ai_tool}' 기준으로 작성\n"
         f"[결과값 조절]\n"
         f"위인 활용 강도: {mixer.get('figure_voice','중간')} — "
         f"{'약(이름 등장 하한선 6회, 일화 가볍게)' if mixer.get('figure_voice')=='약' else '강(이름 등장 12회+, 일화·인용 풍부)' if mixer.get('figure_voice')=='강' else '중간(이름 10회+, 표준)'}\n"

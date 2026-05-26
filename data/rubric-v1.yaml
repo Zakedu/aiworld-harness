@@ -33,9 +33,39 @@ components:
     - id: overview.figure_topic.coherence
       description: 위인의 교육 철학과 프롬프트 기법이 자연스럽게 연결
       severity_if_fail: 중
+    - id: overview.no_absolute_time
+      description: 코스명·팔릴이유·수강대상·수강효과·학습목표에 절대 시간 표기(N분에·N시간에·N시간 만에·N분 만에) 0건. 자격증·시험 기간 예외만 허용
+      severity_if_fail: 상
+    - id: overview.learning_objectives.ai_pattern
+      description: learning_objectives가 3~5개이고 "AI로/AI 활용해 ~할 수 있다" 계열의 측정 가능 문장
+      severity_if_fail: 중
+    - id: overview.learner_persona.specific
+      description: learner_persona가 직군·연차·업무 상황·막힘을 담은 구체 페르소나
+      severity_if_fail: 상
+    - id: overview.adjacent_jobs.exactly_two
+      description: adjacent_jobs가 정확히 2개, 각 항목에 job_label·job_context 모두 채워짐
+      severity_if_fail: 상
+    - id: overview.adjacent_jobs.distinct_from_primary
+      description: adjacent_jobs 2종이 learner_persona의 주력 직무와 다르고 서로도 다르며 AI 활용 빈도 높은 인접 직무
+      severity_if_fail: 중
+    - id: overview.final_part_pattern.present
+      description: final_part_pattern이 id·label·rationale 필수 필드를 모두 갖추고 코스 산출물과 맞음
+      severity_if_fail: 중
+    - id: overview.curriculum.part_name_paired
+      description: 같은 파트의 두 챕터가 동일한 part_name을 공유하고 part_name은 위인 일화와 학습자 동작이 결합된 풍부한 표현
+      severity_if_fail: 중
+    - id: overview.chapter_name.no_outcome_copy
+      description: chapter_name이 시간·산출물 복붙이 아니라 챕터별 학습 동작 중심으로 구체적임
+      severity_if_fail: 중
 
   # ---------- 위인 선정 배경 (figure rationale) ----------
   figure_rationale:
+    - id: rationale.character_alias.format
+      description: character_alias가 위인의 역할을 2~8자 내외 명사구로 선명하게 요약
+      severity_if_fail: 중
+    - id: rationale.character_keywords.three_or_four
+      description: character_keywords가 3~4개이고 figure_background에 자연스럽게 녹아 있음
+      severity_if_fail: 중
     - id: rationale.background.factual
       description: 위인 배경(이력·시대·업적)이 사실 기반이며 허구 없음
       severity_if_fail: 상
@@ -54,13 +84,40 @@ components:
     - id: rationale.voice.mentor_tone
       description: 위인 멘토링 시뮬레이션 톤 일관 (교과서적 표현 금지)
       severity_if_fail: 중
+    - id: rationale.signature_workflow.present
+      description: signature_workflow가 name·steps·rationale을 갖추고 위인 실제 일화와 프롬프트 기법 매핑을 연결
+      severity_if_fail: 상
+    - id: rationale.real_quotes.present
+      description: real_quotes가 3~5개이고 text·original·context·source·source_url을 갖춤
+      severity_if_fail: 중
+    - id: rationale.action_technique_map.five_pairs
+      description: action_technique_map이 5쌍이고 blueprint.figure_actions와 동일한 위인 행동·기법 매핑을 유지
+      severity_if_fail: 중
+
+  # ---------- 챕터 시작 스토리 ----------
+  story:
+    - id: story.body.length_350_600
+      description: story_body가 350~600자에 가까운 자연스러운 한 덩어리 글
+      severity_if_fail: 중
+    - id: story.body.no_markers
+      description: story_body에 [오프닝 훅]·[스토리·시연]·[챕터 미리보기] 같은 내부 마커가 노출되지 않음
+      severity_if_fail: 상
+    - id: story.body.visualization
+      description: 위인 실연 장면이 구체 명사·연도·숫자·행동으로 가시화됨
+      severity_if_fail: 중
+    - id: story.image_prompt.no_appearance
+      description: image_prompt에 옷차림·생김새·체형·얼굴 표정 같은 캐릭터 외형 묘사가 없음
+      severity_if_fail: 중
+    - id: story.no_figure_direct_speech
+      description: 위인 직접 화법 패턴 없이 3인칭 격식 존댓말로 작성됨
+      severity_if_fail: 중
 
   # ---------- 학습자료 ----------
   material:
     - id: material.sections.seven_present
-      description: "정확히 7개 섹션 (배경지식·도입·핵심개념·Bad/Good/Better·실전시나리오·체크리스트·요약) — 브릿지 섹션은 story_writer로 분리"
+      description: "정확히 5개 섹션 (핵심개념·Bad/Good/Better·실전시나리오·체크리스트·요약) — 도입부는 story_writer로 분리"
       severity_if_fail: 상
-      auto_check: len(sections) == 7
+      auto_check: len(sections) == 5
     - id: material.sections.background_knowledge_present
       description: "첫 번째 섹션이 배경지식 (kind=background_knowledge) — 위인 도메인 지식 → 도메인 문제 → 기법 연결 3단 흐름"
       severity_if_fail: 상
@@ -120,17 +177,25 @@ components:
     - id: material.definition.single_source
       description: "한 줄 정의의 핵심 요소 개수·명칭이 핵심 요소 표·Better 예시·체크리스트·요약에서 일치 (N요소라 정의했으면 전체에서 N)"
       severity_if_fail: 상
+    - id: material.principle.ai_mechanism
+      description: 핵심 개념의 원리 섹션이 AI 내부 메커니즘(토큰·확률·맥락·출력 분포 등)과 위인 시그니처 워크플로우를 연결
+      severity_if_fail: 상
+    - id: material.template.job_diversity
+      description: 실전 적용 시나리오 A·B·C가 A=learner_persona 주력 직무, B·C=adjacent_jobs 2종으로 분리되어 직무 다양화됨
+      severity_if_fail: 상
+    - id: material.template.raw_knowledge
+      description: 실전 시나리오에 해당 직무의 Raw 지식(통계·관행·용어·프레임워크)이 1개 이상 자연스럽게 포함됨
+      severity_if_fail: 중
 
   # ---------- 퀴즈 ----------
   quiz:
     - id: quiz.count.total_10
-      description: 총 10문항인가
+      description: 총 문항 수가 설정값 범위(기본 10, UI 조절 시 3~15)에 맞고 불필요한 유형 채우기를 하지 않음
       severity_if_fail: 상
-      auto_check: len(items) == 10
+      auto_check: 3 <= len(items) <= 15
     - id: quiz.count.type_each_2
-      description: 각 유형(OX/단일선택/복수선택/분류/단답형)이 정확히 2개씩
-      severity_if_fail: 상
-      auto_check: each_type_count_eq(2)
+      description: 10문항 기본 구성일 때만 5유형 각 2개를 권장하며, 조절 수량에서는 챕터 성격에 맞는 2~4유형 중심으로 구성
+      severity_if_fail: 중
     - id: quiz.single.choices_4
       description: 단일선택은 보기 4개 + 정답 1개
       severity_if_fail: 상
@@ -148,8 +213,8 @@ components:
       severity_if_fail: 중
       auto_check: regex_match(hint, r'[ㄱ-ㅎ]+\s')
     - id: quiz.title.storytelling_format
-      description: "제목이 '{위인}의 N번째 수업 — {스토리텔링 부제}' 패턴 (교과서식 제목 금지)"
-      severity_if_fail: 중
+      description: "제목이 문항 핵심을 바로 보여주는 12~30자 한 줄이며 '{위인}의 진료실 —', '{위인}의 N번째 수업 —' 같은 위인명 prefix 통일 형식 금지"
+      severity_if_fail: 상
     - id: quiz.question.scenario_based
       description: "문제가 시나리오 기반 ('당신이 ~한 상황에서...') 또는 위인이 직접 묻는 형식"
       severity_if_fail: 중
@@ -187,6 +252,12 @@ components:
     - id: quiz.no_content_bleed
       description: 학습자료 근거 밖 내용 섞이지 않음
       severity_if_fail: 상
+    - id: quiz.docText_literal_match
+      description: 정답·해설의 핵심 근거가 학습자료 docText에 존재하며, docText에 없는 단계 수·시나리오 번호·영문 약어를 만들지 않음
+      severity_if_fail: 상
+    - id: quiz.question.no_figure_prefix
+      description: question 본문에 위인 일화·이름 prefix가 붙지 않고 시나리오/과제만 깔끔하게 제시됨
+      severity_if_fail: 중
     - id: quiz.philosophy.understand_over_trap
       description: "'틀리게 만들기'가 아닌 '학습자료 이해 확인'이 목적으로 설계됨"
       severity_if_fail: 중
