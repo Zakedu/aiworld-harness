@@ -1484,6 +1484,7 @@ $('btn-generate').onclick = async () => {
     if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     state.runId = data.run_id;
+    state.inputs = body;
     state.components = [];
     state.flags = [];
     state.bpId = null; state.blueprint = null;
@@ -1500,7 +1501,13 @@ $('btn-generate').onclick = async () => {
     setStep(2);
   } catch(e) { toast('Generate 실패: '+e.message,'err'); }
 };
-$('btn-regen-bp').onclick = () => $('btn-generate').click();
+$('btn-regen-bp').onclick = () => {
+  if (!state.inputs) { toast('입력값이 없습니다. 새 코스 탭에서 다시 입력해주세요.', 'err'); return; }
+  $('in-figure').value = state.inputs.figure || '';
+  $('in-topic').value = state.inputs.topic || '';
+  $('in-target').value = state.inputs.target_learner || '';
+  $('btn-generate').click();
+};
 
 // ============================================================
 // WEBSOCKET
@@ -1941,6 +1948,26 @@ function previewFigureRationale(c) {
           ${(c.what_learner_gets||[]).map(x=>`<li>${esc(x)}</li>`).join('')}
         </ul>
       </div>
+      <div data-preview-section="fr-action-map">
+        <h4>위인 행동 ↔ 프롬프트 기법</h4>
+        <div class="border border-[#23252a] rounded-md overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-[#23252a] text-[#8a8f98] text-xs">
+                <th class="text-left px-4 py-2 w-1/2">위인의 행동</th>
+                <th class="text-left px-4 py-2 w-1/2">AI 프롬프트 기법</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(c.action_technique_map||[]).map((r,i)=>`
+                <tr class="${i%2===0?'bg-[#0d0e10]':'bg-[#111215]'} border-t border-[#23252a]">
+                  <td class="px-4 py-2 text-[#d0d6e0]">${esc(r.action||'')}</td>
+                  <td class="px-4 py-2 text-[#e4f222] font-medium">${esc(r.technique||'')}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div data-preview-section="fr-workflow">
         <h4>시그니처 워크플로우</h4>
         <div class="border border-[#23252a] rounded-md p-4 mb-3">
@@ -1948,6 +1975,29 @@ function previewFigureRationale(c) {
           <div class="text-sm text-[#d0d6e0] mt-2">${(sw.steps||[]).map(esc).join(' → ')}</div>
           <p class="mt-2 text-sm">${esc(sw.rationale||'')}</p>
         </div>
+      </div>
+      <div data-preview-section="fr-growth-curves">
+        <h4>5파트 성장 곡선</h4>
+        ${(c.part_growth_curves||[]).map(p=>`
+          <div class="border border-[#23252a] rounded-md p-4 mb-3">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs bg-[#e4f222] text-black font-bold rounded px-2 py-0.5">Part ${p.part_id}</span>
+              <span class="text-sm font-semibold text-[#e5e5e6]">${esc(p.part_name||'')}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-[#0d0e10] rounded p-3">
+                <div class="text-[10px] uppercase tracking-wide text-[#62666d] mb-2">위인 (${esc(p.figure_label||'')})</div>
+                <div class="text-xs text-[#8a8f98]">시작: ${esc(p.figure_start||'')}</div>
+                <div class="text-xs text-[#d0d6e0] mt-1">끝: ${esc(p.figure_end||'')}</div>
+              </div>
+              <div class="bg-[#0d0e10] rounded p-3">
+                <div class="text-[10px] uppercase tracking-wide text-[#62666d] mb-2">학습자 (${esc(p.learner_label||'')})</div>
+                <div class="text-xs text-[#8a8f98]">시작: ${esc(p.learner_start||'')}</div>
+                <div class="text-xs text-[#d0d6e0] mt-1">끝: ${esc(p.learner_end||'')}</div>
+              </div>
+            </div>
+            <div class="mt-3 text-xs text-[#e4f222] border-t border-[#23252a] pt-2">${esc(p.pairing_line||'')}</div>
+          </div>`).join('')}
       </div>
       <div data-preview-section="fr-episodes">
         <h4>핵심 에피소드</h4>
