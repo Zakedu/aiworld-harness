@@ -63,7 +63,7 @@
             }
           },
           "minItems": 5,
-          "maxItems": 5
+          "maxItems": 10
         },
         "part_workflow_labels": { "type": "array", "items": {"type":"string"}, "minItems": 5, "maxItems": 5 },
         "curriculum":    { "type": "array", "items": {"$ref": "#/definitions/curriculum_row"}, "minItems": 1, "maxItems": 50 }
@@ -105,7 +105,7 @@
             }
           },
           "minItems": 5,
-          "maxItems": 5
+          "maxItems": 10
         },
         "part_growth_curves": {
           "type": "array",

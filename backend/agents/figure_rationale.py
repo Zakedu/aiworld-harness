@@ -86,7 +86,7 @@ character_alias의 정체성을 뒷받침하는 본문.
 그것이 곧 이 코스의 프롬프트 기법임을 명시적으로 선언하는 흐름.
 
 추상어·미사여구 금지. 위인의 구체 행동·년도·장소 포함.
-blueprint의 figure_actions 5쌍을 그대로 활용해 행동 5개를 명사구로 나열할 것.
+blueprint의 figure_actions(5파트 대표 행동 5개)를 활용해 행동 5개를 명사구로 나열할 것. 10챕터 상세 매핑은 action_technique_map에서 처리.
 
 형식 (4~5단락, 줄바꿈 자유):
 ```
@@ -100,10 +100,13 @@ blueprint의 figure_actions 5쌍을 그대로 활용해 행동 5개를 명사구
 [학습자 약속 한 줄] — "당신은 {위인}의 방식으로 {프로젝트 결과물}을 풀어내게 됩니다."
 ```
 
-## action_technique_map (정확히 5쌍, 캐릭터 카드용 표)
-blueprint의 figure_actions 5쌍을 그대로 받아 표 형식으로 정리.
+## action_technique_map (챕터별 5~10쌍, 캐릭터 카드용 표)
+blueprint.curriculum의 각 챕터별로 위인 행동 → 프롬프트 기법 1:1 매핑 생성.
+챕터 수만큼(최소 5, 최대 10) 쌍을 만든다.
 각 쌍: {"action": "위인의 구체 행동 명사구", "technique": "프롬프트 기법명(한글+영문)"}
-blueprint.figure_actions와 완전히 동일해야 함. 새로 만들지 말 것.
+- 기법 중복은 허용하나 **연속된 챕터 간 동일 기법 반복 지양**.
+- 위인 행동은 해당 챕터의 chapter_name·prompt_technique와 자연스럽게 연결되어야 함.
+- 새로운 위인 행동을 창작할 경우 반드시 위인의 실제 이력·방법론에 근거할 것.
 
 ## part_growth_curves (정확히 5개, 5파트 성장 곡선 페어링)
 각 파트 시작 페이지에 표시될 **위인 ↔ 학습자 1:1 성장 페어링**.
@@ -277,7 +280,7 @@ summary는 한 줄 (20~40자), 구체 동작·결과 명사.
 - [ ] 위인 톤(멘토 화법)이 일관?
 - [ ] intro_narrative가 연도·구체 사건으로 시작하고, blueprint.figure_actions 5행동을 명사구로 나열했는가?
 - [ ] intro_narrative의 1:1 매핑 선언("다섯 가지 행동이, 곧 이 코스의 AI 프롬프트 5기법입니다") 포함?
-- [ ] action_technique_map이 blueprint.figure_actions와 정확히 5쌍 동일한가? (새 매핑 만들지 말 것)
+- [ ] action_technique_map이 커리큘럼 챕터 수(5~10쌍)만큼 생성되었는가? 연속 챕터 간 동일 기법 반복 없는가?
 - [ ] part_growth_curves가 정확히 5개이고 part_name이 blueprint.curriculum의 part_name과 **글자 그대로 동일**한가? (한 글자도 다르면 실패)
 - [ ] **금지 단어("박다·박았·박는·박아·꿰뚫·~봅시다·결과였죠·운이 아니었·돌아옵니다·돌아온다") 사용 0회?**
 - [ ] **signature_workflow.name이 "{위인}의 N단 {핵심 동사} 루틴" 형식이고 8~16자인가?**
