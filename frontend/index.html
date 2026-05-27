@@ -1501,12 +1501,29 @@ $('btn-generate').onclick = async () => {
     setStep(2);
   } catch(e) { toast('Generate 실패: '+e.message,'err'); }
 };
-$('btn-regen-bp').onclick = () => {
-  if (!state.inputs) { toast('입력값이 없습니다. 새 코스 탭에서 다시 입력해주세요.', 'err'); return; }
-  $('in-figure').value = state.inputs.figure || '';
-  $('in-topic').value = state.inputs.topic || '';
-  $('in-target').value = state.inputs.target_learner || '';
-  $('btn-generate').click();
+$('btn-regen-bp').onclick = async () => {
+  if (!state.runId || !state.bpId) { toast('기획서가 없습니다.', 'err'); return; }
+  const edited = collectBlueprintForm();
+  const btn = $('btn-regen-bp');
+  btn.disabled = true;
+  btn.textContent = '재생성 중…';
+  try {
+    const r = await fetch(`/api/runs/${state.runId}/approve-blueprint`, {
+      method: 'POST', headers: {'content-type': 'application/json'},
+      body: JSON.stringify({ blueprint_id: state.bpId, content: edited })
+    });
+    if (!r.ok) throw new Error('재생성 실패 ('+r.status+')');
+    state.blueprint = edited;
+    state.chapterMap = {};
+    edited.curriculum.forEach(c => state.chapterMap[c.chapter_id] = c.chapter_name);
+    btn.textContent = '✓ 재생성 시작됨';
+    setStep(3);
+    toast('기획서 유지 — 컴포넌트 재생성 시작', 'ok');
+  } catch(e) {
+    toast('재생성 실패: '+e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '같은 입력으로 다시 생성';
+  }
 };
 
 // ============================================================
