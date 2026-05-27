@@ -28,7 +28,7 @@ GOLDENS_PATH = _resolve("GOLDENS_PATH", "data/goldens")
 
 # --- Server ---
 HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8000"))
+PORT = int(os.getenv("PORT", "8080"))
 
 # --- Runtime ---
 MAX_REGEN_RETRIES = int(os.getenv("MAX_REGEN_RETRIES", "3"))
