@@ -264,5 +264,3 @@ def _practice_rules(content: dict) -> list[dict]:
         errors.append({"path": "items/passing_score",
                        "reason": f"기본 합격점수 50/80/80 권장 (현재 {actual_scores})"})
     return errors
-    if len(sections) != 5:
-        errors.append({"path": "sections", "reason": f"학습자료는 정확히 5섹션 필요 (현재 {len(sections)})"})

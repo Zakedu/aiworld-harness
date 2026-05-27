@@ -73,7 +73,8 @@ async def create_run(body: RunCreate):
         conn.commit()
 
     inputs = body.model_dump(exclude={"mixer"})
-    asyncio.create_task(orchestrator.run_planning(run_id, inputs, body.mixer))
+    _t = asyncio.create_task(orchestrator.run_planning(run_id, inputs, body.mixer))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"run_id": run_id, "status": "planning"}
 
 
@@ -252,8 +253,8 @@ async def revalidate_run(run_id: str):
         row = conn.execute("SELECT run_id FROM runs WHERE run_id=?", (run_id,)).fetchone()
     if not row:
         raise HTTPException(404, "run not found")
-    import asyncio
-    asyncio.create_task(orchestrator.revalidate_run(run_id))
+    _t = asyncio.create_task(orchestrator.revalidate_run(run_id))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"status": "revalidation_started", "run_id": run_id}
 
 
@@ -271,7 +272,8 @@ async def recover_components(run_id: str, body: RecoverRunBody):
         row = conn.execute("SELECT run_id FROM runs WHERE run_id=?", (run_id,)).fetchone()
     if not row:
         raise HTTPException(404, "run not found")
-    asyncio.create_task(orchestrator.recover_run_components(run_id, comps, body.include_failed))
+    _t = asyncio.create_task(orchestrator.recover_run_components(run_id, comps, body.include_failed))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {
         "status": "recovery_started",
         "run_id": run_id,
@@ -378,7 +380,8 @@ class ChapterRegenBody(BaseModel):
 async def chapter_regenerate(run_id: str, chapter_id: str, body: ChapterRegenBody):
     """챕터 1개의 학습자료·퀴즈·실습을 사용자 피드백과 함께 재생성."""
     comps = body.components or ["material", "quiz", "practice"]
-    asyncio.create_task(orchestrator.regenerate_chapter(run_id, chapter_id, body.instruction, comps))
+    _t = asyncio.create_task(orchestrator.regenerate_chapter(run_id, chapter_id, body.instruction, comps))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"ok": True, "chapter_id": chapter_id, "components": comps}
 
 

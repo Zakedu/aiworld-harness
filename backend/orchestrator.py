@@ -10,6 +10,7 @@ Orchestrator — 전체 파이프라인 제어.
 from __future__ import annotations
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Any
@@ -26,6 +27,23 @@ COMPONENT_TYPES_BY_PHASE = (
     ("quiz", "practice"),
 )
 DEFAULT_RECOVERY_COMPONENTS = ("quiz", "practice")
+
+
+def _task_error_handler(task: asyncio.Task, run_id: str) -> None:
+    """create_task 래퍼 콜백 — 예외 발생 시 run status를 'error'로 전이."""
+    if task.cancelled() or not task.exception():
+        return
+    exc = task.exception()
+    logging.error(f"[Task] background task failed (run={run_id}): {exc}", exc_info=exc)
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                "UPDATE runs SET status='error' WHERE run_id=? AND status NOT IN ('completed','error')",
+                (run_id,),
+            )
+            conn.commit()
+    except Exception:
+        pass
 
 
 def new_id(prefix: str) -> str:
@@ -112,7 +130,8 @@ async def approve_blueprint(run_id: str, blueprint_id: str):
         conn.execute("UPDATE runs SET status='generating' WHERE run_id=?", (run_id,))
         conn.commit()
     # 승인 후 실제 콘텐츠 생성 시작 (비동기)
-    asyncio.create_task(_generate_all_components(run_id, blueprint_id))
+    _t = asyncio.create_task(_generate_all_components(run_id, blueprint_id))
+    _t.add_done_callback(lambda t: _task_error_handler(t, run_id))
 
 
 # ------------------------------------------------------------------
