@@ -161,23 +161,38 @@ def _get_validator_prompt(component_type: str) -> str:
     return resolve_prompt(f"validator_{component_type}", default)
 
 
+_RUBRIC_BATCH_SIZE = 10
+_PASS_WEIGHTS = {"PASS": 1.0, "MARGINAL": 0.5, "FAIL": 0.0}
+
+
 async def rubric_validate(component_type: str, content: dict, validator_provider: str) -> dict:
     rubric_items = _items_for(component_type)
     if not rubric_items:
         return {"passed": True, "results": [], "overall_score": 100.0}
 
     system_prompt = _get_validator_prompt(component_type)
-    user = (
-        f"[컴포넌트 타입]\n{component_type}\n\n"
-        f"[루브릭 항목]\n{json.dumps(rubric_items, ensure_ascii=False, indent=2)}\n\n"
-        f"[대상 컴포넌트]\n{json.dumps(content, ensure_ascii=False, indent=2)}\n\n"
-        "위 루브릭 각 항목에 대해 PASS/MARGINAL/FAIL 판정 JSON을 출력하라."
+    content_json = json.dumps(content, ensure_ascii=False, indent=2)
+
+    # 항목이 많으면 배치 분할 (29개 → 3배치 × ~10개) → 타임아웃 방지
+    all_results: list[dict] = []
+    for i in range(0, len(rubric_items), _RUBRIC_BATCH_SIZE):
+        batch = rubric_items[i:i + _RUBRIC_BATCH_SIZE]
+        user = (
+            f"[컴포넌트 타입]\n{component_type}\n\n"
+            f"[루브릭 항목]\n{json.dumps(batch, ensure_ascii=False, indent=2)}\n\n"
+            f"[대상 컴포넌트]\n{content_json}\n\n"
+            "위 루브릭 각 항목에 대해 PASS/MARGINAL/FAIL 판정 JSON을 출력하라."
+        )
+        resp = await call_model(validator_provider, system_prompt, user, json_mode=True, temperature=0.2, max_tokens=3000)
+        resp = resp if isinstance(resp, dict) else {}
+        all_results.extend(resp.get("results") or [])
+
+    total = len(all_results)
+    score = (
+        sum(_PASS_WEIGHTS.get(r.get("verdict", "FAIL"), 0.0) for r in all_results) / total * 100
+        if total > 0 else 0.0
     )
-    resp = await call_model(validator_provider, system_prompt, user, json_mode=True, temperature=0.2, max_tokens=6000)
-    resp = resp if isinstance(resp, dict) else {"results": [], "overall_score": 0}
-    score = float(resp.get("overall_score") or 0)
-    resp["passed"] = score >= RUBRIC_OVERALL_PASS
-    return resp
+    return {"results": all_results, "overall_score": score, "passed": score >= RUBRIC_OVERALL_PASS}
 
 
 def extract_flags_from_results(component_id: str, run_id: str, component_type: str, results: dict) -> list[dict]:

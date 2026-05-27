@@ -392,7 +392,8 @@ async def _generate_and_validate(
             )
         except Exception as val_err:
             import logging
-            logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {val_err}")
+            _val_err_msg = f"루브릭 검증 타임아웃 ({RUBRIC_VALIDATION_TIMEOUT_SECONDS}s 초과)" if isinstance(val_err, asyncio.TimeoutError) else str(val_err)[:500]
+            logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {_val_err_msg}")
             with get_conn() as conn:
                 conn.execute(
                     "INSERT INTO validations(validation_id, component_id, validator_type, validator_model, rubric_results_json, overall_score, passed) VALUES (?,?,?,?,?,?,?)",
@@ -402,7 +403,7 @@ async def _generate_and_validate(
                          "rubric": {
                              "passed": False,
                              "overall_score": 0,
-                             "error": str(val_err)[:1000],
+                             "error": _val_err_msg,
                          },
                      }, ensure_ascii=False),
                      0, 0),
@@ -412,7 +413,7 @@ async def _generate_and_validate(
                 conn.execute(
                     "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
                     (new_id("flag"), current_component_id, run_id, "VALIDATION", "중",
-                     component_type, "LLM 검증 실패", str(val_err)[:500], ""),
+                     component_type, "LLM 검증 실패", _val_err_msg, ""),
                 )
                 conn.commit()
             await emit(run_id, "component.flagged", {
@@ -675,18 +676,19 @@ async def _run_validators(run_id: str, component_id: str, component_type: str, c
         )
     except Exception as val_err:
         import logging
-        logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {val_err}")
+        _val_err_msg = f"루브릭 검증 타임아웃 ({RUBRIC_VALIDATION_TIMEOUT_SECONDS}s 초과)" if isinstance(val_err, asyncio.TimeoutError) else str(val_err)[:500]
+        logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {_val_err_msg}")
         with get_conn() as conn:
             conn.execute("UPDATE components SET status='validation_error' WHERE component_id=?", (component_id,))
             conn.execute(
                 "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
                 (new_id("flag"), component_id, run_id, "VALIDATION", "중",
-                 component_type, "LLM 검증 실패", str(val_err)[:500], ""),
+                 component_type, "LLM 검증 실패", _val_err_msg, ""),
             )
             conn.commit()
         await emit(run_id, "component.validation_error", {
             "component_id": component_id, "type": component_type,
-            "chapter_id": chapter_id, "error": str(val_err)[:300],
+            "chapter_id": chapter_id, "error": _val_err_msg[:300],
         })
         return
     glossary_violations = glossary_validate(content, component_type)

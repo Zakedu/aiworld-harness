@@ -91,7 +91,7 @@ components:
       description: real_quotes가 3~5개이고 text·original·context·source·source_url을 갖춤
       severity_if_fail: 중
     - id: rationale.action_technique_map.five_pairs
-      description: action_technique_map이 5쌍이고 blueprint.figure_actions와 동일한 위인 행동·기법 매핑을 유지
+      description: action_technique_map이 5~10쌍이고 각 쌍이 챕터의 위인 행동·기법을 유지 (중복 허용, 연속 동일 기법 지양)
       severity_if_fail: 중
 
   # ---------- 챕터 시작 스토리 ----------

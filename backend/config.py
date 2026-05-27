@@ -35,7 +35,7 @@ MAX_REGEN_RETRIES = int(os.getenv("MAX_REGEN_RETRIES", "3"))
 RUBRIC_OVERALL_PASS = int(os.getenv("RUBRIC_OVERALL_PASS", "80"))
 LLM_MAX_CONCURRENCY = int(os.getenv("LLM_MAX_CONCURRENCY", "3"))
 LLM_TRANSIENT_RETRIES = int(os.getenv("LLM_TRANSIENT_RETRIES", "2"))
-RUBRIC_VALIDATION_TIMEOUT_SECONDS = int(os.getenv("RUBRIC_VALIDATION_TIMEOUT_SECONDS", "90"))
+RUBRIC_VALIDATION_TIMEOUT_SECONDS = int(os.getenv("RUBRIC_VALIDATION_TIMEOUT_SECONDS", "180"))
 
 # --- Cross-validation matrix (컴포넌트 → (generator, validator)) ---
 # v1.1 단순화: 전부 Claude 생성 → GPT-5.4 검증 (명확한 역할 분리)
