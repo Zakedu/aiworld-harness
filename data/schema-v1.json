@@ -223,7 +223,7 @@
         "stage":         { "type": "string", "enum": ["실험", "레슨", "도전"] },
         "learning_point": { "type": "string", "description": "이 실습이 검증하는 핵심 학습 능력 1줄" },
         "practice_role":  { "type": "string", "enum": ["BAD", "GOOD"], "description": "실험=BAD, 레슨/도전=GOOD" },
-        "title":         { "type": "string", "maxLength": 100, "description": "{위인}의 {단계} — {구체적 동작}" },
+        "title":         { "type": "string", "maxLength": 100, "description": "행동 중심 명사형 — 위인명·단계명 접두 없음 (예: '프롬프트 구조화 실험')" },
         "question":      { "type": "string", "maxLength": 150, "description": "위인 화법 + ~하시오 어미" },
         "description":   { "type": "string", "maxLength": 140, "description": "위인 원칙 + * 기호로 조건 구분" },
         "file_url":      { "type": "string", "default": "-" },
