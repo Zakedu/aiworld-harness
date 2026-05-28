@@ -296,7 +296,7 @@ components:
       description: 힌트에 프롬프트 작성용 구체 예시 정보 포함 (개념 설명만으로는 [상] 실패)
       severity_if_fail: 상
     - id: practice.title.figure_stage
-      description: 콘텐츠명이 행동 중심 명사형이며 위인명·단계명(실험/레슨/도전) 접두 없음 (예 OK: "프롬프트 구조화 실험" / 예 FAIL: "갈릴레오의 실험 —")
+      description: "콘텐츠명이 행동 중심 명사형이며 위인명·단계명(실험/레슨/도전) 접두 없음 (예 OK: \"프롬프트 구조화 실험\" / 예 FAIL: \"갈릴레오의 실험 —\")"
       severity_if_fail: 중
     - id: practice.question.task_and_suffix
       description: 문제가 구체적 과제 지시 + "~하시오." 어미로 종료

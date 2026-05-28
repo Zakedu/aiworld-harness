@@ -968,7 +968,7 @@ const RUBRIC_LOC = {
   'practice.problem.has_concrete_context':{ area:'실습 · 문제', item:'구체 맥락 (단일 키워드 금지)' },
   'practice.answer.format_is_prompt_example': { area:'실습 · 정답', item:'good/better 프롬프트 형식' },
   'practice.hint.includes_concrete_example':{ area:'실습 · 힌트', item:'구체 예시 정보' },
-  'practice.title.figure_stage':          { area:'실습 · 콘텐츠명', item:'{위인} + 단계 포함' },
+  'practice.title.figure_stage':          { area:'실습 · 콘텐츠명', item:'위인명·단계명 접두 없음' },
   'practice.question.figure_voice_and_suffix': { area:'실습 · 문제', item:"위인 화법 + '~하시오'" },
   'practice.criteria.all_suffix_q':       { area:'실습 · 평가항목', item:"모두 '~했나요?' 어미" },
   'practice.description.principle_and_stars': { area:'실습 · 설명', item:"위인 원칙 + '*' 구분" },
@@ -1196,6 +1196,8 @@ async function refreshRunsList() {
   try {
     const r = await fetch('/api/runs?limit=12');
     const runs = await r.json();
+    if (!r.ok) throw new Error(runs?.detail || 'HTTP ' + r.status);
+    if (!Array.isArray(runs)) throw new Error('Run 목록 응답 형식이 올바르지 않습니다');
     const host = $('runs-list');
     host.innerHTML = '';
     runs.forEach(x => {

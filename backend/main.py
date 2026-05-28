@@ -9,7 +9,7 @@ import json
 import uuid
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import Any, Optional
@@ -587,4 +587,9 @@ if FRONTEND_DIR.exists():
     @app.get("/", response_class=HTMLResponse)
     def index():
         return FileResponse(FRONTEND_DIR / "index.html")
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return Response(status_code=204)
+
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")

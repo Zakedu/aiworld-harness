@@ -1,0 +1,40 @@
+name: Validate
+
+on:
+  push:
+    branches: ["v2.0", "main"]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile backend
+        run: python -m compileall backend
+
+      - name: Validate data files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import yaml
+
+          json.loads(Path("data/schema-v1.json").read_text(encoding="utf-8"))
+          yaml.safe_load(Path("data/rubric-v1.yaml").read_text(encoding="utf-8"))
+          yaml.safe_load(Path("data/glossary.yaml").read_text(encoding="utf-8"))
+          print("data files ok")
+          PY
+
+      - name: Run regression tests
+        run: python -m unittest discover -s tests
