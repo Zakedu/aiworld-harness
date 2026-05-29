@@ -50,6 +50,22 @@ class RuntimeRegressionTests(unittest.TestCase):
         self.assertIn("yaml.safe_load", text)
         self.assertIn("json.loads", text)
 
+    def test_material_pdf_export_css_matches_main_design_spec(self):
+        from backend.exporters.html_export import _CSS
+
+        self.assertIn("font-size: 15px;", _CSS)
+        self.assertIn("font-size: 14px;", _CSS)
+        self.assertIn("print-color-adjust: exact", _CSS)
+        self.assertIn(".bgb-bad    .bgb-header { background: #fdf2f2; color: #b91c1c; }", _CSS)
+        self.assertIn(".bgb-good   .bgb-header { background: #f1f8f3; color: #15803d; }", _CSS)
+        self.assertIn(".bgb-better .bgb-header { background: #f1f4fb; color: #1d4ed8; }", _CSS)
+        self.assertIn(".bgb-body { padding: 16px 18px; font-size: 14px;", _CSS)
+        self.assertIn(".section-heading    { break-after: avoid; page-break-after: avoid; }", _CSS)
+        self.assertIn(".bgb-card     { break-inside: avoid; page-break-inside: avoid; }", _CSS)
+        self.assertNotIn("background: #09090b", _CSS)
+        self.assertNotIn(".bgb-grid { page-break-inside: avoid;", _CSS)
+        self.assertNotIn(".section { page-break-inside: avoid;", _CSS)
+
 
 if __name__ == "__main__":
     unittest.main()

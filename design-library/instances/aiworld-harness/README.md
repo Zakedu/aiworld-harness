@@ -30,6 +30,7 @@
 
 - **콘텐츠 타입 5종**: course_overview / figure_rationale / material / quiz / practice
 - **도메인 톤**: "위인 멘토링 시뮬레이션" — 학습자는 위인의 제자, 위인이 직접 가르침
+- **메인 학습자료 디자인 스펙**: [`material-pdf-design-spec.md`](./material-pdf-design-spec.md) — `material.html` 화면 렌더링과 PDF 인쇄 품질의 기준 문서
 - **루브릭 56항목** (`data/rubric-v1.yaml`)
 - **스키마 7개 정의** (`data/schema-v1.json`)
 - **교차검증 매트릭스**: 컴포넌트별 Claude/GPT 배분 (`backend/config.py`)
@@ -42,3 +43,4 @@
 - [rubric-label-dictionary.md](./rubric-label-dictionary.md) — 루브릭 id → 한글
 - [domain-tone-guide.md](./domain-tone-guide.md) — 위인 멘토링 톤
 - [component-types.md](./component-types.md) — 5개 컴포넌트 타입
+- [material-pdf-design-spec.md](./material-pdf-design-spec.md) — 학습자료 HTML/PDF 메인 디자인 스펙
