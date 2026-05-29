@@ -66,6 +66,19 @@ class RuntimeRegressionTests(unittest.TestCase):
         self.assertNotIn(".bgb-grid { page-break-inside: avoid;", _CSS)
         self.assertNotIn(".section { page-break-inside: avoid;", _CSS)
 
+    def test_anthropic_low_credit_error_falls_back_to_openai(self):
+        from backend.agents.base import _should_fallback
+
+        class LowCreditError(Exception):
+            status_code = 400
+
+        err = LowCreditError(
+            "Your credit balance is too low to access the Anthropic API. "
+            "Please go to Plans & Billing to upgrade or purchase credits."
+        )
+
+        self.assertTrue(_should_fallback(err))
+
 
 if __name__ == "__main__":
     unittest.main()

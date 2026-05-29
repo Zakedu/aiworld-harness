@@ -98,6 +98,8 @@ def _should_fallback(exc: Exception) -> bool:
         or "rate" in name
         or "invalid x-api-key" in text
         or "incorrect api key" in text
+        or "credit balance is too low" in text
+        or "insufficient_quota" in text
         or "overloaded" in text
     )
 
