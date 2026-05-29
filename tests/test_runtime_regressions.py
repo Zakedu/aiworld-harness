@@ -3,6 +3,7 @@ from __future__ import annotations
 import pathlib
 import sys
 import unittest
+from unittest.mock import patch
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -83,6 +84,33 @@ class RuntimeRegressionTests(unittest.TestCase):
         config = (ROOT / "backend" / "config.py").read_text(encoding="utf-8")
 
         self.assertIn("load_dotenv(ROOT / \".env\", override=True)", config)
+
+    def test_run_detail_hides_missing_components_while_generating(self):
+        from backend.main import _missing_components_for_response
+
+        with patch(
+            "backend.main.orchestrator.find_recoverable_components_for_run",
+            return_value=[{"chapter_id": "1-1", "type": "quiz"}],
+        ) as find_recoverable:
+            self.assertEqual(_missing_components_for_response("generating", "run-1"), [])
+            find_recoverable.assert_not_called()
+
+        with patch(
+            "backend.main.orchestrator.find_recoverable_components_for_run",
+            return_value=[{"chapter_id": "1-1", "type": "quiz"}],
+        ):
+            self.assertEqual(
+                _missing_components_for_response("generation_incomplete", "run-1"),
+                [{"chapter_id": "1-1", "type": "quiz"}],
+            )
+
+    def test_recoverable_component_query_has_single_order_by_clause(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertNotIn(
+            "ORDER BY version DESC LIMIT 1\n                    ORDER BY version DESC LIMIT 1",
+            orchestrator,
+        )
 
 
 if __name__ == "__main__":

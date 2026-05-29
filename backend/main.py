@@ -127,7 +127,7 @@ def get_run(run_id: str):
             "SELECT * FROM flags WHERE run_id=? AND resolved=0",
             (run_id,),
         ).fetchall()
-    missing = orchestrator.find_recoverable_components_for_run(run_id)
+    missing = _missing_components_for_response(run["status"], run_id)
 
     return {
         "run": dict(run),
@@ -136,6 +136,12 @@ def get_run(run_id: str):
         "flags": [dict(f) for f in flags],
         "missing_components": missing,
     }
+
+
+def _missing_components_for_response(run_status: str, run_id: str) -> list[dict]:
+    if run_status in {"planning", "awaiting_approval", "generating"}:
+        return []
+    return orchestrator.find_recoverable_components_for_run(run_id)
 
 
 @app.get("/api/runs/{run_id}/summary")
