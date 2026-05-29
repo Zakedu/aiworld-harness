@@ -1002,6 +1002,7 @@ const STATUS_STYLE = {
   'passed':      { label:'통과',    color:'bg-[#0d2015] text-emerald-400', col:'pass' },
   'flagged':     { label:'플래그',  color:'bg-[#2d0a0a] text-rose-400',   col:'flag' },
   'validation_error': { label:'검증오류', color:'bg-[#2d0a0a] text-rose-400', col:'flag' },
+  'validation_timeout': { label:'재검증 필요', color:'bg-[#1f1200] text-amber-400', col:'val' },
   'validating':  { label:'검증중',  color:'bg-[#1f1200] text-amber-400',  col:'val'  },
   'regenerating':{ label:'재생성',  color:'bg-[#1f1200] text-amber-400',  col:'gen'  },
   'generating':  { label:'생성중',  color:'bg-[#0a1628] text-sky-400',   col:'gen' },
@@ -1609,9 +1610,13 @@ function renderMissingBanner() {
   const list = $('missing-list');
   if (!missing || !missing.length) { banner.classList.add('hidden'); return; }
   const TYPE_KR = { quiz: '퀴즈', practice: '실습', material: '학습자료', story: '스토리' };
+  const REASON_KR = {
+    validation_error: '검증오류',
+    validation_timeout: '재검증 필요',
+  };
   list.innerHTML = missing.map(m => `
     <div class="flex items-center justify-between bg-[#0f1011] border border-[#23252a] rounded px-3 py-1.5 text-xs">
-      <span class="text-[#d0d6e0]"><b>${esc(m.chapter_id)}</b> — ${esc(m.chapter_name)} · <span class="text-amber-700 font-semibold">${TYPE_KR[m.type] || m.type}</span> ${m.reason === 'validation_error' ? '검증오류' : '누락'}</span>
+      <span class="text-[#d0d6e0]"><b>${esc(m.chapter_id)}</b> — ${esc(m.chapter_name)} · <span class="text-amber-700 font-semibold">${TYPE_KR[m.type] || m.type}</span> ${REASON_KR[m.reason] || '누락'}</span>
       <button onclick="regenMissing('${esc(m.chapter_id)}','${esc(m.type)}')"
         class="ml-4 px-2 py-0.5 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">재생성</button>
     </div>

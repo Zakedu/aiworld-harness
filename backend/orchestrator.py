@@ -27,6 +27,7 @@ COMPONENT_TYPES_BY_PHASE = (
     ("quiz", "practice"),
 )
 DEFAULT_RECOVERY_COMPONENTS = ("quiz", "practice")
+RECOVERABLE_VALIDATION_STATUSES = {"validation_error", "validation_timeout"}
 
 
 def _task_error_handler(task: asyncio.Task, run_id: str) -> None:
@@ -48,6 +49,29 @@ def _task_error_handler(task: asyncio.Task, run_id: str) -> None:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
+
+
+def _rubric_exception_result(exc: Exception) -> dict[str, Any]:
+    is_timeout = isinstance(exc, TimeoutError)
+    message = (
+        f"루브릭 검증 타임아웃 ({RUBRIC_VALIDATION_TIMEOUT_SECONDS}s 초과)"
+        if is_timeout else str(exc)[:500]
+    )
+    return {
+        "component_status": "validation_timeout" if is_timeout else "validation_error",
+        "event": "component.validation_timeout" if is_timeout else "component.validation_error",
+        "overall_score": None if is_timeout else 0,
+        "passed": False,
+        "create_flag": not is_timeout,
+        "reason": "LLM 검증 타임아웃" if is_timeout else "LLM 검증 실패",
+        "message": message,
+        "rubric": {
+            "passed": False,
+            "status": "timeout" if is_timeout else "error",
+            "overall_score": None if is_timeout else 0,
+            "error": message,
+        },
+    }
 
 
 async def emit(run_id: str, event: str, payload: dict):
@@ -231,7 +255,7 @@ def _find_recoverable_components(
                     """,
                     (run_id, ctype, cid),
                 ).fetchone()
-                if not row or (include_failed and row["status"] == "validation_error"):
+                if not row or (include_failed and row["status"] in RECOVERABLE_VALIDATION_STATUSES):
                     targets.append({
                         "chapter_id": cid,
                         "chapter_name": ch.get("chapter_name", ""),
@@ -410,34 +434,30 @@ async def _generate_and_validate(
                 timeout=RUBRIC_VALIDATION_TIMEOUT_SECONDS,
             )
         except Exception as val_err:
-            import logging
-            _val_err_msg = f"루브릭 검증 타임아웃 ({RUBRIC_VALIDATION_TIMEOUT_SECONDS}s 초과)" if isinstance(val_err, asyncio.TimeoutError) else str(val_err)[:500]
-            logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {_val_err_msg}")
+            result = _rubric_exception_result(val_err)
+            logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {result['message']}")
             with get_conn() as conn:
                 conn.execute(
                     "INSERT INTO validations(validation_id, component_id, validator_type, validator_model, rubric_results_json, overall_score, passed) VALUES (?,?,?,?,?,?,?)",
                     (new_id("val"), current_component_id, "schema+rubric", val_provider,
                      json.dumps({
                          "schema": schema_result,
-                         "rubric": {
-                             "passed": False,
-                             "overall_score": 0,
-                             "error": _val_err_msg,
-                         },
+                         "rubric": result["rubric"],
                      }, ensure_ascii=False),
-                     0, 0),
+                     result["overall_score"], 0),
                 )
-                conn.execute("UPDATE components SET status='flagged' WHERE component_id=?",
-                             (current_component_id,))
-                conn.execute(
-                    "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
-                    (new_id("flag"), current_component_id, run_id, "VALIDATION", "중",
-                     component_type, "LLM 검증 실패", _val_err_msg, ""),
-                )
+                conn.execute("UPDATE components SET status=? WHERE component_id=?",
+                             (result["component_status"], current_component_id))
+                if result["create_flag"]:
+                    conn.execute(
+                        "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
+                        (new_id("flag"), current_component_id, run_id, "VALIDATION", "중",
+                         component_type, result["reason"], result["message"], ""),
+                    )
                 conn.commit()
-            await emit(run_id, "component.flagged", {
+            await emit(run_id, result["event"], {
                 "component_id": current_component_id, "type": component_type,
-                "chapter_id": chapter_id, "error": str(val_err)[:300]
+                "chapter_id": chapter_id, "error": result["message"][:300]
             })
             return
         passed = schema_result["passed"] and rubric_result.get("passed", False)
@@ -694,20 +714,26 @@ async def _run_validators(run_id: str, component_id: str, component_type: str, c
             timeout=RUBRIC_VALIDATION_TIMEOUT_SECONDS,
         )
     except Exception as val_err:
-        import logging
-        _val_err_msg = f"루브릭 검증 타임아웃 ({RUBRIC_VALIDATION_TIMEOUT_SECONDS}s 초과)" if isinstance(val_err, asyncio.TimeoutError) else str(val_err)[:500]
-        logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {_val_err_msg}")
+        result = _rubric_exception_result(val_err)
+        logging.warning(f"[Validator] rubric_validate failed ({component_type} {chapter_id}): {result['message']}")
         with get_conn() as conn:
-            conn.execute("UPDATE components SET status='validation_error' WHERE component_id=?", (component_id,))
+            conn.execute("UPDATE components SET status=? WHERE component_id=?", (result["component_status"], component_id))
             conn.execute(
-                "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
-                (new_id("flag"), component_id, run_id, "VALIDATION", "중",
-                 component_type, "LLM 검증 실패", _val_err_msg, ""),
+                "INSERT INTO validations(validation_id, component_id, validator_type, validator_model, rubric_results_json, overall_score, passed) VALUES (?,?,?,?,?,?,?)",
+                (new_id("val"), component_id, "schema+rubric", val_provider,
+                 json.dumps({"schema": schema_result, "rubric": result["rubric"]}, ensure_ascii=False),
+                 result["overall_score"], 0),
             )
+            if result["create_flag"]:
+                conn.execute(
+                    "INSERT INTO flags(flag_id, component_id, run_id, flag_type, severity, location_path, reason, guide, origin_text) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (new_id("flag"), component_id, run_id, "VALIDATION", "중",
+                     component_type, result["reason"], result["message"], ""),
+                )
             conn.commit()
-        await emit(run_id, "component.validation_error", {
+        await emit(run_id, result["event"], {
             "component_id": component_id, "type": component_type,
-            "chapter_id": chapter_id, "error": _val_err_msg[:300],
+            "chapter_id": chapter_id, "error": result["message"][:300],
         })
         return
     glossary_violations = glossary_validate(content, component_type)
@@ -992,7 +1018,7 @@ async def revalidate_run(run_id: str):
                 FROM components WHERE run_id=?
                 GROUP BY type, chapter_id
             ) m ON c.type=m.type AND c.chapter_id=m.chapter_id AND c.version=m.maxv
-            WHERE c.run_id=? AND c.status IN ('generated','validation_error')
+            WHERE c.run_id=? AND c.status IN ('generated','validation_error','validation_timeout')
             """,
             (run_id, run_id),
         ).fetchall()

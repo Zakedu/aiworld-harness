@@ -149,6 +149,28 @@ class RuntimeRegressionTests(unittest.TestCase):
         self.assertIn("<li>고객 설문 초안을 만들 때</li>", html)
         self.assertNotIn("<br>\n- 고객 설문", html)
 
+    def test_rubric_timeout_is_not_scored_as_quality_failure(self):
+        from backend import orchestrator
+
+        result = orchestrator._rubric_exception_result(TimeoutError())
+
+        self.assertEqual(result["component_status"], "validation_timeout")
+        self.assertIsNone(result["overall_score"])
+        self.assertEqual(result["rubric"]["status"], "timeout")
+        self.assertFalse(result["create_flag"])
+
+    def test_revalidation_includes_timeout_components(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertIn("'validation_timeout'", orchestrator)
+        self.assertIn("c.status IN ('generated','validation_error','validation_timeout')", orchestrator)
+
+    def test_frontend_distinguishes_validation_timeout_from_quality_flags(self):
+        html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("'validation_timeout':", html)
+        self.assertIn("재검증 필요", html)
+
 
 if __name__ == "__main__":
     unittest.main()
