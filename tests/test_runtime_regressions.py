@@ -63,6 +63,7 @@ class RuntimeRegressionTests(unittest.TestCase):
         self.assertIn(".bgb-body { padding: 16px 18px; font-size: 14px;", _CSS)
         self.assertIn(".section-heading    { break-after: avoid; page-break-after: avoid; }", _CSS)
         self.assertIn(".bgb-card     { break-inside: avoid; page-break-inside: avoid; }", _CSS)
+        self.assertIn("@page { margin: 24mm 22mm; }", _CSS)
         self.assertNotIn("background: #09090b", _CSS)
         self.assertNotIn(".bgb-grid { page-break-inside: avoid;", _CSS)
         self.assertNotIn(".section { page-break-inside: avoid;", _CSS)
@@ -117,6 +118,7 @@ class RuntimeRegressionTests(unittest.TestCase):
 
         html = _md(
             """
+[핵심 요소 표]
 | 요소 | 무엇 | 예시 |
 
 |---|---|---|
@@ -131,6 +133,21 @@ class RuntimeRegressionTests(unittest.TestCase):
         self.assertIn("<th>요소</th>", html)
         self.assertIn("<td>Context(상황)</td>", html)
         self.assertNotIn("|---|---|---|", html)
+
+    def test_material_export_renders_lists_after_bracket_headings(self):
+        from backend.exporters.html_export import _md
+
+        html = _md(
+            """
+[언제 쓰나]
+- 고객 설문 초안을 만들 때
+- 사용자 인터뷰 가이드를 만들 때
+""".strip()
+        )
+
+        self.assertIn("<ul>", html)
+        self.assertIn("<li>고객 설문 초안을 만들 때</li>", html)
+        self.assertNotIn("<br>\n- 고객 설문", html)
 
 
 if __name__ == "__main__":

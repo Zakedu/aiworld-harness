@@ -4,6 +4,7 @@
 > 신규 챕터 추가·기존 챕터 재생성·새 컴포넌트 도입 시 이 문서의 원칙을 따른다.
 >
 > **적용 위치**: `backend/exporters/html_export.py` 내 `_CSS` 블록
+> **기준 산출물**: `학습자료-샘플.pdf` 형태의 A4 학습자료 PDF
 > **최종 갱신**: 2026-05-29
 
 ---
@@ -113,6 +114,13 @@
 - 14px, 헤더 셀 배경 `--light`, 짝수 행 배경 `#fafaf8`.
 - 테두리 `--border` 균일.
 - `vertical-align: top` — 셀 높이가 달라도 위 정렬.
+- LLM이 표 행 사이에 빈 줄을 넣어도 `material.html`에서는 반드시 실제 `<table>`로 렌더링되어야 한다. `|---|---|` 같은 마크다운 원문이 PDF에 그대로 보이면 실패다.
+
+### 4.7 일반 리스트 (`.md-body ul`, `.md-body ol`)
+
+- 본문 리스트는 하이픈 문자(`- 항목`)가 아니라 실제 bullet/numbered list로 렌더링한다.
+- `[언제 쓰나]` 같은 대괄호 소제목 바로 다음 줄에 리스트가 붙어 있어도 exporter가 리스트로 정규화해야 한다.
+- 리스트는 샘플 PDF처럼 본문보다 약간 들여쓰고, 항목 간 간격을 충분히 둔다.
 
 ---
 
@@ -181,10 +189,12 @@ PROMPT PRACTICE                ┌─ BAD ─────────┐
 ### 5.3 페이지 마진
 
 ```css
-@page { margin: 20mm 18mm; }
+@page { margin: 24mm 22mm; }
 ```
 
-A4 기준 위·아래 20mm / 좌·우 18mm. 챕터 상단 헤더 + 하단 풋터의 여백과 시각적으로 맞춤.
+A4 기준 위·아래 24mm / 좌·우 22mm. 샘플 PDF처럼 본문 폭을 좁히고 문서형 여백을 확보한다.
+
+Chrome "Print to PDF"로 저장할 때 브라우저 기본 **Headers and footers는 반드시 꺼야 한다**. 이 옵션이 켜지면 날짜·URL·페이지 번호가 PDF 상단/하단에 들어가 디자인 스펙 실패로 본다. 앱 자체 풋터(`.doc-footer`)만 PDF에 남는 것이 정상이다.
 
 ### 5.4 인쇄 시 폰트 약간 축소
 
@@ -241,7 +251,10 @@ A4 기준 위·아래 20mm / 좌·우 18mm. 챕터 상단 헤더 + 하단 풋터
 1. `backend/exporters/html_export.py` 의 `_CSS` 블록을 본 가이드의 §2~§5 기준으로 유지.
 2. 변경 후 서버는 uvicorn `--reload` 모드라 자동 리로드 → 브라우저 새로고침만 하면 화면 반영.
 3. PDF 확인은 반드시 Chrome "인쇄 → PDF로 저장"으로 직접 테스트 (Safari·Preview는 결과 다름).
-4. 새 컴포넌트 도입 시 §6 체크리스트를 반드시 통과시킨 후 머지.
+4. Chrome 인쇄 옵션에서 Headers and footers를 끄고, Background graphics를 켠 상태를 기준으로 확인.
+5. 새 컴포넌트 도입 시 §6 체크리스트를 반드시 통과시킨 후 머지.
+
+이 문서는 런타임에서 매 요청마다 동적으로 읽는 파일이 아니라, `backend/exporters/html_export.py`와 `tests/test_runtime_regressions.py`가 따라야 하는 메인 스펙이다. 학습자료 디자인을 수정할 때는 이 문서를 먼저 갱신하거나 확인하고, 그 기준을 회귀 테스트로 고정한 뒤 exporter를 수정한다.
 
 ---
 

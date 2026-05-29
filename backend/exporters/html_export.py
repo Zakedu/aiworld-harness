@@ -17,10 +17,16 @@ from ..db import get_conn
 def _md(text: str) -> str:
     """마크다운 → HTML 변환 (표·볼드·이탤릭·코드 지원)."""
     return _md_lib.markdown(
-        _normalize_markdown_tables(text or ""),
+        _normalize_markdown_for_export(text or ""),
         extensions=["tables", "nl2br", "fenced_code"],
         output_format="html",
     )
+
+
+def _normalize_markdown_for_export(text: str) -> str:
+    text = _normalize_markdown_tables(text)
+    text = _normalize_markdown_lists(text)
+    return text
 
 
 def _normalize_markdown_tables(text: str) -> str:
@@ -32,6 +38,10 @@ def _normalize_markdown_tables(text: str) -> str:
         next_line = lines[idx + 1] if idx + 1 < len(lines) else ""
         if not line.strip() and _looks_like_table_row(prev_line) and _looks_like_table_row(next_line):
             continue
+        if _looks_like_table_row(line) and normalized:
+            prev = normalized[-1]
+            if prev.strip() and not _looks_like_table_row(prev):
+                normalized.append("")
         normalized.append(line)
     return "\n".join(normalized)
 
@@ -39,6 +49,23 @@ def _normalize_markdown_tables(text: str) -> str:
 def _looks_like_table_row(line: str) -> bool:
     stripped = line.strip()
     return stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 3
+
+
+def _normalize_markdown_lists(text: str) -> str:
+    """제목 바로 아래 붙은 리스트를 실제 ul/ol로 렌더링되도록 분리."""
+    lines = text.splitlines()
+    normalized: list[str] = []
+    for line in lines:
+        if _looks_like_list_item(line) and normalized:
+            prev = normalized[-1]
+            if prev.strip() and not _looks_like_list_item(prev):
+                normalized.append("")
+        normalized.append(line)
+    return "\n".join(normalized)
+
+
+def _looks_like_list_item(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[-*+]\s+|\d+\.\s+)", line))
 
 
 _CSS = """
@@ -289,7 +316,7 @@ _CSS = """
     .summary-box  { break-inside: avoid; page-break-inside: avoid; }
     .checklist li { break-inside: avoid; page-break-inside: avoid; }
     table, tr, thead, tbody { break-inside: avoid; page-break-inside: avoid; }
-    @page { margin: 20mm 18mm; }
+    @page { margin: 24mm 22mm; }
   }
 """
 
