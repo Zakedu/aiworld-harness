@@ -112,6 +112,26 @@ class RuntimeRegressionTests(unittest.TestCase):
             orchestrator,
         )
 
+    def test_material_export_renders_loose_markdown_tables(self):
+        from backend.exporters.html_export import _md
+
+        html = _md(
+            """
+| 요소 | 무엇 | 예시 |
+
+|---|---|---|
+
+| Context(상황) | 응답이 발생한 생활 장면 | 출근길에 앱 알림을 확인하는 순간 |
+
+| Behavior(행동) | 관찰하려는 실제 사용 행동 | 알림을 끄거나 앱을 삭제한 행동 |
+""".strip()
+        )
+
+        self.assertIn("<table>", html)
+        self.assertIn("<th>요소</th>", html)
+        self.assertIn("<td>Context(상황)</td>", html)
+        self.assertNotIn("|---|---|---|", html)
+
 
 if __name__ == "__main__":
     unittest.main()

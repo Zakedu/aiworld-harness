@@ -17,10 +17,29 @@ from ..db import get_conn
 def _md(text: str) -> str:
     """마크다운 → HTML 변환 (표·볼드·이탤릭·코드 지원)."""
     return _md_lib.markdown(
-        text or "",
+        _normalize_markdown_tables(text or ""),
         extensions=["tables", "nl2br", "fenced_code"],
         output_format="html",
     )
+
+
+def _normalize_markdown_tables(text: str) -> str:
+    """빈 줄이 섞인 LLM 표를 Python-Markdown이 인식하는 연속 표 블록으로 정리."""
+    lines = text.splitlines()
+    normalized: list[str] = []
+    for idx, line in enumerate(lines):
+        prev_line = lines[idx - 1] if idx > 0 else ""
+        next_line = lines[idx + 1] if idx + 1 < len(lines) else ""
+        if not line.strip() and _looks_like_table_row(prev_line) and _looks_like_table_row(next_line):
+            continue
+        normalized.append(line)
+    return "\n".join(normalized)
+
+
+def _looks_like_table_row(line: str) -> bool:
+    stripped = line.strip()
+    return stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 3
+
 
 _CSS = """
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap');
