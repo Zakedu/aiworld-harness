@@ -79,6 +79,11 @@ class RuntimeRegressionTests(unittest.TestCase):
 
         self.assertTrue(_should_fallback(err))
 
+    def test_env_file_values_take_priority_over_process_environment(self):
+        config = (ROOT / "backend" / "config.py").read_text(encoding="utf-8")
+
+        self.assertIn("load_dotenv(ROOT / \".env\", override=True)", config)
+
 
 if __name__ == "__main__":
     unittest.main()
