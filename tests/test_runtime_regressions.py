@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import pathlib
+import sqlite3
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -170,6 +172,79 @@ class RuntimeRegressionTests(unittest.TestCase):
 
         self.assertIn("'validation_timeout':", html)
         self.assertIn("재검증 필요", html)
+
+    def test_story_generation_runs_story_validators(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertIn(
+            'await _run_validators(run_id, cid, "story", content, val, chapter_id=chapter_id)',
+            orchestrator,
+        )
+
+    def test_shared_validator_applies_schema_to_quiz_and_practice(self):
+        from backend import orchestrator
+        from backend.db import SCHEMA_SQL
+
+        async def passing_rubric(*_args, **_kwargs):
+            return {"passed": True, "overall_score": 100, "results": []}
+
+        def no_glossary_violations(*_args, **_kwargs):
+            return []
+
+        with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
+            def get_test_conn():
+                conn = sqlite3.connect(tmp.name, check_same_thread=False)
+                conn.row_factory = sqlite3.Row
+                conn.execute("PRAGMA foreign_keys = ON;")
+                return conn
+
+            with get_test_conn() as conn:
+                conn.executescript(SCHEMA_SQL)
+                conn.execute(
+                    "INSERT INTO runs(run_id, status) VALUES (?, ?)",
+                    ("run-schema", "reviewing"),
+                )
+                conn.execute(
+                    "INSERT INTO blueprints(blueprint_id, run_id, content_json) VALUES (?, ?, ?)",
+                    ("bp-schema", "run-schema", "{}"),
+                )
+                for component_id, component_type in [
+                    ("quiz-schema", "quiz"),
+                    ("practice-schema", "practice"),
+                ]:
+                    conn.execute(
+                        "INSERT INTO components(component_id, run_id, blueprint_id, type, chapter_id, version, content_json, status) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (component_id, "run-schema", "bp-schema", component_type, "1-1", 1, "{}", "generated"),
+                    )
+                conn.commit()
+
+            with patch("backend.orchestrator.get_conn", get_test_conn), \
+                 patch("backend.orchestrator.rubric_validate", passing_rubric), \
+                 patch("backend.orchestrator.glossary_validate", no_glossary_violations), \
+                 patch("backend.orchestrator.emit", passing_rubric):
+                import asyncio
+
+                asyncio.run(
+                    orchestrator._run_validators(
+                        "run-schema", "quiz-schema", "quiz", {}, "openai", chapter_id="1-1"
+                    )
+                )
+                asyncio.run(
+                    orchestrator._run_validators(
+                        "run-schema", "practice-schema", "practice", {}, "openai", chapter_id="1-1"
+                    )
+                )
+
+            with get_test_conn() as conn:
+                rows = conn.execute(
+                    "SELECT component_id, status FROM components ORDER BY component_id"
+                ).fetchall()
+
+            self.assertEqual(
+                {row["component_id"]: row["status"] for row in rows},
+                {"practice-schema": "flagged", "quiz-schema": "flagged"},
+            )
 
 
 if __name__ == "__main__":
