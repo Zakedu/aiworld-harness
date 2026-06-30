@@ -3,6 +3,8 @@
 > 위인 멘토링 시뮬레이션 기반 AI 교육 코스 자동 생성 시스템 (멀티모델 교차검증 + 로컬 서버 + SQL)
 >
 > 기존 `aiworld-main` (Claude Code 스킬 파이프라인)의 서식·기획 로직을 계승하여, 멀티모델 교차검증·로컬 SQL 관리·Web UI·사내 LAN 배포를 더한 v2 시스템.
+>
+> 학습자료 `material.html` 화면 렌더링과 PDF 인쇄 품질은 [`design-library/instances/aiworld-harness/material-pdf-design-spec.md`](../design-library/instances/aiworld-harness/material-pdf-design-spec.md)를 메인 디자인 스펙으로 따른다.
 
 ---
 

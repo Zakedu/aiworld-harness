@@ -19,6 +19,8 @@
 
 4. **사람 검토 루프를 설계하고 있다면** → [`02-patterns/flag-anchor-system.md`](./02-patterns/flag-anchor-system.md), [`02-patterns/item-and-batch-regeneration.md`](./02-patterns/item-and-batch-regeneration.md)
 
+5. **AI World Harness 학습자료 HTML/PDF 디자인을 수정한다면** → [`instances/aiworld-harness/material-pdf-design-spec.md`](./instances/aiworld-harness/material-pdf-design-spec.md)를 메인 스펙으로 따른다.
+
 ---
 
 ## 폴더 구조
@@ -54,7 +56,8 @@ design-library/
         ├── flag-types-5.md
         ├── rubric-label-dictionary.md
         ├── domain-tone-guide.md
-        └── component-types.md
+        ├── component-types.md
+        └── material-pdf-design-spec.md ← 학습자료 HTML/PDF 메인 디자인 스펙
 ```
 
 ---

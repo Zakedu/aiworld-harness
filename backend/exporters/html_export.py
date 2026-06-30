@@ -17,10 +17,56 @@ from ..db import get_conn
 def _md(text: str) -> str:
     """마크다운 → HTML 변환 (표·볼드·이탤릭·코드 지원)."""
     return _md_lib.markdown(
-        text or "",
+        _normalize_markdown_for_export(text or ""),
         extensions=["tables", "nl2br", "fenced_code"],
         output_format="html",
     )
+
+
+def _normalize_markdown_for_export(text: str) -> str:
+    text = _normalize_markdown_tables(text)
+    text = _normalize_markdown_lists(text)
+    return text
+
+
+def _normalize_markdown_tables(text: str) -> str:
+    """빈 줄이 섞인 LLM 표를 Python-Markdown이 인식하는 연속 표 블록으로 정리."""
+    lines = text.splitlines()
+    normalized: list[str] = []
+    for idx, line in enumerate(lines):
+        prev_line = lines[idx - 1] if idx > 0 else ""
+        next_line = lines[idx + 1] if idx + 1 < len(lines) else ""
+        if not line.strip() and _looks_like_table_row(prev_line) and _looks_like_table_row(next_line):
+            continue
+        if _looks_like_table_row(line) and normalized:
+            prev = normalized[-1]
+            if prev.strip() and not _looks_like_table_row(prev):
+                normalized.append("")
+        normalized.append(line)
+    return "\n".join(normalized)
+
+
+def _looks_like_table_row(line: str) -> bool:
+    stripped = line.strip()
+    return stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 3
+
+
+def _normalize_markdown_lists(text: str) -> str:
+    """제목 바로 아래 붙은 리스트를 실제 ul/ol로 렌더링되도록 분리."""
+    lines = text.splitlines()
+    normalized: list[str] = []
+    for line in lines:
+        if _looks_like_list_item(line) and normalized:
+            prev = normalized[-1]
+            if prev.strip() and not _looks_like_list_item(prev):
+                normalized.append("")
+        normalized.append(line)
+    return "\n".join(normalized)
+
+
+def _looks_like_list_item(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[-*+]\s+|\d+\.\s+)", line))
+
 
 _CSS = """
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -37,13 +83,14 @@ _CSS = """
     --border:     #d1cfc8;
     --rule:       #e5e3dc;
     --print-bg:   white;
+    --code-bg:    #f5f5f0;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Noto Sans KR', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 400;
     color: var(--ink);
     line-height: 1.85;
@@ -51,6 +98,7 @@ _CSS = """
     max-width: 820px;
     margin: 0 auto;
     padding: 56px 48px 80px;
+    word-break: keep-all;
   }
 
   /* ── Print controls (hidden in PDF) ── */
@@ -136,7 +184,7 @@ _CSS = """
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent-mid);
     padding: 18px 22px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.8;
     border-radius: 0 4px 4px 0;
   }
@@ -149,13 +197,14 @@ _CSS = """
     margin-bottom: 8px;
   }
 
-  /* ── Bad / Good / Better cards (code-editor style) ── */
+  /* ── Bad / Good / Better cards ── */
   .bgb-grid { display: grid; gap: 16px; margin-top: 8px; }
   .bgb-card {
-    border: 1px solid #3f3f46;
+    border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
     font-family: 'JetBrains Mono', monospace;
+    background: white;
   }
   .bgb-header {
     display: flex;
@@ -166,8 +215,8 @@ _CSS = """
     text-transform: uppercase;
     font-weight: 700;
     padding: 10px 16px;
-    background: #27272a;
-    border-bottom: 1px solid #3f3f46;
+    background: white;
+    border-bottom: 1px solid var(--border);
   }
   .bgb-dot {
     display: inline-block;
@@ -176,20 +225,20 @@ _CSS = """
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .bgb-sub { color: #71717a; font-weight: 400; margin-left: 2px; letter-spacing: 0; text-transform: none; }
-  .bgb-bad    .bgb-header { color: #f87171; }
-  .bgb-bad    .bgb-dot    { background: #f87171; }
-  .bgb-good   .bgb-header { color: #4ade80; }
-  .bgb-good   .bgb-dot    { background: #4ade80; }
-  .bgb-better .bgb-header { color: #60a5fa; }
-  .bgb-better .bgb-dot    { background: #60a5fa; }
-  .bgb-body { padding: 16px 18px; font-size: 13px; line-height: 1.8; background: #09090b; color: #d4d4d8; white-space: pre-wrap; }
+  .bgb-sub { color: var(--mid); font-weight: 400; margin-left: 2px; letter-spacing: 0; text-transform: none; }
+  .bgb-bad    .bgb-header { background: #fdf2f2; color: #b91c1c; }
+  .bgb-bad    .bgb-dot    { background: #b91c1c; }
+  .bgb-good   .bgb-header { background: #f1f8f3; color: #15803d; }
+  .bgb-good   .bgb-dot    { background: #15803d; }
+  .bgb-better .bgb-header { background: #f1f4fb; color: #1d4ed8; }
+  .bgb-better .bgb-dot    { background: #1d4ed8; }
+  .bgb-body { padding: 16px 18px; font-size: 14px; line-height: 1.8; background: white; color: var(--ink); white-space: pre-wrap; }
 
   /* ── Syntax tokens ── */
-  .tok-keyword { color: #c084fc; }
-  .tok-string  { color: #4ade80; }
-  .tok-var     { color: #60a5fa; }
-  .tok-bold    { color: #fbbf24; font-weight: 600; }
+  .tok-keyword { color: #b91c1c; font-weight: 600; }
+  .tok-string  { color: #15803d; }
+  .tok-var     { color: #1d4ed8; }
+  .tok-bold    { color: #a16207; font-weight: 600; }
 
   /* ── Checklist ── */
   .checklist { list-style: none; margin-top: 4px; }
@@ -199,8 +248,8 @@ _CSS = """
     gap: 10px;
     padding: 6px 0;
     border-bottom: 1px solid var(--rule);
-    font-size: 13.5px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.65;
   }
   .checklist li:last-child { border-bottom: none; }
   .check-box {
@@ -221,7 +270,7 @@ _CSS = """
     border-radius: 0 4px 4px 0;
     margin-top: 8px;
   }
-  .summary-box p { font-size: 13.5px; line-height: 1.8; color: var(--ink); }
+  .summary-box p { font-size: 14px; line-height: 1.8; color: var(--ink); }
 
   /* ── Divider ── */
   .section-rule { border: none; border-top: 1px solid var(--rule); margin: 40px 0; }
@@ -244,8 +293,8 @@ _CSS = """
   .md-body em { font-style: italic; }
   .md-body ul, .md-body ol { padding-left: 1.4em; margin: 0.4em 0 0.8em; }
   .md-body li { margin-bottom: 0.3em; line-height: 1.7; }
-  .md-body code { font-family: 'JetBrains Mono', monospace; background: var(--code-bg); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
-  .md-body table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  .md-body code { font-family: 'JetBrains Mono', monospace; background: var(--code-bg); padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+  .md-body table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
   .md-body th { background: var(--light); font-weight: 600; padding: 9px 14px; border: 1px solid var(--border); text-align: left; font-family: 'Noto Sans KR', sans-serif; }
   .md-body td { padding: 8px 14px; border: 1px solid var(--border); vertical-align: top; }
   .md-body tr:nth-child(even) td { background: #fafaf8; }
@@ -253,13 +302,21 @@ _CSS = """
 
   /* ── Print ── */
   @media print {
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .print-bar { display: none !important; }
-    body { padding: 20px 24px; font-size: 13px; }
-    .section-heading { font-size: 15px; }
-    .bgb-grid { page-break-inside: avoid; }
-    .bgb-card { page-break-inside: avoid; }
-    .section { page-break-inside: avoid; }
-    @page { margin: 20mm 18mm; }
+    body { padding: 0; font-size: 14px; }
+    .section-heading { font-size: 16px; }
+    .bgb-body { font-size: 13.5px; }
+    .section-label      { break-after: avoid; page-break-after: avoid; }
+    .section-heading    { break-after: avoid; page-break-after: avoid; }
+    .bg-knowledge-label { break-after: avoid; page-break-after: avoid; }
+    h1, h2, h3, h4      { break-after: avoid; page-break-after: avoid; }
+    .bgb-card     { break-inside: avoid; page-break-inside: avoid; }
+    .bg-knowledge { break-inside: avoid; page-break-inside: avoid; }
+    .summary-box  { break-inside: avoid; page-break-inside: avoid; }
+    .checklist li { break-inside: avoid; page-break-inside: avoid; }
+    table, tr, thead, tbody { break-inside: avoid; page-break-inside: avoid; }
+    @page { margin: 24mm 22mm; }
   }
 """
 

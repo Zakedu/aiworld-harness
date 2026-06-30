@@ -197,6 +197,26 @@
   html[data-theme="light"] ::-webkit-scrollbar-track { background: #f2f3f5; }
   html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #d3d5db; }
   html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #adb3be; }
+  /* 학습자료 prose 본문 텍스트 강화 */
+  html[data-theme="light"] .prose { --tw-prose-body: #1a1a1a; --tw-prose-headings: #0f0f0f; --tw-prose-bold: #0f0f0f; color: #1a1a1a !important; }
+  html[data-theme="light"] .prose p, html[data-theme="light"] .prose li,
+  html[data-theme="light"] .prose td, html[data-theme="light"] .prose dd { color: #1a1a1a !important; }
+  html[data-theme="light"] .prose th { color: #374151 !important; font-weight: 600; }
+  html[data-theme="light"] .prose a { color: #1d4ed8 !important; }
+  html[data-theme="light"] .prose table { border-color: #d1d5db !important; }
+  html[data-theme="light"] .prose thead { background-color: #e8eaed !important; }
+  html[data-theme="light"] .prose tbody tr { border-color: #e5e7eb !important; }
+  /* BGB 블록 (Bad/Good/Better) 라이트 모드 */
+  html[data-theme="light"] .bg-zinc-800 { background-color: #eeeff2 !important; }
+  html[data-theme="light"] .bg-zinc-950 { background-color: #f7f8fa !important; }
+  html[data-theme="light"] .border-zinc-700 { border-color: #d1d5db !important; }
+  /* tok-* 신택스 하이라이트 라이트 모드 */
+  html[data-theme="light"] .tok-keyword { color: #6d28d9 !important; }
+  html[data-theme="light"] .tok-string  { color: #15803d !important; }
+  html[data-theme="light"] .tok-var     { color: #1d4ed8 !important; }
+  html[data-theme="light"] .tok-bold    { color: #92400e !important; }
+  /* background_knowledge 좌측 강조선 */
+  html[data-theme="light"] .border-l-\[\#8a8f98\] { border-left-color: #6366f1 !important; }
 </style>
 </head>
 <body class="bg-[#08090a] text-[#f7f8f8]">
@@ -536,6 +556,31 @@
               <div class="text-[#8a8f98] font-medium mb-1.5">프로젝트 결과물</div>
               <input id="f-project_outcome" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" />
             </label>
+            <label class="block md:col-span-2">
+              <div class="text-[#8a8f98] font-medium mb-1.5">학습 페르소나</div>
+              <textarea id="f-learner_persona" rows="2" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]"></textarea>
+            </label>
+            <label class="block md:col-span-2">
+              <div class="text-[#8a8f98] font-medium mb-1.5">학습 목표 <span class="text-[#62666d] font-normal">(3~5개, 줄바꿈)</span></div>
+              <textarea id="f-learning_objectives" rows="3" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]"></textarea>
+            </label>
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="block">
+                <div class="text-[#8a8f98] font-medium mb-1.5">인접직무 1</div>
+                <input id="f-adjacent_job_0_label" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8] mb-2" placeholder="직무명" />
+                <textarea id="f-adjacent_job_0_context" rows="2" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" placeholder="업무 상황·도구·페인포인트"></textarea>
+              </label>
+              <label class="block">
+                <div class="text-[#8a8f98] font-medium mb-1.5">인접직무 2</div>
+                <input id="f-adjacent_job_1_label" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8] mb-2" placeholder="직무명" />
+                <textarea id="f-adjacent_job_1_context" rows="2" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" placeholder="업무 상황·도구·페인포인트"></textarea>
+              </label>
+            </div>
+            <label class="block md:col-span-2">
+              <div class="text-[#8a8f98] font-medium mb-1.5">최종 파트 패턴</div>
+              <input id="f-final_part_pattern_label" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8] mb-2" placeholder="라벨" />
+              <textarea id="f-final_part_pattern_rationale" rows="2" class="w-full border border-[#383b3f] rounded-md px-3 py-2 bg-[#08090a] text-[#f7f8f8]" placeholder="선택 이유"></textarea>
+            </label>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -580,8 +625,11 @@
       <!-- 누락 컴포넌트 경고 배너 -->
       <div id="missing-banner" class="hidden mb-4 bg-[#1f1200] border border-[#3d2600] rounded-lg p-3">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-semibold text-amber-800">⚠️ 누락된 컴포넌트 — 병렬 생성 중 일부가 실패했습니다</span>
-          <button onclick="dismissMissingBanner()" class="text-xs text-amber-600 hover:underline">닫기</button>
+          <span class="text-sm font-semibold text-amber-800">⚠️ 누락/검증오류 컴포넌트 — 생성 복구가 필요합니다</span>
+          <div class="flex items-center gap-2">
+            <button onclick="recoverAllMissing()" class="text-xs bg-amber-500 text-white rounded px-2 py-1 hover:bg-amber-600">전체 자동복구</button>
+            <button onclick="dismissMissingBanner()" class="text-xs text-amber-600 hover:underline">닫기</button>
+          </div>
         </div>
         <div id="missing-list" class="space-y-1"></div>
       </div>
@@ -810,7 +858,7 @@ const state = {
   flags: [],           // 미해결 플래그
   missingComponents: [], // 누락 컴포넌트 목록
   selectedCompId: null,
-  activeFilters: new Set(['FACT','SCHEMA','BORDERLINE','SENSITIVE','CONSISTENCY']),
+  activeFilters: new Set(['FACT','SCHEMA','BORDERLINE','SENSITIVE','CONSISTENCY','VALIDATION']),
   summary: null,
   currentTab: 'control',
 };
@@ -845,6 +893,7 @@ const FLAG_META = {
   SENSITIVE:   { label:'민감 표현 가능',   short:'민감',   bg:'#2d0a1a', fg:'#f9a8d4', hint:'특정 직군·세대·성별·국적에 대한 일반화 등 중립 표현으로 바꿀 필요가 있는지 점검하세요.' },
   CONSISTENCY: { label:'앞뒤 불일치',      short:'모순',   bg:'#0d2015', fg:'#6ee7b7', hint:'기획서·다른 컴포넌트·같은 챕터 내에서 서로 모순되는 내용이 있습니다.' },
   GLOSSARY:    { label:'용어 불일치',      short:'용어',   bg:'#1e1035', fg:'#c4b5fd', hint:'glossary.yaml 표준 용어와 다른 표현이 감지되었습니다. 수정 권장.' },
+  VALIDATION:  { label:'검증기 오류',      short:'검증',   bg:'#1f1200', fg:'#fbbf24', hint:'콘텐츠는 생성됐지만 LLM 검증 호출이 실패했습니다. 내용 확인 후 재검증하거나 승인하세요.' },
 };
 // 편의용 구(舊) 이름 호환
 const FLAG_COLORS = FLAG_META;
@@ -871,7 +920,7 @@ const RUBRIC_LOC = {
   'material.bridge.three_present':        { area:'학습자료', item:'브릿지 섹션 3개 (오프닝훅·시연·미리보기)' },
   'material.bridge.demo_visualize_not_analogy': { area:'학습자료', item:'브릿지 시연 — 가시화 (비유 X)' },
   'material.length.1500_2500':            { area:'학습자료', item:'분량 1,500~2,500자' },
-  'material.good_better_best.present':    { area:'학습자료', item:'Good/Better/Best 비교' },
+  'material.good_better_best.present':    { area:'학습자료', item:'Bad/Good/Better 비교' },
   'material.checklist.5_to_7':            { area:'학습자료', item:'실전 체크리스트 5~7개' },
   'material.opener.empathy_line_present': { area:'학습자료', item:'공감 오프너 (첫 섹션)' },
   'material.category.concept_explanation_present': { area:'학습자료', item:'전문 개념 설명 (SWOT 등)' },
@@ -919,7 +968,7 @@ const RUBRIC_LOC = {
   'practice.problem.has_concrete_context':{ area:'실습 · 문제', item:'구체 맥락 (단일 키워드 금지)' },
   'practice.answer.format_is_prompt_example': { area:'실습 · 정답', item:'good/better 프롬프트 형식' },
   'practice.hint.includes_concrete_example':{ area:'실습 · 힌트', item:'구체 예시 정보' },
-  'practice.title.figure_stage':          { area:'실습 · 콘텐츠명', item:'{위인} + 단계 포함' },
+  'practice.title.figure_stage':          { area:'실습 · 콘텐츠명', item:'위인명·단계명 접두 없음' },
   'practice.question.figure_voice_and_suffix': { area:'실습 · 문제', item:"위인 화법 + '~하시오'" },
   'practice.criteria.all_suffix_q':       { area:'실습 · 평가항목', item:"모두 '~했나요?' 어미" },
   'practice.description.principle_and_stars': { area:'실습 · 설명', item:"위인 원칙 + '*' 구분" },
@@ -952,9 +1001,13 @@ const STATUS_STYLE = {
   'generated':   { label:'생성완료', color:'bg-[#0a1628] text-sky-400',     col:'pass' },
   'passed':      { label:'통과',    color:'bg-[#0d2015] text-emerald-400', col:'pass' },
   'flagged':     { label:'플래그',  color:'bg-[#2d0a0a] text-rose-400',   col:'flag' },
+  'validation_error': { label:'검증오류', color:'bg-[#2d0a0a] text-rose-400', col:'flag' },
+  'validation_timeout': { label:'재검증 필요', color:'bg-[#1f1200] text-amber-400', col:'val' },
   'validating':  { label:'검증중',  color:'bg-[#1f1200] text-amber-400',  col:'val'  },
   'regenerating':{ label:'재생성',  color:'bg-[#1f1200] text-amber-400',  col:'gen'  },
   'generating':  { label:'생성중',  color:'bg-[#0a1628] text-sky-400',   col:'gen' },
+  'recovering':  { label:'복구중',  color:'bg-[#1f1200] text-amber-400',  col:'gen' },
+  'generation_incomplete': { label:'일부 누락', color:'bg-[#1f1200] text-amber-400', col:'flag' },
 };
 
 // ============================================================
@@ -1144,6 +1197,8 @@ async function refreshRunsList() {
   try {
     const r = await fetch('/api/runs?limit=12');
     const runs = await r.json();
+    if (!r.ok) throw new Error(runs?.detail || 'HTTP ' + r.status);
+    if (!Array.isArray(runs)) throw new Error('Run 목록 응답 형식이 올바르지 않습니다');
     const host = $('runs-list');
     host.innerHTML = '';
     runs.forEach(x => {
@@ -1201,15 +1256,6 @@ async function deleteRun(runId, inputs) {
 }
 
 async function attachToRun(runId) {
-  // Run 전환 시 이전 Run의 잔존 상태 초기화 (플래그·선택 컴포넌트가 섞이는 것 방지)
-  if (state.runId !== runId) {
-    state.selectedCompId = null;
-    state.components = [];
-    state.flags = [];
-    state.blueprint = null;
-    state.bpId = null;
-    resetReviewUI();
-  }
   state.runId = runId;
   updateRunPill(null);
   try {
@@ -1441,11 +1487,10 @@ $('btn-generate').onclick = async () => {
     if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     state.runId = data.run_id;
+    state.inputs = body;
     state.components = [];
     state.flags = [];
     state.bpId = null; state.blueprint = null;
-    state.selectedCompId = null;
-    resetReviewUI();
     updateRunPill('planning');
     switchTab('exec');
     $('bp-idle').classList.add('hidden');
@@ -1459,7 +1504,30 @@ $('btn-generate').onclick = async () => {
     setStep(2);
   } catch(e) { toast('Generate 실패: '+e.message,'err'); }
 };
-$('btn-regen-bp').onclick = () => $('btn-generate').click();
+$('btn-regen-bp').onclick = async () => {
+  if (!state.runId || !state.bpId) { toast('기획서가 없습니다.', 'err'); return; }
+  const edited = collectBlueprintForm();
+  const btn = $('btn-regen-bp');
+  btn.disabled = true;
+  btn.textContent = '재생성 중…';
+  try {
+    const r = await fetch(`/api/runs/${state.runId}/approve-blueprint`, {
+      method: 'POST', headers: {'content-type': 'application/json'},
+      body: JSON.stringify({ blueprint_id: state.bpId, content: edited })
+    });
+    if (!r.ok) throw new Error('재생성 실패 ('+r.status+')');
+    state.blueprint = edited;
+    state.chapterMap = {};
+    edited.curriculum.forEach(c => state.chapterMap[c.chapter_id] = c.chapter_name);
+    btn.textContent = '✓ 재생성 시작됨';
+    setStep(3);
+    toast('기획서 유지 — 컴포넌트 재생성 시작', 'ok');
+  } catch(e) {
+    toast('재생성 실패: '+e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '같은 입력으로 다시 생성';
+  }
+};
 
 // ============================================================
 // WEBSOCKET
@@ -1497,9 +1565,14 @@ function handleEvent(m) {
   } else if (t.startsWith('component.')) {
     // 증분 업데이트 대신 간단히 전체 새로고침 (단순)
     refreshRunData();
-  } else if (t === 'run.missing_components') {
+  } else if (t === 'run.missing_components' || t === 'run.recovering_missing') {
     state.missingComponents = p.missing || [];
     renderMissingBanner();
+  } else if (t === 'run.recovery_completed') {
+    state.missingComponents = p.missing || [];
+    renderMissingBanner();
+    refreshRunData();
+    toast(p.missing_count ? `복구 완료 — ${p.missing_count}개가 아직 누락` : '복구 완료 — 누락 컴포넌트 없음', p.missing_count ? 'err' : 'ok');
   } else if (t === 'run.completed') {
     updateRunPill('reviewing');
     toast('✅ 전체 생성 완료 — 검토 탭에서 플래그를 확인하세요', 'ok');
@@ -1517,8 +1590,10 @@ async function refreshRunData() {
     const d = await r.json();
     state.components = d.components || [];
     state.flags = d.flags || [];
+    state.missingComponents = d.missing_components || [];
     updateRunPill(d.run.status);
     renderKanban();
+    renderMissingBanner();
     refreshSummary();
     if (state.currentTab === 'review') renderNavTree();
   } catch(e) {}
@@ -1535,9 +1610,13 @@ function renderMissingBanner() {
   const list = $('missing-list');
   if (!missing || !missing.length) { banner.classList.add('hidden'); return; }
   const TYPE_KR = { quiz: '퀴즈', practice: '실습', material: '학습자료', story: '스토리' };
+  const REASON_KR = {
+    validation_error: '검증오류',
+    validation_timeout: '재검증 필요',
+  };
   list.innerHTML = missing.map(m => `
     <div class="flex items-center justify-between bg-[#0f1011] border border-[#23252a] rounded px-3 py-1.5 text-xs">
-      <span class="text-[#d0d6e0]"><b>${esc(m.chapter_id)}</b> — ${esc(m.chapter_name)} · <span class="text-amber-700 font-semibold">${TYPE_KR[m.type] || m.type}</span> 누락</span>
+      <span class="text-[#d0d6e0]"><b>${esc(m.chapter_id)}</b> — ${esc(m.chapter_name)} · <span class="text-amber-700 font-semibold">${TYPE_KR[m.type] || m.type}</span> ${REASON_KR[m.reason] || '누락'}</span>
       <button onclick="regenMissing('${esc(m.chapter_id)}','${esc(m.type)}')"
         class="ml-4 px-2 py-0.5 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">재생성</button>
     </div>
@@ -1568,6 +1647,23 @@ async function regenMissing(chapterId, compType) {
   }
 }
 
+async function recoverAllMissing() {
+  if (!state.runId) return;
+  try {
+    const res = await fetch(`/api/runs/${state.runId}/recover-components`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ components: ['quiz', 'practice'], include_failed: true }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    toast('누락/검증오류 퀴즈·실습 자동복구 시작', 'ok');
+    updateRunPill('recovering');
+    setTimeout(refreshRunData, 800);
+  } catch(e) {
+    showError('자동복구 요청 실패: ' + e.message);
+  }
+}
+
 // ============================================================
 // BLUEPRINT FORM
 // ============================================================
@@ -1586,6 +1682,16 @@ function showBlueprint(c) {
   $('f-character_name').value = c.character_name || '';
   $('f-sell_reason').value = c.sell_reason || '';
   $('f-project_outcome').value = c.project_outcome || '';
+  $('f-learner_persona').value = c.learner_persona || '';
+  $('f-learning_objectives').value = (c.learning_objectives || []).join('\n');
+  const adj = c.adjacent_jobs || [];
+  [0, 1].forEach(i => {
+    $(`f-adjacent_job_${i}_label`).value = adj[i]?.job_label || '';
+    $(`f-adjacent_job_${i}_context`).value = adj[i]?.job_context || '';
+  });
+  const finalPattern = c.final_part_pattern || {};
+  $('f-final_part_pattern_label').value = finalPattern.label || '';
+  $('f-final_part_pattern_rationale').value = finalPattern.rationale || '';
 
   const renderList = (host, arr, dataAttr) => {
     host.innerHTML = '';
@@ -1629,18 +1735,32 @@ function collectBlueprintForm() {
   const curriculum = Object.keys(rows).sort((a,b)=>+a-+b).map(i => {
     const idx = +i;
     return {
-      chapter_id: `${Math.floor(idx/2)+1}-${(idx%2)+1}`,
+      chapter_id: state.blueprint?.curriculum?.[idx]?.chapter_id || `${Math.floor(idx/2)+1}-${(idx%2)+1}`,
       part_name: rows[i].part_name || '',
       chapter_name: rows[i].chapter_name || '',
       prompt_technique: rows[i].prompt_technique || '',
     };
   });
+  const adjacent_jobs = [0, 1].map(i => ({
+    job_label: $(`f-adjacent_job_${i}_label`).value.trim(),
+    job_context: $(`f-adjacent_job_${i}_context`).value.trim(),
+  })).filter(j => j.job_label || j.job_context);
+  const previousFinal = state.blueprint?.final_part_pattern || {};
   return {
+    ...state.blueprint,
     course_name: $('f-course_name').value.trim(),
     category: $('f-category').value,
     character_name: $('f-character_name').value.trim(),
     sell_reason: $('f-sell_reason').value.trim(),
     project_outcome: $('f-project_outcome').value.trim(),
+    learning_objectives: $('f-learning_objectives').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    learner_persona: $('f-learner_persona').value.trim(),
+    adjacent_jobs,
+    final_part_pattern: {
+      id: previousFinal.id || 'integration',
+      label: $('f-final_part_pattern_label').value.trim(),
+      rationale: $('f-final_part_pattern_rationale').value.trim(),
+    },
     targets, effects, curriculum,
   };
 }
@@ -1676,48 +1796,16 @@ document.addEventListener('click', async (ev) => {
 // ============================================================
 // REVIEW (Screen 3) — Navigator + Preview + Actions
 // ============================================================
-function resetReviewUI() {
-  // Run 전환/삭제 시 Review 화면 초기화 — 이전 Run의 프리뷰/플래그 카드가 남지 않도록
-  const pb = $('preview-body');
-  if (pb) pb.innerHTML = '<div class="text-sm text-[#62666d] text-center mt-20">아직 선택된 컴포넌트가 없습니다.</div>';
-  const ap = $('action-panel');
-  if (ap) ap.innerHTML = '<div class="text-sm text-[#62666d] text-center mt-20 px-4">좌측에서 컴포넌트를 선택하면 해당 플래그가 여기에 표시됩니다.</div>';
-  const pt = $('preview-title'); if (pt) pt.textContent = '컴포넌트 선택';
-  ['preview-model','preview-score','btn-chapter-regen','btn-material-docx'].forEach(id => {
-    const el = $(id); if (el) el.classList.add('hidden');
-  });
-  const rs = $('review-summary'); if (rs) rs.textContent = '—';
-}
-
 async function refreshReview() {
   await refreshRunData();
   renderNavTree();
   renderFilters();
-  // selectedCompId가 현재 Run의 컴포넌트 중 하나인지 확인 (Run 전환 후 stale 방지)
-  const validSel = state.selectedCompId &&
-    state.components.some(c => c.component_id === state.selectedCompId);
-  if (!validSel) {
-    state.selectedCompId = null;
-    resetReviewUI();
-  }
   if (!state.selectedCompId && state.components.length) {
     selectComponent(state.components[0].component_id);
   } else if (state.selectedCompId) {
     selectComponent(state.selectedCompId);
   }
-  updateReviewSummary();
-}
-
-function updateReviewSummary() {
-  // "플래그 & 액션" 우측 헤더 — 스코프(이 Run / 선택 컴포넌트)를 명확히 표기
-  const total = state.flags.length;
-  const selN = state.selectedCompId
-    ? state.flags.filter(f => f.component_id === state.selectedCompId).length
-    : 0;
-  const label = state.selectedCompId
-    ? `선택 ${selN} · 이 Run 총 ${total}건 미해결`
-    : `이 Run 총 ${total}건 미해결`;
-  $('review-summary').textContent = label;
+  $('review-summary').textContent = `${state.flags.length} flags`;
 }
 
 function renderNavTree() {
@@ -1788,13 +1876,7 @@ async function selectComponent(cid) {
   _clearAnchor && _clearAnchor();
   renderNavTree();
   const c = state.components.find(x => x.component_id === cid);
-  if (!c) {
-    // cid가 현재 Run의 컴포넌트가 아님 (stale) — UI 정리
-    state.selectedCompId = null;
-    resetReviewUI();
-    updateReviewSummary();
-    return;
-  }
+  if (!c) return;
   const typeKo = TYPE_LABEL[c.type];
   const chapName = state.chapterMap[c.chapter_id] || '';
   $('preview-title').textContent = `${typeKo}${c.chapter_id && c.chapter_id !== '-' ? ' · ' + c.chapter_id : ''}${chapName ? ' · ' + chapName : ''}`;
@@ -1840,7 +1922,6 @@ async function selectComponent(cid) {
     }
     renderPreview(c.type, d.content);
     renderActionPanel(d.flags || state.flags.filter(f => f.component_id === cid));
-    updateReviewSummary();
   } catch(e) { toast('컴포넌트 로드 실패','err'); }
 }
 
@@ -1859,11 +1940,19 @@ function renderPreview(type, content) {
 }
 
 function previewFigureRationale(c) {
+  const sw = c.signature_workflow || {};
   return `
     <div class="max-w-2xl">
       <div data-preview-section="fr-opening">
         <div class="text-xs text-[#62666d] mb-1">OPENING ONE-LINER</div>
         <blockquote class="border-l-4 border-[#e4f222] pl-4 italic text-lg text-[#e5e5e6]">"${esc(c.opening_one_liner||'')}"</blockquote>
+      </div>
+      <div data-preview-section="fr-alias" class="mt-5">
+        <h4>캐릭터 정체성</h4>
+        <p><b>${esc(c.character_alias||'')}</b></p>
+        <div class="flex flex-wrap gap-1 mt-2">
+          ${(c.character_keywords||[]).map(x=>`<span class="text-xs bg-[#23252a] border border-[#383b3f] rounded px-2 py-1">${esc(x)}</span>`).join('')}
+        </div>
       </div>
       <div data-preview-section="fr-background">
         <h4>배경</h4>
@@ -1883,13 +1972,72 @@ function previewFigureRationale(c) {
           ${(c.what_learner_gets||[]).map(x=>`<li>${esc(x)}</li>`).join('')}
         </ul>
       </div>
+      <div data-preview-section="fr-action-map">
+        <h4>위인 행동 ↔ 프롬프트 기법</h4>
+        <div class="border border-[#23252a] rounded-md overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-[#23252a] text-[#8a8f98] text-xs">
+                <th class="text-left px-4 py-2 w-1/2">위인의 행동</th>
+                <th class="text-left px-4 py-2 w-1/2">AI 프롬프트 기법</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(c.action_technique_map||[]).map((r,i)=>`
+                <tr class="${i%2===0?'bg-[#0d0e10]':'bg-[#111215]'} border-t border-[#23252a]">
+                  <td class="px-4 py-2 text-[#d0d6e0]">${esc(r.action||'')}</td>
+                  <td class="px-4 py-2 text-[#e4f222] font-medium">${esc(r.technique||'')}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div data-preview-section="fr-workflow">
+        <h4>시그니처 워크플로우</h4>
+        <div class="border border-[#23252a] rounded-md p-4 mb-3">
+          <div class="font-semibold">${esc(sw.name||'')}</div>
+          <div class="text-sm text-[#d0d6e0] mt-2">${(sw.steps||[]).map(esc).join(' → ')}</div>
+          <p class="mt-2 text-sm">${esc(sw.rationale||'')}</p>
+        </div>
+      </div>
+      <div data-preview-section="fr-growth-curves">
+        <h4>5파트 성장 곡선</h4>
+        ${(c.part_growth_curves||[]).map(p=>`
+          <div class="border border-[#23252a] rounded-md p-4 mb-3">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs bg-[#e4f222] text-black font-bold rounded px-2 py-0.5">Part ${p.part_id}</span>
+              <span class="text-sm font-semibold text-[#e5e5e6]">${esc(p.part_name||'')}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-[#0d0e10] rounded p-3">
+                <div class="text-[10px] uppercase tracking-wide text-[#62666d] mb-2">위인 (${esc(p.figure_label||'')})</div>
+                <div class="text-xs text-[#8a8f98]">시작: ${esc(p.figure_start||'')}</div>
+                <div class="text-xs text-[#d0d6e0] mt-1">끝: ${esc(p.figure_end||'')}</div>
+              </div>
+              <div class="bg-[#0d0e10] rounded p-3">
+                <div class="text-[10px] uppercase tracking-wide text-[#62666d] mb-2">학습자 (${esc(p.learner_label||'')})</div>
+                <div class="text-xs text-[#8a8f98]">시작: ${esc(p.learner_start||'')}</div>
+                <div class="text-xs text-[#d0d6e0] mt-1">끝: ${esc(p.learner_end||'')}</div>
+              </div>
+            </div>
+            <div class="mt-3 text-xs text-[#e4f222] border-t border-[#23252a] pt-2">${esc(p.pairing_line||'')}</div>
+          </div>`).join('')}
+      </div>
       <div data-preview-section="fr-episodes">
         <h4>핵심 에피소드</h4>
         ${(c.key_episodes||[]).map(ep=>`
           <div class="border border-[#23252a] rounded-md p-4 mb-3">
             <div class="font-semibold">${esc(ep.title)}</div>
             <p class="mt-1 text-sm">${esc(ep.description)}</p>
-            <div class="text-xs text-[#8a8f98] mt-2">출처: ${esc(ep.source)}</div>
+            <div class="text-xs text-[#8a8f98] mt-2">출처: ${esc(ep.source)} ${ep.source_url ? '· ' + esc(ep.source_url) : ''}</div>
+          </div>`).join('')}
+      </div>
+      <div data-preview-section="fr-quotes">
+        <h4>실제 어록</h4>
+        ${(c.real_quotes||[]).map(q=>`
+          <div class="border border-[#23252a] rounded-md p-4 mb-3">
+            <blockquote class="italic text-[#e5e5e6]">"${esc(q.text||'')}"</blockquote>
+            <div class="text-xs text-[#8a8f98] mt-2">${esc(q.context||'')} · ${esc(q.source||'')}</div>
           </div>`).join('')}
       </div>
     </div>`;
@@ -1907,12 +2055,9 @@ function previewStory(c) {
     </div>` : '';
   return `
     <div class="max-w-2xl space-y-2 p-1">
-      <div class="text-xs text-[#62666d] mb-3">챕터 ${esc(c.chapter_id||'')} · ${esc(c.scene_title||'')}</div>
-      ${field('씬 제목', c.scene_title)}
-      ${field('위인 캐릭터명', c.character_name)}
-      ${field('오프닝 씬', c.opening_scene)}
-      ${field('미션 브리핑', c.mission_briefing)}
-      ${imgField('Scene — 이미지 프롬프트 (영문)', c.scene_image_prompt)}
+      <div class="text-xs text-[#62666d] mb-3">챕터 ${esc(c.chapter_id||'')}</div>
+      ${field('스토리 본문', c.story_body || c.opening_scene)}
+      ${imgField('이미지 프롬프트', c.image_prompt || c.scene_image_prompt)}
     </div>`;
 }
 

@@ -5,17 +5,21 @@ Generator/Validator가 공통으로 쓰는 LLM 클라이언트 래퍼.
 교차검증 매트릭스에서 'claude' | 'openai' 문자열 하나로 스위칭할 수 있게 한다.
 """
 from __future__ import annotations
+import asyncio
 import json
-from typing import Any
+import logging
+from typing import Any, Optional
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI
 from ..config import (
     ANTHROPIC_API_KEY, OPENAI_API_KEY,
     CLAUDE_MODEL, OPENAI_MODEL,
+    LLM_MAX_CONCURRENCY, LLM_TRANSIENT_RETRIES,
 )
 
 _anthropic = AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 _openai = AsyncOpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+_llm_semaphore = asyncio.Semaphore(max(1, LLM_MAX_CONCURRENCY))
 
 
 async def call_model(
@@ -29,12 +33,83 @@ async def call_model(
 ) -> dict[str, Any] | str:
     """Dispatch to the right provider. json_mode=True → 응답을 dict로 파싱."""
     provider = provider.lower()
+    if provider not in {"claude", "openai"}:
+        raise ValueError(f"unknown provider: {provider}")
+
+    fallback = "openai" if provider == "claude" else "claude"
+    providers = [provider]
+    if _provider_available(fallback):
+        providers.append(fallback)
+
+    last_exc: Optional[Exception] = None
+    for idx, current_provider in enumerate(providers):
+        try:
+            return await _call_provider_with_retries(
+                current_provider, system, user, json_mode, temperature, max_tokens
+            )
+        except Exception as exc:
+            last_exc = exc
+            if idx == 0 and _should_fallback(exc) and _provider_available(fallback):
+                logging.warning(
+                    "%s call failed with %s; retrying with %s",
+                    current_provider, type(exc).__name__, fallback,
+                )
+                continue
+            raise
+    raise last_exc or RuntimeError("LLM call failed")
+
+
+async def _call_provider(provider, system, user, json_mode, temperature, max_tokens):
     if provider == "claude":
         return await _call_claude(system, user, json_mode, temperature, max_tokens)
-    elif provider == "openai":
-        return await _call_openai(system, user, json_mode, temperature, max_tokens)
-    else:
-        raise ValueError(f"unknown provider: {provider}")
+    return await _call_openai(system, user, json_mode, temperature, max_tokens)
+
+
+async def _call_provider_with_retries(provider, system, user, json_mode, temperature, max_tokens):
+    attempts = max(0, LLM_TRANSIENT_RETRIES) + 1
+    for attempt in range(attempts):
+        try:
+            async with _llm_semaphore:
+                return await _call_provider(provider, system, user, json_mode, temperature, max_tokens)
+        except Exception as exc:
+            if not _is_transient_failure(exc) or attempt >= attempts - 1:
+                raise
+            delay = 1.5 * (attempt + 1)
+            logging.warning(
+                "%s transient failure (%s); retrying in %.1fs",
+                provider, type(exc).__name__, delay,
+            )
+            await asyncio.sleep(delay)
+
+
+def _provider_available(provider: str) -> bool:
+    return (_anthropic is not None) if provider == "claude" else (_openai is not None)
+
+
+def _should_fallback(exc: Exception) -> bool:
+    status = getattr(exc, "status_code", None)
+    if status in {401, 429, 529}:
+        return True
+    name = type(exc).__name__.lower()
+    text = str(exc).lower()
+    return (
+        "authentication" in name
+        or "overloaded" in name
+        or "rate" in name
+        or "invalid x-api-key" in text
+        or "incorrect api key" in text
+        or "credit balance is too low" in text
+        or "insufficient_quota" in text
+        or "overloaded" in text
+    )
+
+
+def _is_transient_failure(exc: Exception) -> bool:
+    status = getattr(exc, "status_code", None)
+    if status in {429, 529}:
+        return True
+    text = f"{type(exc).__name__} {exc}".lower()
+    return "overloaded" in text or "rate" in text or "temporarily" in text
 
 
 async def _call_claude(system, user, json_mode, temperature, max_tokens):

@@ -36,6 +36,7 @@ def validate_component(component_type: str, content: Any) -> dict:
     mapping = {
         "course_overview": "course_overview",
         "figure_rationale": "figure_rationale",
+        "story": "story_chapter",
         "material": "material_chapter",
         "quiz": "quiz_chapter_set",
         "practice": "practice_chapter_set",
@@ -58,6 +59,8 @@ def validate_component(component_type: str, content: Any) -> dict:
         errors.extend(_practice_rules(content))
     elif component_type == "material":
         errors.extend(_material_rules(content))
+    elif component_type == "story":
+        errors.extend(_story_rules(content))
 
     return {"passed": len(errors) == 0, "errors": errors}
 
@@ -65,15 +68,16 @@ def validate_component(component_type: str, content: Any) -> dict:
 def _quiz_rules(content: dict) -> list[dict]:
     errors: list[dict] = []
     items = content.get("items") or []
-    if len(items) != 10:
-        errors.append({"path": "items", "reason": f"총 문항 10개 필요 (현재 {len(items)})"})
-    # 유형별 2개씩
+    if not (3 <= len(items) <= 15):
+        errors.append({"path": "items", "reason": f"총 문항은 3~15개 범위 필요 (현재 {len(items)})"})
+    # 기본 10문항 과정에서는 유형별 2개씩. 수량을 조절한 경우에는 형식만 검사한다.
     type_counts: dict[str, int] = {}
     for it in items:
         type_counts[it.get("type", "")] = type_counts.get(it.get("type", ""), 0) + 1
-    for t in ["OX", "단일선택", "복수선택", "분류", "단답형"]:
-        if type_counts.get(t, 0) != 2:
-            errors.append({"path": "items/type", "reason": f"{t} 유형이 정확히 2개여야 함 (현재 {type_counts.get(t,0)})"})
+    if len(items) == 10:
+        for t in ["OX", "단일선택", "복수선택", "분류", "단답형"]:
+            if type_counts.get(t, 0) != 2:
+                errors.append({"path": "items/type", "reason": f"{t} 유형이 정확히 2개여야 함 (현재 {type_counts.get(t,0)})"})
     # 단일선택 검사
     for i, it in enumerate(items):
         tp = it.get("type")
@@ -184,13 +188,31 @@ def _material_rules(content: dict) -> list[dict]:
     return errors
 
 
+def _story_rules(content: dict) -> list[dict]:
+    errors: list[dict] = []
+    body = content.get("story_body", "") or ""
+    image_prompt = content.get("image_prompt", "") or ""
+    for marker in ["[오프닝 훅]", "[스토리·시연]", "[챕터 미리보기]"]:
+        if marker in body:
+            errors.append({"path": "story_body", "reason": f"내부 마커 노출 금지: {marker}"})
+    forbidden_body = ["박다", "박았", "박는", "박아", "꿰뚫", "봅시다", "결과였죠", "돌아옵니다", "돌아온다"]
+    hits = [w for w in forbidden_body if w in body]
+    if hits:
+        errors.append({"path": "story_body", "reason": f"금지 표현 포함: {hits}"})
+    forbidden_image = ["표정", "미소", "수염", "머리", "옷", "셔츠", "드레스", "젊은", "늙은"]
+    img_hits = [w for w in forbidden_image if w in image_prompt]
+    if img_hits:
+        errors.append({"path": "image_prompt", "reason": f"캐릭터 외형·표정 묘사 금지: {img_hits}"})
+    return errors
+
+
 def _practice_rules(content: dict) -> list[dict]:
     errors: list[dict] = []
     items = content.get("items") or []
-    if len(items) != 3:
-        errors.append({"path": "items", "reason": f"실습 3개 필요 (현재 {len(items)})"})
+    if not (1 <= len(items) <= 5):
+        errors.append({"path": "items", "reason": f"실습은 1~5개 범위 필요 (현재 {len(items)})"})
     stages_seen = [it.get("stage") for it in items]
-    if stages_seen != ["실험", "레슨", "도전"]:
+    if len(items) == 3 and stages_seen != ["실험", "레슨", "도전"]:
         errors.append({"path": "items/stage", "reason": f"stage 순서는 [실험,레슨,도전]: {stages_seen}"})
     for i, it in enumerate(items):
         # 평가항목 어미·길이 체크
@@ -226,15 +248,18 @@ def _practice_rules(content: dict) -> list[dict]:
             errors.append({"path": f"items[{i}]/criteria",
                            "reason": "평가항목 3개가 서로 다른 기준이어야 함 (중복 발견)"})
         # 고정값
-        for k, v in [("environment", "ChatGPT"), ("response_type", "텍스트"),
-                     ("is_free", "FALSE"), ("clip_group_id", "-"), ("file_url", "-")]:
+        for k, v in [("response_type", "텍스트"), ("is_free", "FALSE"),
+                     ("clip_group_id", "-"), ("file_url", "-")]:
             if it.get(k) != v:
                 errors.append({"path": f"items[{i}]/{k}",
                                "reason": f"고정값 불일치: 기대={v!r} 실제={it.get(k)!r}"})
+        if it.get("environment") not in {"ChatGPT", "Claude", "Gemini"}:
+            errors.append({"path": f"items[{i}]/environment",
+                           "reason": f"지원 AI 도구는 ChatGPT/Claude/Gemini 중 하나여야 함: {it.get('environment')!r}"})
     # 기본 합격점수 50/80/80 (미세 편차 경고만)
     expected_scores = [50, 80, 80]
     actual_scores = [it.get("passing_score") for it in items]
-    if actual_scores and actual_scores != expected_scores:
+    if len(items) == 3 and actual_scores and actual_scores != expected_scores:
         # 경고 수준으로만 (엄격 차단 X — mixer로 조정 가능하므로)
         errors.append({"path": "items/passing_score",
                        "reason": f"기본 합격점수 50/80/80 권장 (현재 {actual_scores})"})

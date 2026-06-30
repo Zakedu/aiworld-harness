@@ -1,0 +1,251 @@
+from __future__ import annotations
+
+import pathlib
+import sqlite3
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+
+class RuntimeRegressionTests(unittest.TestCase):
+    def test_favicon_request_does_not_404(self):
+        from fastapi.testclient import TestClient
+        from backend.main import app
+
+        with TestClient(app) as client:
+            response = client.get("/favicon.ico")
+
+        self.assertLess(response.status_code, 400)
+
+    def test_run_list_fetch_rejects_non_array_responses(self):
+        html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("if (!Array.isArray(runs))", html)
+        self.assertIn("Run 목록 응답 형식이 올바르지 않습니다", html)
+
+    def test_run_script_uses_env_port_and_falls_forward_on_conflict(self):
+        run_sh = (ROOT / "run.sh").read_text(encoding="utf-8")
+
+        self.assertIn("ENV_PORT", run_sh)
+        self.assertIn("port_in_use()", run_sh)
+        self.assertIn("선택한 포트가 사용 중이라", run_sh)
+
+    def test_practice_title_policy_is_consistent_across_ui_and_prompt(self):
+        html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+        prompt = (ROOT / "backend" / "agents" / "practice_generator.py").read_text(encoding="utf-8")
+
+        self.assertIn("위인명·단계명 접두 없음", html)
+        self.assertNotIn("item:'{위인} + 단계 포함'", html)
+        self.assertIn("- 콘텐츠명(title): **40~100자**", prompt)
+        self.assertIn("- 문제(question): **40~100자**", prompt)
+
+    def test_github_validation_workflow_exists(self):
+        workflow = ROOT / ".github" / "workflows" / "validate.yml"
+
+        self.assertTrue(workflow.exists())
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn("python -m compileall backend", text)
+        self.assertIn("yaml.safe_load", text)
+        self.assertIn("json.loads", text)
+
+    def test_material_pdf_export_css_matches_main_design_spec(self):
+        from backend.exporters.html_export import _CSS
+
+        self.assertIn("font-size: 15px;", _CSS)
+        self.assertIn("font-size: 14px;", _CSS)
+        self.assertIn("print-color-adjust: exact", _CSS)
+        self.assertIn(".bgb-bad    .bgb-header { background: #fdf2f2; color: #b91c1c; }", _CSS)
+        self.assertIn(".bgb-good   .bgb-header { background: #f1f8f3; color: #15803d; }", _CSS)
+        self.assertIn(".bgb-better .bgb-header { background: #f1f4fb; color: #1d4ed8; }", _CSS)
+        self.assertIn(".bgb-body { padding: 16px 18px; font-size: 14px;", _CSS)
+        self.assertIn(".section-heading    { break-after: avoid; page-break-after: avoid; }", _CSS)
+        self.assertIn(".bgb-card     { break-inside: avoid; page-break-inside: avoid; }", _CSS)
+        self.assertIn("@page { margin: 24mm 22mm; }", _CSS)
+        self.assertNotIn("background: #09090b", _CSS)
+        self.assertNotIn(".bgb-grid { page-break-inside: avoid;", _CSS)
+        self.assertNotIn(".section { page-break-inside: avoid;", _CSS)
+
+    def test_anthropic_low_credit_error_falls_back_to_openai(self):
+        from backend.agents.base import _should_fallback
+
+        class LowCreditError(Exception):
+            status_code = 400
+
+        err = LowCreditError(
+            "Your credit balance is too low to access the Anthropic API. "
+            "Please go to Plans & Billing to upgrade or purchase credits."
+        )
+
+        self.assertTrue(_should_fallback(err))
+
+    def test_env_file_values_take_priority_over_process_environment(self):
+        config = (ROOT / "backend" / "config.py").read_text(encoding="utf-8")
+
+        self.assertIn("load_dotenv(ROOT / \".env\", override=True)", config)
+
+    def test_run_detail_hides_missing_components_while_generating(self):
+        from backend.main import _missing_components_for_response
+
+        with patch(
+            "backend.main.orchestrator.find_recoverable_components_for_run",
+            return_value=[{"chapter_id": "1-1", "type": "quiz"}],
+        ) as find_recoverable:
+            self.assertEqual(_missing_components_for_response("generating", "run-1"), [])
+            find_recoverable.assert_not_called()
+
+        with patch(
+            "backend.main.orchestrator.find_recoverable_components_for_run",
+            return_value=[{"chapter_id": "1-1", "type": "quiz"}],
+        ):
+            self.assertEqual(
+                _missing_components_for_response("generation_incomplete", "run-1"),
+                [{"chapter_id": "1-1", "type": "quiz"}],
+            )
+
+    def test_recoverable_component_query_has_single_order_by_clause(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertNotIn(
+            "ORDER BY version DESC LIMIT 1\n                    ORDER BY version DESC LIMIT 1",
+            orchestrator,
+        )
+
+    def test_material_export_renders_loose_markdown_tables(self):
+        from backend.exporters.html_export import _md
+
+        html = _md(
+            """
+[핵심 요소 표]
+| 요소 | 무엇 | 예시 |
+
+|---|---|---|
+
+| Context(상황) | 응답이 발생한 생활 장면 | 출근길에 앱 알림을 확인하는 순간 |
+
+| Behavior(행동) | 관찰하려는 실제 사용 행동 | 알림을 끄거나 앱을 삭제한 행동 |
+""".strip()
+        )
+
+        self.assertIn("<table>", html)
+        self.assertIn("<th>요소</th>", html)
+        self.assertIn("<td>Context(상황)</td>", html)
+        self.assertNotIn("|---|---|---|", html)
+
+    def test_material_export_renders_lists_after_bracket_headings(self):
+        from backend.exporters.html_export import _md
+
+        html = _md(
+            """
+[언제 쓰나]
+- 고객 설문 초안을 만들 때
+- 사용자 인터뷰 가이드를 만들 때
+""".strip()
+        )
+
+        self.assertIn("<ul>", html)
+        self.assertIn("<li>고객 설문 초안을 만들 때</li>", html)
+        self.assertNotIn("<br>\n- 고객 설문", html)
+
+    def test_rubric_timeout_is_not_scored_as_quality_failure(self):
+        from backend import orchestrator
+
+        result = orchestrator._rubric_exception_result(TimeoutError())
+
+        self.assertEqual(result["component_status"], "validation_timeout")
+        self.assertIsNone(result["overall_score"])
+        self.assertEqual(result["rubric"]["status"], "timeout")
+        self.assertFalse(result["create_flag"])
+
+    def test_revalidation_includes_timeout_components(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertIn("'validation_timeout'", orchestrator)
+        self.assertIn("c.status IN ('generated','validation_error','validation_timeout')", orchestrator)
+
+    def test_frontend_distinguishes_validation_timeout_from_quality_flags(self):
+        html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("'validation_timeout':", html)
+        self.assertIn("재검증 필요", html)
+
+    def test_story_generation_runs_story_validators(self):
+        orchestrator = (ROOT / "backend" / "orchestrator.py").read_text(encoding="utf-8")
+
+        self.assertIn(
+            'await _run_validators(run_id, cid, "story", content, val, chapter_id=chapter_id)',
+            orchestrator,
+        )
+
+    def test_shared_validator_applies_schema_to_quiz_and_practice(self):
+        from backend import orchestrator
+        from backend.db import SCHEMA_SQL
+
+        async def passing_rubric(*_args, **_kwargs):
+            return {"passed": True, "overall_score": 100, "results": []}
+
+        def no_glossary_violations(*_args, **_kwargs):
+            return []
+
+        with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
+            def get_test_conn():
+                conn = sqlite3.connect(tmp.name, check_same_thread=False)
+                conn.row_factory = sqlite3.Row
+                conn.execute("PRAGMA foreign_keys = ON;")
+                return conn
+
+            with get_test_conn() as conn:
+                conn.executescript(SCHEMA_SQL)
+                conn.execute(
+                    "INSERT INTO runs(run_id, status) VALUES (?, ?)",
+                    ("run-schema", "reviewing"),
+                )
+                conn.execute(
+                    "INSERT INTO blueprints(blueprint_id, run_id, content_json) VALUES (?, ?, ?)",
+                    ("bp-schema", "run-schema", "{}"),
+                )
+                for component_id, component_type in [
+                    ("quiz-schema", "quiz"),
+                    ("practice-schema", "practice"),
+                ]:
+                    conn.execute(
+                        "INSERT INTO components(component_id, run_id, blueprint_id, type, chapter_id, version, content_json, status) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (component_id, "run-schema", "bp-schema", component_type, "1-1", 1, "{}", "generated"),
+                    )
+                conn.commit()
+
+            with patch("backend.orchestrator.get_conn", get_test_conn), \
+                 patch("backend.orchestrator.rubric_validate", passing_rubric), \
+                 patch("backend.orchestrator.glossary_validate", no_glossary_violations), \
+                 patch("backend.orchestrator.emit", passing_rubric):
+                import asyncio
+
+                asyncio.run(
+                    orchestrator._run_validators(
+                        "run-schema", "quiz-schema", "quiz", {}, "openai", chapter_id="1-1"
+                    )
+                )
+                asyncio.run(
+                    orchestrator._run_validators(
+                        "run-schema", "practice-schema", "practice", {}, "openai", chapter_id="1-1"
+                    )
+                )
+
+            with get_test_conn() as conn:
+                rows = conn.execute(
+                    "SELECT component_id, status FROM components ORDER BY component_id"
+                ).fetchall()
+
+            self.assertEqual(
+                {row["component_id"]: row["status"] for row in rows},
+                {"practice-schema": "flagged", "quiz-schema": "flagged"},
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()

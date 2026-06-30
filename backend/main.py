@@ -9,9 +9,9 @@ import json
 import uuid
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Optional
 
 from fastapi.responses import StreamingResponse
@@ -37,13 +37,13 @@ class RunCreate(BaseModel):
     figure: str
     topic: str
     target_learner: str
-    learning_goals: list[str] = []
+    learning_goals: list[str] = Field(default_factory=list)
     chapters: int = 10                 # total = parts_count × chapters_per_part
     parts_count: int = 5
     chapters_per_part: int = 2
     category: str = "auto"             # "auto" | 업무생산성 | 마케팅 | ...
     chapter_duration_min: int = 15
-    mixer: dict = {}
+    mixer: dict = Field(default_factory=dict)
 
 
 # ------------------------------------------------------------------
@@ -73,7 +73,8 @@ async def create_run(body: RunCreate):
         conn.commit()
 
     inputs = body.model_dump(exclude={"mixer"})
-    asyncio.create_task(orchestrator.run_planning(run_id, inputs, body.mixer))
+    _t = asyncio.create_task(orchestrator.run_planning(run_id, inputs, body.mixer))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"run_id": run_id, "status": "planning"}
 
 
@@ -126,13 +127,21 @@ def get_run(run_id: str):
             "SELECT * FROM flags WHERE run_id=? AND resolved=0",
             (run_id,),
         ).fetchall()
+    missing = _missing_components_for_response(run["status"], run_id)
 
     return {
         "run": dict(run),
         "blueprint": (dict(bp) | {"content": json.loads(bp["content_json"])}) if bp else None,
         "components": [dict(c) for c in comps],
         "flags": [dict(f) for f in flags],
+        "missing_components": missing,
     }
+
+
+def _missing_components_for_response(run_status: str, run_id: str) -> list[dict]:
+    if run_status in {"planning", "awaiting_approval", "generating"}:
+        return []
+    return orchestrator.find_recoverable_components_for_run(run_id)
 
 
 @app.get("/api/runs/{run_id}/summary")
@@ -250,9 +259,33 @@ async def revalidate_run(run_id: str):
         row = conn.execute("SELECT run_id FROM runs WHERE run_id=?", (run_id,)).fetchone()
     if not row:
         raise HTTPException(404, "run not found")
-    import asyncio
-    asyncio.create_task(orchestrator.revalidate_run(run_id))
+    _t = asyncio.create_task(orchestrator.revalidate_run(run_id))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"status": "revalidation_started", "run_id": run_id}
+
+
+class RecoverRunBody(BaseModel):
+    components: list[str] = Field(default_factory=lambda: ["quiz", "practice"])
+    include_failed: bool = True
+
+
+@app.post("/api/runs/{run_id}/recover-components")
+async def recover_components(run_id: str, body: RecoverRunBody):
+    """누락되었거나 validator 오류가 난 컴포넌트를 다시 생성."""
+    allowed = {"material", "story", "quiz", "practice"}
+    comps = tuple(c for c in body.components if c in allowed) or ("quiz", "practice")
+    with get_conn() as conn:
+        row = conn.execute("SELECT run_id FROM runs WHERE run_id=?", (run_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "run not found")
+    _t = asyncio.create_task(orchestrator.recover_run_components(run_id, comps, body.include_failed))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
+    return {
+        "status": "recovery_started",
+        "run_id": run_id,
+        "components": comps,
+        "include_failed": body.include_failed,
+    }
 
 
 @app.get("/api/runs/{run_id}/export.sql")
@@ -346,14 +379,15 @@ def delete_run(run_id: str):
 
 class ChapterRegenBody(BaseModel):
     instruction: str = ""
-    components: list[str] = []  # ["material","quiz","practice"] — 빈 리스트면 전체
+    components: list[str] = Field(default_factory=list)  # ["material","quiz","practice"] — 빈 리스트면 전체
 
 
 @app.post("/api/runs/{run_id}/chapters/{chapter_id}/regenerate")
 async def chapter_regenerate(run_id: str, chapter_id: str, body: ChapterRegenBody):
     """챕터 1개의 학습자료·퀴즈·실습을 사용자 피드백과 함께 재생성."""
     comps = body.components or ["material", "quiz", "practice"]
-    asyncio.create_task(orchestrator.regenerate_chapter(run_id, chapter_id, body.instruction, comps))
+    _t = asyncio.create_task(orchestrator.regenerate_chapter(run_id, chapter_id, body.instruction, comps))
+    _t.add_done_callback(lambda t: orchestrator._task_error_handler(t, run_id))
     return {"ok": True, "chapter_id": chapter_id, "components": comps}
 
 
@@ -415,7 +449,9 @@ def admin_config():
     """환경설정 요약 (API 키는 마스킹). 수정은 불가, 열람만."""
     from .config import (
         ANTHROPIC_API_KEY, OPENAI_API_KEY, CLAUDE_MODEL, OPENAI_MODEL,
-        CROSS_MATRIX, MAX_REGEN_RETRIES, RUBRIC_OVERALL_PASS, HOST, PORT,
+        CROSS_MATRIX, MAX_REGEN_RETRIES, RUBRIC_OVERALL_PASS,
+        LLM_MAX_CONCURRENCY, LLM_TRANSIENT_RETRIES, RUBRIC_VALIDATION_TIMEOUT_SECONDS,
+        HOST, PORT,
     )
     def mask(k: str) -> str:
         if not k:
@@ -431,6 +467,9 @@ def admin_config():
         },
         "cross_matrix": {k: list(v) for k, v in CROSS_MATRIX.items()},
         "retry_limit": MAX_REGEN_RETRIES,
+        "llm_max_concurrency": LLM_MAX_CONCURRENCY,
+        "llm_transient_retries": LLM_TRANSIENT_RETRIES,
+        "rubric_validation_timeout_seconds": RUBRIC_VALIDATION_TIMEOUT_SECONDS,
         "overall_pass": RUBRIC_OVERALL_PASS,
         "server": {"host": HOST, "port": PORT},
     }
@@ -439,7 +478,8 @@ def admin_config():
 @app.post("/api/admin/api-key")
 async def update_api_key(body: dict):
     """API 키를 .env 파일에 업데이트."""
-    import re, pathlib
+    import re
+    from .config import ROOT
     key_name = body.get("key")   # "OPENAI_API_KEY" | "ANTHROPIC_API_KEY"
     key_value = body.get("value", "").strip()
     allowed = {"OPENAI_API_KEY", "ANTHROPIC_API_KEY"}
@@ -448,7 +488,7 @@ async def update_api_key(body: dict):
     if not key_value:
         raise HTTPException(400, "키 값이 비어있습니다")
 
-    env_path = pathlib.Path(".env")
+    env_path = ROOT / ".env"
     if not env_path.exists():
         raise HTTPException(500, ".env 파일을 찾을 수 없습니다")
 
@@ -460,6 +500,21 @@ async def update_api_key(body: dict):
     else:
         text = text.rstrip("\n") + f"\n{new_line}\n"
     env_path.write_text(text)
+
+    # 실행 중인 서버에 즉시 반영 (재시작 불필요)
+    import os as _os
+    _os.environ[key_name] = key_value
+    import backend.config as _cfg
+    import backend.agents.base as _base
+    from anthropic import AsyncAnthropic
+    from openai import AsyncOpenAI
+    if key_name == "ANTHROPIC_API_KEY":
+        _cfg.ANTHROPIC_API_KEY = key_value
+        _base._anthropic = AsyncAnthropic(api_key=key_value)
+    else:
+        _cfg.OPENAI_API_KEY = key_value
+        _base._openai = AsyncOpenAI(api_key=key_value)
+
     return {"status": "ok", "key": key_name}
 
 
@@ -538,4 +593,9 @@ if FRONTEND_DIR.exists():
     @app.get("/", response_class=HTMLResponse)
     def index():
         return FileResponse(FRONTEND_DIR / "index.html")
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return Response(status_code=204)
+
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")

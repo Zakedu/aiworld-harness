@@ -27,7 +27,28 @@ if [ ! -f "data/aiworld.db" ]; then
 fi
 
 # 4. 서버 기동
+if [ -z "${PORT:-}" ] && [ -f ".env" ]; then
+  ENV_PORT="$(awk -F= '/^[[:space:]]*PORT[[:space:]]*=/{print $2; exit}' .env | tr -d '"'\''[:space:]')"
+  if [ -n "${ENV_PORT}" ]; then
+    PORT="${ENV_PORT}"
+  fi
+fi
 PORT="${PORT:-8000}"
+
+port_in_use() {
+  lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+REQUESTED_PORT="${PORT}"
+while port_in_use "${PORT}"; do
+  PORT=$((PORT + 1))
+done
+
+if [ "${PORT}" != "${REQUESTED_PORT}" ]; then
+  echo "!! 선택한 포트가 사용 중이라 ${REQUESTED_PORT} → ${PORT}로 변경합니다."
+fi
+
+export PORT
 LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo '127.0.0.1')"
 
 echo ""
@@ -43,4 +64,5 @@ echo "================================================================"
 echo ""
 
 exec ./venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port "${PORT}" \
-  --reload --reload-include '*.env' --reload-include '*.yaml' --reload-include '*.json'
+  --reload --reload-include '*.env' --reload-include '*.yaml' --reload-include '*.json' \
+  --reload-exclude '.omc/*' --reload-exclude 'tmp/*' --reload-exclude '*hud-stdin-cache.json'
