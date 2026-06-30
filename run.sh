@@ -64,4 +64,5 @@ echo "================================================================"
 echo ""
 
 exec ./venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port "${PORT}" \
-  --reload --reload-include '*.env' --reload-include '*.yaml' --reload-include '*.json'
+  --reload --reload-include '*.env' --reload-include '*.yaml' --reload-include '*.json' \
+  --reload-exclude '.omc/*' --reload-exclude 'tmp/*' --reload-exclude '*hud-stdin-cache.json'

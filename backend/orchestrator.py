@@ -620,6 +620,7 @@ async def _generate_story_chapter(run_id: str, blueprint_id: str, blueprint: dic
         )
         conn.commit()
     await emit(run_id, "component.generated", {"component_id": cid, "type": "story", "chapter_id": chapter_id})
+    await _run_validators(run_id, cid, "story", content, val, chapter_id=chapter_id)
 
 
 async def _generate_special_quizzes(
@@ -706,8 +707,12 @@ async def _generate_special_quizzes(
 
 
 async def _run_validators(run_id: str, component_id: str, component_type: str, content: dict, val_provider: str, chapter_id: str = "-"):
-    """단발성 검증 (재생성 루프 없음) — part_intro·material용."""
-    schema_result = validate_component(component_type, content) if component_type in {"figure_rationale", "story", "material"} else {"passed": True, "errors": []}
+    """단발성 검증 (재생성 루프 없음)."""
+    schema_result = (
+        {"passed": True, "errors": []}
+        if component_type == "special_quiz"
+        else validate_component(component_type, content)
+    )
     try:
         rubric_result = await asyncio.wait_for(
             rubric_validate(component_type, content, val_provider),
